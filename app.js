@@ -382,6 +382,13 @@ function buildReview() {
     updatedAt: ""
   };
 
+  $("reviewSummary").innerHTML = [
+    `<div class="review-stat"><span>葷食</span><strong>${state.pendingOrder.meatQty}</strong><small>份</small></div>`,
+    `<div class="review-stat"><span>素食</span><strong>${state.pendingOrder.vegQty}</strong><small>份</small></div>`,
+    `<div class="review-stat"><span>外賓</span><strong>${state.pendingOrder.guestQty}</strong><small>人</small></div>`,
+    `<div class="review-stat"><span>合計</span><strong>${state.pendingOrder.meatQty + state.pendingOrder.vegQty + state.pendingOrder.guestQty}</strong><small>總數</small></div>`
+  ].join("");
+
   $("reviewUser").innerHTML = [
     row("工號", state.user.empId),
     row("姓名", state.user.name),
