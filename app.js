@@ -2,7 +2,7 @@ const STORAGE_USER = "lunch_user_profile_v7";
 const STORAGE_ORDERS = "lunch_orders_v7";
 // 正式規則：每日 10:00 截止，超過後整個員工端鎖定。
 // 測試時若要暫時解除鎖定，可將 TEST_FORCE_OPEN 改成 true。
-const TEST_FORCE_OPEN = false;
+const TEST_FORCE_OPEN = true;
 const SYSTEM_STATUS = "AUTO"; // AUTO / OPEN / CLOSE
 const DEADLINE_HOUR = 10;
 const DEADLINE_MINUTE = 0;
