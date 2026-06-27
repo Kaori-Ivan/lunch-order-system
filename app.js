@@ -1,7 +1,7 @@
 const STORAGE_USER = "lunch_user_profile_v7";
 const STORAGE_ORDERS = "lunch_orders_v7";
 // 正式規則：每日 10:00 截止，超過後整個員工端鎖定。
-// 測試時若要暫時模擬未截止，可將 TEST_FORCE_OPEN 改成 true。
+// 測試時若要暫時解除鎖定，可將 TEST_FORCE_OPEN 改成 true。
 const TEST_FORCE_OPEN = false;
 const SYSTEM_STATUS = "AUTO"; // AUTO / OPEN / CLOSE
 const DEADLINE_HOUR = 10;
@@ -20,7 +20,7 @@ let state = {
   user: null,
   pendingOrder: null,
   isSubmitting: false,
-  currentStep: "scan
+  currentStep: "closed
 };
 
 const $ = (id) => document.getElementById(id);
@@ -77,8 +77,9 @@ function enforceClosedMode() {
 
   if (!isClosed()) return false;
 
+  state.pendingOrder = null;
+
   if (state.currentStep !== "closed" && state.currentStep !== "done") {
-    state.pendingOrder = null;
     setStep("closed");
   }
 
@@ -518,10 +519,18 @@ document.addEventListener("DOMContentLoaded", () => {
   updateHeader();
   cleanupLocalOrders();
   bindEvents();
-  enforceClosedMode() || setStep("scan");
+
+  if (isClosed()) {
+    setStep("closed");
+  } else {
+    setStep("scan");
+  }
 
   setInterval(() => {
     updateHeader();
-    enforceClosedMode();
+
+    if (isClosed() && state.currentStep !== "closed" && state.currentStep !== "done") {
+      setStep("closed");
+    }
   }, 30000);
 });
