@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>企業午餐訂餐系統</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f9fafc;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 34%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #2563eb, #60a5fa);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+
+    .brand h1 {
+      font-size: 22px;
+      margin: 0;
+      letter-spacing: .03em;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status-pill {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.8);
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .side {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .step {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      color: var(--muted);
+      transition: .2s;
+    }
+
+    .step.active {
+      background: #eff6ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .step-number {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      flex: none;
+      font-size: 12px;
+    }
+
+    .step.active .step-number {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .card {
+      padding: 26px;
+    }
+
+    .card-header {
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .desc {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      color: #374151;
+      font-weight: 650;
+      font-size: 14px;
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-size: 16px;
+      outline: none;
+      background: #fff;
+      transition: .16s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    input[readonly] {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+
+    .info-box {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .info-row:last-child { border-bottom: 0; }
+
+    .info-row span:first-child { color: var(--muted); }
+    .info-row span:last-child { font-weight: 700; text-align: right; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .18s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-secondary {
+      background: #eef2ff;
+      color: var(--primary);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .notice {
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin: 16px 0;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .notice.success { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
+    .notice.warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .notice.danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+    .hidden { display: none !important; }
+
+    .order-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .option-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #fff;
+    }
+
+    .option-card strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .option-card small {
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 820px) {
+      .app { padding: 16px; }
+      .layout { grid-template-columns: 1fr; }
+      .side { position: static; }
+      .grid, .order-options { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .card { padding: 20px; }
+      h2 { font-size: 22px; }
+      .actions button { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">L</div>
+        <div>
+          <h1>企業午餐訂餐系統</h1>
+          <p>Lunch Order Portal｜Internal Service</p>
+        </div>
+      </div>
+      <div class="status-pill" id="todayText"></div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel side">
+        <div class="step active" data-step="scan"><div class="step-number">1</div><div>掃描部門 QRCode</div></div>
+        <div class="step" data-step="profile"><div class="step-number">2</div><div>確認使用者資料</div></div>
+        <div class="step" data-step="orderCheck"><div class="step-number">3</div><div>今日訂餐判斷</div></div>
+        <div class="step" data-step="order"><div class="step-number">4</div><div>建立 / 修改訂單</div></div>
+        <div class="step" data-step="done"><div class="step-number">5</div><div>送出完成</div></div>
+      </aside>
+
+      <section class="panel card">
+        <div id="view-scan">
+          <div class="card-header">
+            <div class="eyebrow">STEP 01</div>
+            <h2>掃描部門 QRCode</h2>
+            <p class="desc">正式環境中，部門與組別會由 QRCode 自動帶入。此測試頁可手動選擇部門 QRCode 模擬。</p>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label>部門</label>
+              <select id="qrDept">
+                <option value="燃料電池生產部">燃料電池生產部</option>
+                <option value="熱處理部">熱處理部</option>
+                <option value="品保部">品保部</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>組別</label>
+              <select id="qrGroup">
+                <option value="A組">A組</option>
+                <option value="B組">B組</option>
+                <option value="C組">C組</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary" onclick="scanQRCode()">模擬掃描 QRCode</button>
+            <button class="btn-ghost" onclick="clearAll()">清除測試資料</button>
+          </div>
+
+          <p class="footer-note">部署 GitHub Pages 時，可用網址參數帶入，例如：index.html?dept=燃料電池生產部&group=A組</p>
+        </div>
+
+        <div id="view-profile" class="hidden">
+          <div class="card-header">
+            <div class="eyebrow">STEP 02</div>
+            <h2>確認使用者資料</h2>
+            <p class="desc" id="profileDesc"></p>
+          </div>
+
+          <div id="profileDisplay" class="info-box hidden"></div>
+
+          <div id="profileForm" class="hidden">
+            <div class="grid">
+              <div class="field">
+                <label>工號</label>
+                <input id="empId" placeholder="請輸入工號" />
+              </div>
+              <div class="field">
+                <label>姓名</label>
+                <input id="empName" placeholder="請輸入姓名" />
+              </div>
+              <div class="field">
+                <label>部門</label>
+                <input id="dept" readonly />
+              </div>
+              <div class="field">
+                <label>組別</label>
+                <input id="group" readonly />
+              </div>
+            </div>
+          </div>
+
+          <div id="profileNotice"></div>
+
+          <div class="actions" id="profileActions"></div>
+        </div>
+
+        <div id="view-orderCheck" class="hidden">
+          <div class="card-header">
+            <div class="eyebrow">STEP 03</div>
+            <h2>今日訂餐判斷</h2>
+            <p class="desc">系統會依工號與日期檢查今日是否已有訂單。</p>
+          </div>
+
+          <div id="orderCheckBox" class="info-box"></div>
+          <div class="actions" id="orderCheckActions"></div>
+        </div>
+
+        <div id="view-order" class="hidden">
+          <div class="card-header">
+            <div class="eyebrow">STEP 04</div>
+            <h2 id="orderTitle">建立新訂單</h2>
+            <p class="desc">請填寫今日午餐數量。系統會依身分自動套用警戒值與外賓權限。</p>
+          </div>
+
+          <div id="ruleNotice"></div>
+
+          <div class="order-options">
+            <div class="option-card">
+              <strong>葷食</strong>
+              <small>一般餐點</small>
+              <input id="meatQty" type="number" min="0" value="0" oninput="validateOrder()" />
+            </div>
+            <div class="option-card">
+              <strong>素食</strong>
+              <small>素食餐點</small>
+              <input id="vegQty" type="number" min="0" value="0" oninput="validateOrder()" />
+            </div>
+            <div class="option-card">
+              <strong>外賓</strong>
+              <small>一般員工不可填寫</small>
+              <input id="guestQty" type="number" min="0" value="0" oninput="validateOrder()" />
+            </div>
+          </div>
+
+          <div id="orderNotice"></div>
+
+          <div class="actions">
+            <button class="btn-primary" onclick="submitOrder()">送出訂單</button>
+            <button class="btn-ghost" onclick="goStep('orderCheck')">返回</button>
+          </div>
+        </div>
+
+        <div id="view-done" class="hidden">
+          <div class="card-header">
+            <div class="eyebrow">STEP 05</div>
+            <h2>訂單已送出</h2>
+            <p class="desc">以下為本次訂單資訊。</p>
+          </div>
+
+          <div id="doneBox" class="info-box"></div>
+
+          <div class="actions">
+            <button class="btn-primary" onclick="backHome()">回到主畫面</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_USER = "lunch_user_profile";
+    const STORAGE_ORDERS = "lunch_orders";
+    let currentDept = "";
+    let currentGroup = "";
+    let currentUser = null;
+    let editingOrder = false;
+
+    // 測試用員工資料庫
+    // 正式版會改由 Google Sheet 的 Users 分頁提供
+    const mockEmployees = {
+      "A001": { name: "王小明", role: "一般員工" },
+      "B001": { name: "林主管", role: "主管" },
+      "C001": { name: "陳助理", role: "助理" }
+    };
+
+    document.getElementById("todayText").textContent =
+      new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit", weekday: "long" });
+
+    cleanupOldOrders();
+
+    function todayKey() {
+      return new Date().toISOString().slice(0,10);
+    }
+
+    // 每天自動清除舊的訂餐暫存資料
+    // 只清除 lunch_orders 內非今日的訂單，不清除使用者基本資料
+    function cleanupOldOrders() {
+      const orders = getOrders();
+      const today = todayKey();
+      const cleanedOrders = {};
+
+      Object.keys(orders).forEach(key => {
+        if (key.startsWith(today + "_")) {
+          cleanedOrders[key] = orders[key];
+        }
+      });
+
+      localStorage.setItem(STORAGE_ORDERS, JSON.stringify(cleanedOrders));
+    }
+
+    function setStep(step) {
+      document.querySelectorAll(".step").forEach(s => s.classList.toggle("active", s.dataset.step === step));
+      ["scan", "profile", "orderCheck", "order", "done"].forEach(v => {
+        document.getElementById("view-" + v).classList.toggle("hidden", v !== step);
+      });
+    }
+
+    function goStep(step) {
+      setStep(step);
+    }
+
+    function scanQRCode() {
+      currentDept = document.getElementById("qrDept").value;
+      currentGroup = document.getElementById("qrGroup").value;
+      const saved = localStorage.getItem(STORAGE_USER);
+
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        currentUser.dept = currentDept;
+        currentUser.group = currentGroup;
+        showSavedProfile();
+      } else {
+        showInputProfile();
+      }
+      setStep("profile");
+    }
+
+    function showSavedProfile() {
+      document.getElementById("profileDesc").textContent = "系統已讀取此裝置上次使用者資料，請確認是否正確。";
+      document.getElementById("profileForm").classList.add("hidden");
+      document.getElementById("profileDisplay").classList.remove("hidden");
+      document.getElementById("profileDisplay").innerHTML = profileHTML(currentUser);
+      document.getElementById("profileNotice").innerHTML = "";
+      document.getElementById("profileActions").innerHTML = `
+        <button class="btn-primary" onclick="confirmProfile()">開始點餐</button>
+        <button class="btn-secondary" onclick="resetProfileInput()">資料錯誤，重新輸入</button>
+      `;
+    }
+
+    function showInputProfile() {
+      document.getElementById("profileDesc").textContent = "此裝置尚未建立使用者資料，請輸入工號與姓名，系統將比對資料是否正確。";
+      document.getElementById("profileDisplay").classList.add("hidden");
+      document.getElementById("profileForm").classList.remove("hidden");
+      document.getElementById("dept").value = currentDept;
+      document.getElementById("group").value = currentGroup;
+      document.getElementById("profileNotice").innerHTML = "";
+      document.getElementById("profileActions").innerHTML = `
+        <button class="btn-primary" onclick="lookupEmployee()">查詢</button>
+        <button class="btn-ghost" onclick="goStep('scan')">返回</button>
+      `;
+    }
+
+    function resetProfileInput() {
+      localStorage.removeItem(STORAGE_USER);
+      currentUser = null;
+      document.getElementById("empId").value = "";
+      document.getElementById("empName").value = "";
+      showInputProfile();
+    }
+
+    function lookupEmployee() {
+      const empId = document.getElementById("empId").value.trim();
+      const empName = document.getElementById("empName").value.trim();
+
+      if (!empId || !empName) {
+        notice("profileNotice", "danger", "請輸入工號與姓名。");
+        return;
+      }
+
+      // 正式版會改成向 Google Apps Script 查詢 Google Sheet 的 Users 分頁
+      // 判斷規則：工號存在，且姓名完全相符，才允許進入訂餐
+      const found = mockEmployees[empId];
+
+      if (!found) {
+        currentUser = null;
+        document.getElementById("profileDisplay").classList.add("hidden");
+        notice("profileNotice", "danger", "資料錯誤：查無此工號，請確認後重新輸入。");
+        return;
+      }
+
+      if (found.name !== empName) {
+        currentUser = null;
+        document.getElementById("profileDisplay").classList.add("hidden");
+        notice("profileNotice", "danger", "資料錯誤：工號與姓名不相符，請確認後重新輸入。");
+        return;
+      }
+
+      currentUser = {
+        empId: empId,
+        name: found.name,
+        dept: currentDept,
+        group: currentGroup,
+        role: found.role
+      };
+
+      localStorage.setItem(STORAGE_USER, JSON.stringify(currentUser));
+      document.getElementById("profileDisplay").classList.remove("hidden");
+      document.getElementById("profileDisplay").innerHTML = profileHTML(currentUser);
+      notice("profileNotice", "success", "資料確認成功，已自動帶入身分：" + found.role + "。");
+      document.getElementById("profileActions").innerHTML = `
+        <button class="btn-primary" onclick="confirmProfile()">確認並開始點餐</button>
+        <button class="btn-secondary" onclick="resetProfileInput()">資料錯誤，重新輸入</button>
+      `;
+    }
+
+    function confirmProfile() {
+      checkTodayOrder();
+      setStep("orderCheck");
+    }
+
+    function checkTodayOrder() {
+      const orders = getOrders();
+      const key = `${todayKey()}_${currentUser.empId}`;
+      const order = orders[key];
+
+      document.getElementById("orderCheckBox").innerHTML = profileHTML(currentUser) + (order
+        ? `<div class="notice warning">今日已有訂單：葷 ${order.meatQty}、素 ${order.vegQty}、外賓 ${order.guestQty}</div>`
+        : `<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);
+
+      document.getElementById("orderCheckActions").innerHTML = order
+        ? `<button class="btn-primary" onclick="startOrder(true)">修改今日訂單</button><button class="btn-ghost" onclick="goStep('profile')">返回</button>`
+        : `<button class="btn-primary" onclick="startOrder(false)">建立新訂單</button><button class="btn-ghost" onclick="goStep('profile')">返回</button>`;
+    }
+
+    function startOrder(edit) {
+      editingOrder = edit;
+      document.getElementById("orderTitle").textContent = edit ? "修改今日訂單" : "建立新訂單";
+
+      const limit = getLimit();
+      const guest = document.getElementById("guestQty");
+      guest.disabled = currentUser.role === "一般員工";
+      if (guest.disabled) guest.value = 0;
+
+      document.getElementById("ruleNotice").innerHTML = `
+        <div class="notice warning">
+          目前身分：${currentUser.role}｜警戒值：${limit}<br>
+          葷食 + 素食至少 1 份，且不可超過警戒值；一般員工不可填寫外賓。
+        </div>`;
+
+      const orders = getOrders();
+      const key = `${todayKey()}_${currentUser.empId}`;
+      const old = orders[key];
+
+      document.getElementById("meatQty").value = old?.meatQty ?? 0;
+      document.getElementById("vegQty").value = old?.vegQty ?? 0;
+      document.getElementById("guestQty").value = old?.guestQty ?? 0;
+
+      validateOrder();
+      setStep("order");
+    }
+
+    function validateOrder() {
+      const meat = num("meatQty");
+      const veg = num("vegQty");
+      const guest = num("guestQty");
+      const limit = getLimit();
+
+      if (meat + veg < 1) {
+        notice("orderNotice", "danger", "葷食 + 素食至少需要填寫 1 份。");
+        return false;
+      }
+
+      if (meat + veg > limit) {
+        notice("orderNotice", "danger", `葷食 + 素食不可超過警戒值 ${limit}。目前合計 ${meat + veg}。`);
+        return false;
+      }
+
+      if (currentUser.role === "一般員工" && guest > 0) {
+        notice("orderNotice", "danger", "一般員工不可填寫外賓數量。");
+        return false;
+      }
+
+      if (guest > 10) {
+        notice("orderNotice", "warning", "外賓數量大於 10，送出時系統會再次確認。");
+        return true;
+      }
+
+      notice("orderNotice", "success", "目前訂單符合規則。");
+      return true;
+    }
+
+    function submitOrder() {
+      if (!validateOrder()) return;
+
+      const meatQty = num("meatQty");
+      const vegQty = num("vegQty");
+      const guestQty = num("guestQty");
+
+      if (guestQty > 10 && !confirm("外賓數量大於 10，請再次確認是否送出？")) return;
+
+      const order = {
+        date: todayKey(),
+        empId: currentUser.empId,
+        name: currentUser.name,
+        dept: currentUser.dept,
+        group: currentUser.group,
+        role: currentUser.role,
+        meatQty,
+        vegQty,
+        guestQty,
+        submittedAt: new Date().toLocaleString("zh-TW")
+      };
+
+      const orders = getOrders();
+      orders[`${todayKey()}_${currentUser.empId}`] = order;
+      localStorage.setItem(STORAGE_ORDERS, JSON.stringify(orders));
+
+      // Google Apps Script 預留：
+      // fetch("YOUR_APPS_SCRIPT_WEB_APP_URL", {
+      //   method: "POST",
+      //   body: JSON.stringify(order)
+      // });
+
+      document.getElementById("doneBox").innerHTML = orderHTML(order);
+      setStep("done");
+    }
+
+    function backHome() {
+      currentUser = null;
+      currentDept = "";
+      currentGroup = "";
+      setStep("scan");
+    }
+
+    function getLimit() {
+      return currentUser.role === "主管" || currentUser.role === "助理" ? 5 : 1;
+    }
+
+    function getOrders() {
+      return JSON.parse(localStorage.getItem(STORAGE_ORDERS) || "{}");
+    }
+
+    function num(id) {
+      return Math.max(0, Number(document.getElementById(id).value || 0));
+    }
+
+    function notice(id, type, message) {
+      document.getElementById(id).innerHTML = `<div class="notice ${type}">${message}</div>`;
+    }
+
+    function profileHTML(u) {
+      return `
+        <div class="info-row"><span>工號</span><span>${u.empId}</span></div>
+        <div class="info-row"><span>姓名</span><span>${u.name}</span></div>
+        <div class="info-row"><span>部門</span><span>${u.dept}</span></div>
+        <div class="info-row"><span>組別</span><span>${u.group}</span></div>
+        <div class="info-row"><span>身分</span><span>${u.role}</span></div>
+      `;
+    }
+
+    function orderHTML(o) {
+      return profileHTML(o) + `
+        <div class="info-row"><span>日期</span><span>${o.date}</span></div>
+        <div class="info-row"><span>葷食</span><span>${o.meatQty}</span></div>
+        <div class="info-row"><span>素食</span><span>${o.vegQty}</span></div>
+        <div class="info-row"><span>外賓</span><span>${o.guestQty}</span></div>
+        <div class="info-row"><span>送出時間</span><span>${o.submittedAt}</span></div>
+      `;
+    }
+
+    function clearAll() {
+      if (!confirm("確定要清除本機測試資料？")) return;
+      localStorage.removeItem(STORAGE_USER);
+      localStorage.removeItem(STORAGE_ORDERS);
+      location.reload();
+    }
+  </script>
+</body>
+</html>
