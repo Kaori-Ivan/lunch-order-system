@@ -1,143 +1,118 @@
-const STORAGE_USER = "lunch_user_profile_v7";
-const STORAGE_ORDERS = "lunch_orders_v7";
-// 系統模式：
-// TEST  = 永遠開放，方便測試
-// AUTO  = 依照每天 10:00 自動截止
-// CLOSE = 強制關閉，不開放訂餐
-const SYSTEM_MODE = "TEST";
-const DEADLINE_HOUR = 10;
-const DEADLINE_MINUTE = 0;
+const STORAGE_USER = "lunch_user_profile_v8";
+const STORAGE_ORDERS = "lunch_orders_v8";
 
-const employees = {
+const EMPLOYEES = {
   "C5454": { name: "KOOK", role: "一般員工" },
   "A001": { name: "王小明", role: "一般員工" },
   "B001": { name: "林主管", role: "主管" },
   "C001": { name: "陳助理", role: "助理" }
 };
 
-let state = {
+const state = {
+  step: "closed",
   dept: "",
   group: "",
   user: null,
   pendingOrder: null,
-  isSubmitting: false,
-  currentStep: "closed
+  isSubmitting: false
 };
 
 const $ = (id) => document.getElementById(id);
 
 function todayKey() {
   const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-function isClosed() {
-  if (SYSTEM_MODE === "TEST") return false;
-  if (SYSTEM_MODE === "CLOSE") return true;
+function isSystemClosed() {
+  if (APP_CONFIG.MODE === "TEST") return false;
+  if (APP_CONFIG.MODE === "CLOSE") return true;
 
   const now = new Date();
   const deadline = new Date();
-  deadline.setHours(DEADLINE_HOUR, DEADLINE_MINUTE, 0, 0);
+  deadline.setHours(APP_CONFIG.DEADLINE_HOUR, APP_CONFIG.DEADLINE_MINUTE, 0, 0);
   return now >= deadline;
 }
 
+function getStatusText() {
+  if (APP_CONFIG.MODE === "TEST") return "測試模式：系統開放中";
+  if (APP_CONFIG.MODE === "CLOSE") return "目前未開放訂餐";
+  return isSystemClosed() ? "今日訂餐已截止" : "截止時間：10:00";
+}
+
 function getClosedReason() {
-  if (SYSTEM_MODE === "CLOSE") return "系統已由管理端關閉";
-  if (SYSTEM_MODE === "AUTO" && isClosed()) return "已超過每日 10:00 截止時間";
+  if (APP_CONFIG.MODE === "CLOSE") return "系統已由管理端關閉";
+  if (APP_CONFIG.MODE === "AUTO" && isSystemClosed()) return "已超過每日 10:00 截止時間";
   return "未開放訂餐";
 }
 
 function updateHeader() {
   $("todayText").textContent = new Date().toLocaleDateString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "long"
+    year:"numeric", month:"2-digit", day:"2-digit", weekday:"long"
   });
 
-  const text = $("deadlineText");
-  if (SYSTEM_MODE === "TEST") {
-    text.textContent = "測試模式：系統開放中";
-    text.classList.remove("closed");
-  } else if (isClosed()) {
-    text.textContent = "今日訂餐已截止";
-    text.classList.add("closed");
+  const status = $("systemStatusText");
+  status.textContent = getStatusText();
+  status.classList.toggle("closed", isSystemClosed());
+}
+
+function routeInitial() {
+  updateHeader();
+  cleanupLocalOrders();
+
+  if (isSystemClosed()) {
+    $("closedReason").textContent = getClosedReason();
+    showPage("closed");
   } else {
-    text.textContent = "截止時間：10:00";
-    text.classList.remove("closed");
+    showPage("scan");
   }
 }
 
-function cleanupLocalOrders() {
-  const orders = getOrders();
-  const today = todayKey();
-  const cleaned = {};
-  Object.keys(orders).forEach((key) => {
-    if (key.startsWith(today + "_")) cleaned[key] = orders[key];
-  });
-  localStorage.setItem(STORAGE_ORDERS, JSON.stringify(cleaned));
-}
-
-function enforceClosedMode() {
+function guardOpen() {
   updateHeader();
-
-  if (!isClosed()) return false;
+  if (!isSystemClosed()) return true;
 
   state.pendingOrder = null;
-
-  const reasonBox = $("closedReason");
-  if (reasonBox) reasonBox.textContent = getClosedReason();
-
-  if (state.currentStep !== "closed" && state.currentStep !== "done") {
-    setStep("closed");
-  }
-
-  return true;
+  $("closedReason").textContent = getClosedReason();
+  showPage("closed");
+  return false;
 }
 
-function setStep(step) {
-  state.currentStep = step;
+function showPage(page) {
+  state.step = page;
 
-  document.querySelectorAll(".step").forEach((item) => {
-    item.classList.toggle("active", item.dataset.step === step);
+  ["closed","scan","verify","check","order","review","done"].forEach((name) => {
+    $("page-" + name).classList.toggle("hidden", name !== page);
   });
 
-  ["closed", "scan", "verify", "check", "order", "review", "done"].forEach((name) => {
-    $("view-" + name).classList.toggle("hidden", name !== step);
+  document.querySelectorAll(".step").forEach((step) => {
+    step.classList.toggle("active", step.dataset.step === page);
+    if (page === "closed") step.classList.remove("active");
   });
-
-  if (step === "closed") {
-    document.querySelectorAll(".step").forEach((item) => item.classList.remove("active"));
-  }
 
   hideAlert();
 }
 
-function showAlert(type, message) {
-  const box = $("alertBox");
-  box.className = `alert ${type || ""}`;
-  box.textContent = message;
+function showAlert(message) {
+  $("alertBox").textContent = message;
+  $("alertBox").classList.remove("hidden");
 }
 
 function hideAlert() {
-  const box = $("alertBox");
-  box.className = "alert hidden";
-  box.textContent = "";
+  $("alertBox").textContent = "";
+  $("alertBox").classList.add("hidden");
 }
 
-function notice(targetId, type, message) {
-  $(targetId).innerHTML = `<div class="notice ${type}">${message}</div>`;
+function notice(id, type, msg) {
+  $(id).innerHTML = `<div class="notice ${type}">${msg}</div>`;
 }
 
-function clearNotice(targetId) {
-  $(targetId).innerHTML = "";
+function clearNotice(id) {
+  $(id).innerHTML = "";
 }
 
 function row(label, value) {
-  return `<div class="row"><span>${label}</span><span>${value}</span></div>`;
+  return `<div class="row"><span>${label}</span><strong>${value}</strong></div>`;
 }
 
 function profileHTML(user) {
@@ -150,39 +125,34 @@ function profileHTML(user) {
   ].join("");
 }
 
-function orderHTML(order) {
-  return [
-    profileHTML(order),
-    row("日期", order.date),
-    row("葷食", order.meatQty),
-    row("素食", order.vegQty),
-    row("外賓", order.guestQty),
-    row("更新時間", order.updatedAt || "-")
-  ].join("");
-}
-
 function getOrders() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_ORDERS) || "{}");
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_ORDERS) || "{}"); }
+  catch { return {}; }
 }
 
 function saveOrders(orders) {
   localStorage.setItem(STORAGE_ORDERS, JSON.stringify(orders));
 }
 
-function saveUser(user) {
-  localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+function cleanupLocalOrders() {
+  const orders = getOrders();
+  const today = todayKey();
+  const cleaned = {};
+
+  Object.keys(orders).forEach((key) => {
+    if (key.startsWith(today + "_")) cleaned[key] = orders[key];
+  });
+
+  localStorage.setItem(STORAGE_ORDERS, JSON.stringify(cleaned));
 }
 
 function getSavedUser() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_USER) || "null");
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_USER) || "null"); }
+  catch { return null; }
+}
+
+function saveUser(user) {
+  localStorage.setItem(STORAGE_USER, JSON.stringify(user));
 }
 
 function maskName(name) {
@@ -191,66 +161,64 @@ function maskName(name) {
   return name[0] + "○" + name[name.length - 1];
 }
 
-function encodedName(name) {
-  // 測試用簡易轉碼；正式版建議由 Apps Script 做 AES 加密或權限查詢
+function encodeName(name) {
   return btoa(unescape(encodeURIComponent(name)));
 }
 
 function scanQRCode() {
-  if (enforceClosedMode()) return;
+  if (!guardOpen()) return;
 
-  state.dept = $("qrDept").value;
-  state.group = $("qrGroup").value;
+  state.dept = $("deptSelect").value;
+  state.group = $("groupSelect").value;
+
+  $("deptReadonly").value = state.dept;
+  $("groupReadonly").value = state.group;
+  clearNotice("verifyNotice");
 
   const saved = getSavedUser();
-  $("dept").value = state.dept;
-  $("group").value = state.group;
-  clearNotice("verifyNotice");
 
   if (saved) {
     state.user = { ...saved, dept: state.dept, group: state.group };
     $("verifyForm").classList.add("hidden");
-    $("savedProfileBox").classList.remove("hidden");
-    $("savedProfileBox").innerHTML = profileHTML(state.user);
+    $("savedUserBox").classList.remove("hidden");
+    $("savedUserBox").innerHTML = profileHTML(state.user);
     $("verifyDesc").textContent = "系統已讀取此裝置上次使用者資料，請確認是否正確。";
     $("verifyActions").innerHTML = `
-      <button class="btn primary" id="btnStartFromSaved">開始點餐</button>
-      <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
+      <button class="btn primary" id="btnStartSaved">開始點餐</button>
+      <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
     `;
-    $("btnStartFromSaved").addEventListener("click", confirmProfile);
-    $("btnWrongProfile").addEventListener("click", resetProfileInput);
+    $("btnStartSaved").addEventListener("click", confirmProfile);
+    $("btnWrongSaved").addEventListener("click", resetVerify);
   } else {
-    showVerifyInput();
+    showVerifyForm();
   }
 
-  setStep("verify");
+  showPage("verify");
 }
 
-function showVerifyInput() {
+function showVerifyForm() {
   $("verifyForm").classList.remove("hidden");
-  $("savedProfileBox").classList.add("hidden");
-  $("dept").value = state.dept;
-  $("group").value = state.group;
+  $("savedUserBox").classList.add("hidden");
   $("verifyDesc").textContent = "請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。";
   $("verifyActions").innerHTML = `
     <button class="btn primary" id="btnVerify">查詢</button>
-    <button class="btn ghost" id="btnBackScan">返回</button>
+    <button class="btn ghost" id="btnBackToScan">返回</button>
   `;
   $("btnVerify").addEventListener("click", verifyEmployee);
-  $("btnBackScan").addEventListener("click", () => setStep("scan"));
+  $("btnBackToScan").addEventListener("click", () => showPage("scan"));
 }
 
-function resetProfileInput() {
+function resetVerify() {
   localStorage.removeItem(STORAGE_USER);
   state.user = null;
   $("empId").value = "";
   $("empName").value = "";
-  showVerifyInput();
   clearNotice("verifyNotice");
+  showVerifyForm();
 }
 
 function verifyEmployee() {
-  if (enforceClosedMode()) return;
+  if (!guardOpen()) return;
 
   const empId = $("empId").value.trim();
   const empName = $("empName").value.trim();
@@ -260,16 +228,14 @@ function verifyEmployee() {
     return;
   }
 
-  const found = employees[empId];
+  const found = EMPLOYEES[empId];
 
   if (!found) {
-    state.user = null;
     notice("verifyNotice", "danger", "資料錯誤：查無此工號，請確認後重新輸入。");
     return;
   }
 
   if (found.name !== empName) {
-    state.user = null;
     notice("verifyNotice", "danger", "資料錯誤：工號與姓名不相符，請確認後重新輸入。");
     return;
   }
@@ -277,58 +243,48 @@ function verifyEmployee() {
   state.user = {
     empId,
     name: found.name,
-    nameEncoded: encodedName(found.name),
     nameMasked: maskName(found.name),
+    nameEncoded: encodeName(found.name),
     dept: state.dept,
     group: state.group,
     role: found.role
   };
 
   saveUser(state.user);
-  $("savedProfileBox").classList.remove("hidden");
-  $("savedProfileBox").innerHTML = profileHTML(state.user);
+
+  $("savedUserBox").classList.remove("hidden");
+  $("savedUserBox").innerHTML = profileHTML(state.user);
   notice("verifyNotice", "success", "資料確認成功，已自動帶入身分：" + found.role + "。");
 
   $("verifyActions").innerHTML = `
     <button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button>
-    <button class="btn secondary" id="btnWrongProfile2">資料錯誤，重新輸入</button>
+    <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
   `;
   $("btnConfirmProfile").addEventListener("click", confirmProfile);
-  $("btnWrongProfile2").addEventListener("click", resetProfileInput);
+  $("btnWrongProfile").addEventListener("click", resetVerify);
 }
 
 function confirmProfile() {
-  if (enforceClosedMode()) return;
-
-  updateHeader();
-  if (isClosed()) {
-    $("orderCheckBox").innerHTML = profileHTML(state.user) +
-      `<div class="notice danger">今日訂餐已截止，無法新增或修改訂單。</div>`;
-    $("checkActions").innerHTML = `<button class="btn ghost" id="btnCheckBack">返回</button>`;
-    $("btnCheckBack").addEventListener("click", () => setStep("verify"));
-    setStep("check");
-    return;
-  }
-
+  if (!guardOpen()) return;
   checkTodayOrder();
-  setStep("check");
+  showPage("check");
 }
 
 function checkTodayOrder() {
   const orders = getOrders();
   const key = `${todayKey()}_${state.user.empId}`;
-  const existing = orders[key];
+  const old = orders[key];
 
-  if (existing) {
-    $("orderCheckBox").innerHTML = profileHTML(state.user) +
-      `<div class="notice warning">今日已有訂單：葷 ${existing.meatQty}、素 ${existing.vegQty}、外賓 ${existing.guestQty}。修改後會覆蓋原資料。</div>`;
+  if (old) {
+    $("checkBox").innerHTML = profileHTML(state.user) +
+      `<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`;
     $("checkActions").innerHTML = `
       <button class="btn primary" id="btnEditOrder">修改今日訂單</button>
       <button class="btn ghost" id="btnBackVerify">返回</button>
     `;
     $("btnEditOrder").addEventListener("click", () => startOrder(true));
   } else {
-    $("orderCheckBox").innerHTML = profileHTML(state.user) +
+    $("checkBox").innerHTML = profileHTML(state.user) +
       `<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`;
     $("checkActions").innerHTML = `
       <button class="btn primary" id="btnNewOrder">建立新訂單</button>
@@ -337,7 +293,7 @@ function checkTodayOrder() {
     $("btnNewOrder").addEventListener("click", () => startOrder(false));
   }
 
-  $("btnBackVerify").addEventListener("click", () => setStep("verify"));
+  $("btnBackVerify").addEventListener("click", () => showPage("verify"));
 }
 
 function getLimit() {
@@ -345,43 +301,33 @@ function getLimit() {
 }
 
 function startOrder(isEdit) {
-  if (enforceClosedMode()) return;
+  if (!guardOpen()) return;
 
-  if (isClosed()) {
-    showAlert("danger", "今日訂餐已截止，無法新增或修改訂單。");
-    return;
-  }
-
+  const old = getOrders()[`${todayKey()}_${state.user.empId}`];
   const limit = getLimit();
-  const guest = $("guestQty");
-  guest.disabled = state.user.role === "一般員工";
 
   $("orderTitle").textContent = isEdit ? "修改今日訂單" : "建立新訂單";
-  $("ruleBox").innerHTML = `
-    目前身分：${state.user.role}｜警戒值：${limit}<br>
-    葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。
-  `;
+  $("ruleBox").innerHTML = `目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`;
 
-  const existing = getOrders()[`${todayKey()}_${state.user.empId}`];
+  $("meatQty").value = old ? old.meatQty : 0;
+  $("vegQty").value = old ? old.vegQty : 0;
+  $("guestQty").value = old ? old.guestQty : 0;
+  $("guestQty").disabled = state.user.role === "一般員工";
 
-  $("meatQty").value = existing ? existing.meatQty : 0;
-  $("vegQty").value = existing ? existing.vegQty : 0;
-  $("guestQty").value = existing ? existing.guestQty : 0;
-
-  if (guest.disabled) $("guestQty").value = 0;
+  if ($("guestQty").disabled) $("guestQty").value = 0;
 
   validateOrder();
-  setStep("order");
+  showPage("order");
 }
 
-function n(id) {
+function num(id) {
   return Math.max(0, Number($(id).value || 0));
 }
 
 function validateOrder() {
-  const meat = n("meatQty");
-  const veg = n("vegQty");
-  const guest = n("guestQty");
+  const meat = num("meatQty");
+  const veg = num("vegQty");
+  const guest = num("guestQty");
   const limit = getLimit();
 
   if (meat + veg < 1) {
@@ -409,13 +355,7 @@ function validateOrder() {
 }
 
 function buildReview() {
-  if (enforceClosedMode()) return;
-
-  if (isClosed()) {
-    showAlert("danger", "今日訂餐已截止，無法新增或修改訂單。");
-    return;
-  }
-
+  if (!guardOpen()) return;
   if (!validateOrder()) return;
 
   state.pendingOrder = {
@@ -426,13 +366,13 @@ function buildReview() {
     dept: state.user.dept,
     group: state.user.group,
     role: state.user.role,
-    meatQty: n("meatQty"),
-    vegQty: n("vegQty"),
-    guestQty: n("guestQty"),
+    meatQty: num("meatQty"),
+    vegQty: num("vegQty"),
+    guestQty: num("guestQty"),
     updatedAt: ""
   };
 
-  $("reviewUserBox").innerHTML = [
+  $("reviewUser").innerHTML = [
     row("工號", state.user.empId),
     row("姓名", state.user.name),
     row("部門", state.user.dept),
@@ -440,28 +380,25 @@ function buildReview() {
     row("身分", state.user.role)
   ].join("");
 
-  $("reviewOrderBox").innerHTML = [
+  $("reviewOrder").innerHTML = [
     row("日期", state.pendingOrder.date),
     row("葷食", state.pendingOrder.meatQty),
     row("素食", state.pendingOrder.vegQty),
     row("外賓", state.pendingOrder.guestQty)
   ].join("");
 
-  setStep("review");
+  showPage("review");
 }
 
-function confirmSubmit() {
-  if (enforceClosedMode()) return;
-
+function submitOrder() {
+  if (!guardOpen()) return;
   if (!state.pendingOrder || state.isSubmitting) return;
 
-  if (state.pendingOrder.guestQty > 10 && !confirm("外賓數量大於 10，請再次確認是否送出？")) {
-    return;
-  }
+  if (state.pendingOrder.guestQty > 10 && !confirm("外賓數量大於 10，請再次確認是否送出？")) return;
 
   state.isSubmitting = true;
-  $("btnConfirmSubmit").disabled = true;
-  $("btnConfirmSubmit").textContent = "送出中...";
+  $("btnSubmit").disabled = true;
+  $("btnSubmit").textContent = "送出中...";
 
   state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
 
@@ -490,19 +427,25 @@ function confirmSubmit() {
     ].join("");
 
     state.isSubmitting = false;
-    $("btnConfirmSubmit").disabled = false;
-    $("btnConfirmSubmit").textContent = "確認送出";
-    setStep("done");
+    $("btnSubmit").disabled = false;
+    $("btnSubmit").textContent = "確認送出";
+    showPage("done");
   }, 400);
 }
 
-function backHome() {
-  state.pendingOrder = null;
+function goHome() {
   state.user = null;
-  enforceClosedMode() || setStep("scan");
+  state.pendingOrder = null;
+
+  if (isSystemClosed()) {
+    $("closedReason").textContent = getClosedReason();
+    showPage("closed");
+  } else {
+    showPage("scan");
+  }
 }
 
-function resetAll() {
+function clearLocalData() {
   if (!confirm("確定要清除本機測試資料？")) return;
   localStorage.removeItem(STORAGE_USER);
   localStorage.removeItem(STORAGE_ORDERS);
@@ -511,12 +454,12 @@ function resetAll() {
 
 function bindEvents() {
   $("btnScan").addEventListener("click", scanQRCode);
-  $("btnResetAll").addEventListener("click", resetAll);
-  $("btnBackCheck").addEventListener("click", () => enforceClosedMode() || setStep("check"));
+  $("btnClear").addEventListener("click", clearLocalData);
+  $("btnBackToCheck").addEventListener("click", () => guardOpen() && showPage("check"));
   $("btnReview").addEventListener("click", buildReview);
-  $("btnBackEdit").addEventListener("click", () => enforceClosedMode() || setStep("order"));
-  $("btnConfirmSubmit").addEventListener("click", confirmSubmit);
-  $("btnHome").addEventListener("click", backHome);
+  $("btnEdit").addEventListener("click", () => guardOpen() && showPage("order"));
+  $("btnSubmit").addEventListener("click", submitOrder);
+  $("btnHome").addEventListener("click", goHome);
 
   ["meatQty", "vegQty", "guestQty"].forEach((id) => {
     $(id).addEventListener("input", validateOrder);
@@ -524,29 +467,19 @@ function bindEvents() {
 }
 
 window.addEventListener("error", (e) => {
-  showAlert("danger", "系統錯誤：" + e.message);
+  showAlert("系統錯誤：" + e.message);
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  updateHeader();
-  cleanupLocalOrders();
   bindEvents();
-
-  if (isClosed()) {
-    const reasonBox = $("closedReason");
-    if (reasonBox) reasonBox.textContent = getClosedReason();
-    setStep("closed");
-  } else {
-    setStep("scan");
-  }
+  routeInitial();
 
   setInterval(() => {
     updateHeader();
 
-    if (isClosed() && state.currentStep !== "closed" && state.currentStep !== "done") {
-      const reasonBox = $("closedReason");
-      if (reasonBox) reasonBox.textContent = getClosedReason();
-      setStep("closed");
+    if (isSystemClosed() && !["closed", "done"].includes(state.step)) {
+      $("closedReason").textContent = getClosedReason();
+      showPage("closed");
     }
   }, 30000);
 });

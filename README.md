@@ -1,18 +1,22 @@
-# 企業午餐訂餐系統 V7 Lock3 測試版
+# 企業午餐訂餐系統 V8 測試版
 
 ## 系統模式
 
-請到 `app.js` 最上方設定：
+請開啟 `config.js` 修改：
 
 ```js
-const SYSTEM_MODE = "TEST";
+const APP_CONFIG = {
+  MODE: "TEST",
+  DEADLINE_HOUR: 10,
+  DEADLINE_MINUTE: 0
+};
 ```
 
-可用模式：
+### MODE 說明
 
 - `TEST`：永遠開放，方便測試，不受星期幾與時間影響。
-- `AUTO`：依照每天 10:00 自動截止。
-- `CLOSE`：強制關閉，進入後直接顯示「目前未開放訂餐」。
+- `AUTO`：每日 10:00 後自動鎖定。
+- `CLOSE`：強制關閉，一進入就顯示未開放訂餐。
 
 ## 測試帳號
 
@@ -20,9 +24,12 @@ const SYSTEM_MODE = "TEST";
 - B001 / 林主管：主管
 - C001 / 陳助理：助理
 
-## 本版修正
+## 部署 GitHub Pages
 
-- 一進入網頁就先判斷系統是否開放。
-- 未開放時直接鎖住整個頁面，不會先進入工號 / 姓名查詢。
-- 使用 TEST 模式時，不論週六、週日或超過 10:00 都可測試。
-- 使用 AUTO 模式時，每日 10:00 後自動鎖定。
+將下列檔案放在 Repository 根目錄：
+
+- index.html
+- style.css
+- config.js
+- app.js
+- README.md
