@@ -103,6 +103,15 @@ function showPage(page) {
   hideAlert();
 }
 
+function setHTML(id, html) {
+  const el = $(id);
+  if (el) {
+    el.innerHTML = html;
+  } else {
+    console.warn("Missing element for innerHTML:", id);
+  }
+}
+
 function showAlert(message) {
   $("alertBox").textContent = message;
   $("alertBox").classList.remove("hidden");
@@ -382,27 +391,27 @@ function buildReview() {
     updatedAt: ""
   };
 
-  $("reviewSummary").innerHTML = [
+  setHTML("reviewSummary", [
     `<div class="review-stat"><span>葷食</span><strong>${state.pendingOrder.meatQty}</strong><small>份</small></div>`,
     `<div class="review-stat"><span>素食</span><strong>${state.pendingOrder.vegQty}</strong><small>份</small></div>`,
     `<div class="review-stat"><span>外賓</span><strong>${state.pendingOrder.guestQty}</strong><small>人</small></div>`,
     `<div class="review-stat"><span>合計</span><strong>${state.pendingOrder.meatQty + state.pendingOrder.vegQty + state.pendingOrder.guestQty}</strong><small>總數</small></div>`
-  ].join("");
+  ].join(""));
 
-  $("reviewUser").innerHTML = [
+  setHTML("reviewUser", [
     row("工號", state.user.empId),
     row("姓名", state.user.name),
     row("部門", state.user.dept),
     row("組別", state.user.group),
     row("身分", state.user.role)
-  ].join("");
+  ].join(""));
 
-  $("reviewOrder").innerHTML = [
+  setHTML("reviewOrder", [
     row("日期", state.pendingOrder.date),
     row("葷食", state.pendingOrder.meatQty),
     row("素食", state.pendingOrder.vegQty),
     row("外賓", state.pendingOrder.guestQty)
-  ].join("");
+  ].join(""));
 
   showPage("review");
 }
