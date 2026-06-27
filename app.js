@@ -1,9 +1,10 @@
 const STORAGE_USER = "lunch_user_profile_v7";
 const STORAGE_ORDERS = "lunch_orders_v7";
-// 正式規則：每日 10:00 截止，超過後整個員工端鎖定。
-// 測試時若要暫時解除鎖定，可將 TEST_FORCE_OPEN 改成 true。
-const TEST_FORCE_OPEN = true;
-const SYSTEM_STATUS = "AUTO"; // AUTO / OPEN / CLOSE
+// 系統模式：
+// TEST  = 永遠開放，方便測試
+// AUTO  = 依照每天 10:00 自動截止
+// CLOSE = 強制關閉，不開放訂餐
+const SYSTEM_MODE = "TEST";
 const DEADLINE_HOUR = 10;
 const DEADLINE_MINUTE = 0;
 
@@ -34,14 +35,19 @@ function todayKey() {
 }
 
 function isClosed() {
-  if (TEST_FORCE_OPEN) return false;
-  if (SYSTEM_STATUS === "CLOSE") return true;
-  if (SYSTEM_STATUS === "OPEN") return false;
+  if (SYSTEM_MODE === "TEST") return false;
+  if (SYSTEM_MODE === "CLOSE") return true;
 
   const now = new Date();
   const deadline = new Date();
   deadline.setHours(DEADLINE_HOUR, DEADLINE_MINUTE, 0, 0);
   return now >= deadline;
+}
+
+function getClosedReason() {
+  if (SYSTEM_MODE === "CLOSE") return "系統已由管理端關閉";
+  if (SYSTEM_MODE === "AUTO" && isClosed()) return "已超過每日 10:00 截止時間";
+  return "未開放訂餐";
 }
 
 function updateHeader() {
@@ -53,7 +59,10 @@ function updateHeader() {
   });
 
   const text = $("deadlineText");
-  if (isClosed()) {
+  if (SYSTEM_MODE === "TEST") {
+    text.textContent = "測試模式：系統開放中";
+    text.classList.remove("closed");
+  } else if (isClosed()) {
     text.textContent = "今日訂餐已截止";
     text.classList.add("closed");
   } else {
@@ -78,6 +87,9 @@ function enforceClosedMode() {
   if (!isClosed()) return false;
 
   state.pendingOrder = null;
+
+  const reasonBox = $("closedReason");
+  if (reasonBox) reasonBox.textContent = getClosedReason();
 
   if (state.currentStep !== "closed" && state.currentStep !== "done") {
     setStep("closed");
@@ -521,6 +533,8 @@ document.addEventListener("DOMContentLoaded", () => {
   bindEvents();
 
   if (isClosed()) {
+    const reasonBox = $("closedReason");
+    if (reasonBox) reasonBox.textContent = getClosedReason();
     setStep("closed");
   } else {
     setStep("scan");
@@ -530,6 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHeader();
 
     if (isClosed() && state.currentStep !== "closed" && state.currentStep !== "done") {
+      const reasonBox = $("closedReason");
+      if (reasonBox) reasonBox.textContent = getClosedReason();
       setStep("closed");
     }
   }, 30000);
