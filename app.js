@@ -187,8 +187,8 @@ function scanQRCode() {
       <button class="btn primary" id="btnStartSaved">開始點餐</button>
       <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
     `;
-    $("btnStartSaved").addEventListener("click", confirmProfile);
-    $("btnWrongSaved").addEventListener("click", resetVerify);
+    on("btnStartSaved", "click", confirmProfile);
+    on("btnWrongSaved", "click", resetVerify);
   } else {
     showVerifyForm();
   }
@@ -204,8 +204,8 @@ function showVerifyForm() {
     <button class="btn primary" id="btnVerify">查詢</button>
     <button class="btn ghost" id="btnBackToScan">返回</button>
   `;
-  $("btnVerify").addEventListener("click", verifyEmployee);
-  $("btnBackToScan").addEventListener("click", () => showPage("scan"));
+  on("btnVerify", "click", verifyEmployee);
+  on("btnBackToScan", "click", () => showPage("scan"));
 }
 
 function resetVerify() {
@@ -260,8 +260,8 @@ function verifyEmployee() {
     <button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button>
     <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
   `;
-  $("btnConfirmProfile").addEventListener("click", confirmProfile);
-  $("btnWrongProfile").addEventListener("click", resetVerify);
+  on("btnConfirmProfile", "click", confirmProfile);
+  on("btnWrongProfile", "click", resetVerify);
 }
 
 function confirmProfile() {
@@ -282,7 +282,7 @@ function checkTodayOrder() {
       <button class="btn primary" id="btnEditOrder">修改今日訂單</button>
       <button class="btn ghost" id="btnBackVerify">返回</button>
     `;
-    $("btnEditOrder").addEventListener("click", () => startOrder(true));
+    on("btnEditOrder", "click", () => startOrder(true));
   } else {
     $("checkBox").innerHTML = profileHTML(state.user) +
       `<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`;
@@ -290,10 +290,10 @@ function checkTodayOrder() {
       <button class="btn primary" id="btnNewOrder">建立新訂單</button>
       <button class="btn ghost" id="btnBackVerify">返回</button>
     `;
-    $("btnNewOrder").addEventListener("click", () => startOrder(false));
+    on("btnNewOrder", "click", () => startOrder(false));
   }
 
-  $("btnBackVerify").addEventListener("click", () => showPage("verify"));
+  on("btnBackVerify", "click", () => showPage("verify"));
 }
 
 function getLimit() {
@@ -452,17 +452,23 @@ function clearLocalData() {
   location.reload();
 }
 
+
+function on(id, event, handler) {
+  const el = $(id);
+  if (el) el.addEventListener(event, handler);
+}
+
 function bindEvents() {
-  $("btnScan").addEventListener("click", scanQRCode);
-  $("btnClear").addEventListener("click", clearLocalData);
-  $("btnBackToCheck").addEventListener("click", () => guardOpen() && showPage("check"));
-  $("btnReview").addEventListener("click", buildReview);
-  $("btnEdit").addEventListener("click", () => guardOpen() && showPage("order"));
-  $("btnSubmit").addEventListener("click", submitOrder);
-  $("btnHome").addEventListener("click", goHome);
+  on("btnScan", "click", scanQRCode);
+  on("btnClear", "click", clearLocalData);
+  on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
+  on("btnReview", "click", buildReview);
+  on("btnEdit", "click", () => guardOpen() && showPage("order"));
+  on("btnSubmit", "click", submitOrder);
+  on("btnHome", "click", goHome);
 
   ["meatQty", "vegQty", "guestQty"].forEach((id) => {
-    $(id).addEventListener("input", validateOrder);
+    on(id, "input", validateOrder);
   });
 }
 

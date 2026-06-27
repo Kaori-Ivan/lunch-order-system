@@ -1,4 +1,10 @@
-# 企業午餐訂餐系統 V8 測試版
+# 企業午餐訂餐系統 V8 Fixed 測試版
+
+## 本版修正
+
+- 修正 `Cannot read properties of null (reading 'addEventListener')`。
+- 改成安全綁定事件，不會因畫面未載入某個按鈕而整個系統停止。
+- 保留 TEST / AUTO / CLOSE 三種模式。
 
 ## 系統模式
 
@@ -23,13 +29,3 @@ const APP_CONFIG = {
 - C5454 / KOOK：一般員工
 - B001 / 林主管：主管
 - C001 / 陳助理：助理
-
-## 部署 GitHub Pages
-
-將下列檔案放在 Repository 根目錄：
-
-- index.html
-- style.css
-- config.js
-- app.js
-- README.md
