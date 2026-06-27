@@ -1,3 +1,4 @@
+const V8_FIXED2_BUILD = "2026-06-27-safe-events";
 const STORAGE_USER = "lunch_user_profile_v8";
 const STORAGE_ORDERS = "lunch_orders_v8";
 
@@ -18,6 +19,15 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
+
+function on(id, event, handler) {
+  const el = $(id);
+  if (el) {
+    el.addEventListener(event, handler);
+  } else {
+    console.warn("Missing element:", id);
+  }
+}
 
 function todayKey() {
   const d = new Date();
@@ -452,12 +462,6 @@ function clearLocalData() {
   location.reload();
 }
 
-
-function on(id, event, handler) {
-  const el = $(id);
-  if (el) el.addEventListener(event, handler);
-}
-
 function bindEvents() {
   on("btnScan", "click", scanQRCode);
   on("btnClear", "click", clearLocalData);
@@ -474,6 +478,7 @@ function bindEvents() {
 
 window.addEventListener("error", (e) => {
   showAlert("系統錯誤：" + e.message);
+  console.error(e.error || e.message);
 });
 
 document.addEventListener("DOMContentLoaded", () => {
