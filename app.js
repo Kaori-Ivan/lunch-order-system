@@ -71,7 +71,7 @@ function routeInitial() {
   cleanupLocalOrders();
 
   if (isSystemClosed()) {
-    $("closedReason").textContent = getClosedReason();
+    if ($("closedReason")) $("closedReason").textContent = getClosedReason();
     showPage("closed");
   } else {
     showPage("scan");
@@ -83,7 +83,7 @@ function guardOpen() {
   if (!isSystemClosed()) return true;
 
   state.pendingOrder = null;
-  $("closedReason").textContent = getClosedReason();
+  if ($("closedReason")) $("closedReason").textContent = getClosedReason();
   showPage("closed");
   return false;
 }
@@ -113,17 +113,21 @@ function setHTML(id, html) {
 }
 
 function showAlert(message) {
-  $("alertBox").textContent = message;
-  $("alertBox").classList.remove("hidden");
+  const box = $("alertBox");
+  if (!box) return;
+  box.textContent = message;
+  box.classList.remove("hidden");
 }
 
 function hideAlert() {
-  $("alertBox").textContent = "";
-  $("alertBox").classList.add("hidden");
+  const box = $("alertBox");
+  if (!box) return;
+  box.textContent = "";
+  box.classList.add("hidden");
 }
 
 function notice(id, type, msg) {
-  $(id).innerHTML = `<div class="notice ${type}">${msg}</div>`;
+  setHTML(id, `<div class="notice ${type}">${msg}</div>`);
 }
 
 function clearNotice(id) {
@@ -200,12 +204,12 @@ function scanQRCode() {
     state.user = { ...saved, dept: state.dept, group: state.group };
     $("verifyForm").classList.add("hidden");
     $("savedUserBox").classList.remove("hidden");
-    $("savedUserBox").innerHTML = profileHTML(state.user);
+    setHTML("savedUserBox", profileHTML(state.user));
     $("verifyDesc").textContent = "系統已讀取此裝置上次使用者資料，請確認是否正確。";
-    $("verifyActions").innerHTML = `
+    setHTML("verifyActions", `
       <button class="btn primary" id="btnStartSaved">開始點餐</button>
       <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
-    `;
+    `);
     on("btnStartSaved", "click", confirmProfile);
     on("btnWrongSaved", "click", resetVerify);
   } else {
@@ -219,10 +223,10 @@ function showVerifyForm() {
   $("verifyForm").classList.remove("hidden");
   $("savedUserBox").classList.add("hidden");
   $("verifyDesc").textContent = "請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。";
-  $("verifyActions").innerHTML = `
+  setHTML("verifyActions", `
     <button class="btn primary" id="btnVerify">查詢</button>
     <button class="btn ghost" id="btnBackToScan">返回</button>
-  `;
+  `);
   on("btnVerify", "click", verifyEmployee);
   on("btnBackToScan", "click", () => showPage("scan"));
 }
@@ -272,13 +276,13 @@ function verifyEmployee() {
   saveUser(state.user);
 
   $("savedUserBox").classList.remove("hidden");
-  $("savedUserBox").innerHTML = profileHTML(state.user);
+  setHTML("savedUserBox", profileHTML(state.user));
   notice("verifyNotice", "success", "資料確認成功，已自動帶入身分：" + found.role + "。");
 
-  $("verifyActions").innerHTML = `
+  setHTML("verifyActions", `
     <button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button>
     <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
-  `;
+  `);
   on("btnConfirmProfile", "click", confirmProfile);
   on("btnWrongProfile", "click", resetVerify);
 }
@@ -295,20 +299,20 @@ function checkTodayOrder() {
   const old = orders[key];
 
   if (old) {
-    $("checkBox").innerHTML = profileHTML(state.user) +
-      `<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`;
-    $("checkActions").innerHTML = `
+    setHTML("checkBox", profileHTML(state.user) +
+      `<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);
+    setHTML("checkActions", `
       <button class="btn primary" id="btnEditOrder">修改今日訂單</button>
       <button class="btn ghost" id="btnBackVerify">返回</button>
-    `;
+    `);
     on("btnEditOrder", "click", () => startOrder(true));
   } else {
-    $("checkBox").innerHTML = profileHTML(state.user) +
-      `<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`;
-    $("checkActions").innerHTML = `
+    setHTML("checkBox", profileHTML(state.user) +
+      `<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);
+    setHTML("checkActions", `
       <button class="btn primary" id="btnNewOrder">建立新訂單</button>
       <button class="btn ghost" id="btnBackVerify">返回</button>
-    `;
+    `);
     on("btnNewOrder", "click", () => startOrder(false));
   }
 
@@ -326,7 +330,7 @@ function startOrder(isEdit) {
   const limit = getLimit();
 
   $("orderTitle").textContent = isEdit ? "修改今日訂單" : "建立新訂單";
-  $("ruleBox").innerHTML = `目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`;
+  setHTML("ruleBox", `目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`);
 
   $("meatQty").value = old ? old.meatQty : 0;
   $("vegQty").value = old ? old.vegQty : 0;
@@ -439,7 +443,7 @@ function submitOrder() {
   // });
 
   setTimeout(() => {
-    $("doneBox").innerHTML = [
+    setHTML("doneBox", [
       row("日期", state.pendingOrder.date),
       row("工號", state.pendingOrder.empId),
       row("姓名", state.user.name),
@@ -450,7 +454,7 @@ function submitOrder() {
       row("素食", state.pendingOrder.vegQty),
       row("外賓", state.pendingOrder.guestQty),
       row("送出時間", state.pendingOrder.updatedAt)
-    ].join("");
+    ].join(""));
 
     state.isSubmitting = false;
     $("btnSubmit").disabled = false;
@@ -464,7 +468,7 @@ function goHome() {
   state.pendingOrder = null;
 
   if (isSystemClosed()) {
-    $("closedReason").textContent = getClosedReason();
+    if ($("closedReason")) $("closedReason").textContent = getClosedReason();
     showPage("closed");
   } else {
     showPage("scan");
@@ -505,7 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHeader();
 
     if (isSystemClosed() && !["closed", "done"].includes(state.step)) {
-      $("closedReason").textContent = getClosedReason();
+      if ($("closedReason")) $("closedReason").textContent = getClosedReason();
       showPage("closed");
     }
   }, 30000);
