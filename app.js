@@ -1,5 +1,9 @@
 const STORAGE_USER = "lunch_user_profile_v7";
 const STORAGE_ORDERS = "lunch_orders_v7";
+// 正式規則：每日 10:00 截止，超過後整個員工端鎖定。
+// 測試時若要暫時模擬未截止，可將 TEST_FORCE_OPEN 改成 true。
+const TEST_FORCE_OPEN = false;
+const SYSTEM_STATUS = "AUTO"; // AUTO / OPEN / CLOSE
 const DEADLINE_HOUR = 10;
 const DEADLINE_MINUTE = 0;
 
@@ -15,7 +19,8 @@ let state = {
   group: "",
   user: null,
   pendingOrder: null,
-  isSubmitting: false
+  isSubmitting: false,
+  currentStep: "scan
 };
 
 const $ = (id) => document.getElementById(id);
@@ -29,10 +34,14 @@ function todayKey() {
 }
 
 function isClosed() {
+  if (TEST_FORCE_OPEN) return false;
+  if (SYSTEM_STATUS === "CLOSE") return true;
+  if (SYSTEM_STATUS === "OPEN") return false;
+
   const now = new Date();
   const deadline = new Date();
   deadline.setHours(DEADLINE_HOUR, DEADLINE_MINUTE, 0, 0);
-  return now > deadline;
+  return now >= deadline;
 }
 
 function updateHeader() {
@@ -63,14 +72,33 @@ function cleanupLocalOrders() {
   localStorage.setItem(STORAGE_ORDERS, JSON.stringify(cleaned));
 }
 
+function enforceClosedMode() {
+  updateHeader();
+
+  if (!isClosed()) return false;
+
+  if (state.currentStep !== "closed" && state.currentStep !== "done") {
+    state.pendingOrder = null;
+    setStep("closed");
+  }
+
+  return true;
+}
+
 function setStep(step) {
+  state.currentStep = step;
+
   document.querySelectorAll(".step").forEach((item) => {
     item.classList.toggle("active", item.dataset.step === step);
   });
 
-  ["scan", "verify", "check", "order", "review", "done"].forEach((name) => {
+  ["closed", "scan", "verify", "check", "order", "review", "done"].forEach((name) => {
     $("view-" + name).classList.toggle("hidden", name !== step);
   });
+
+  if (step === "closed") {
+    document.querySelectorAll(".step").forEach((item) => item.classList.remove("active"));
+  }
 
   hideAlert();
 }
@@ -156,6 +184,8 @@ function encodedName(name) {
 }
 
 function scanQRCode() {
+  if (enforceClosedMode()) return;
+
   state.dept = $("qrDept").value;
   state.group = $("qrGroup").value;
 
@@ -207,6 +237,8 @@ function resetProfileInput() {
 }
 
 function verifyEmployee() {
+  if (enforceClosedMode()) return;
+
   const empId = $("empId").value.trim();
   const empName = $("empName").value.trim();
 
@@ -253,6 +285,8 @@ function verifyEmployee() {
 }
 
 function confirmProfile() {
+  if (enforceClosedMode()) return;
+
   updateHeader();
   if (isClosed()) {
     $("orderCheckBox").innerHTML = profileHTML(state.user) +
@@ -298,6 +332,8 @@ function getLimit() {
 }
 
 function startOrder(isEdit) {
+  if (enforceClosedMode()) return;
+
   if (isClosed()) {
     showAlert("danger", "今日訂餐已截止，無法新增或修改訂單。");
     return;
@@ -360,6 +396,8 @@ function validateOrder() {
 }
 
 function buildReview() {
+  if (enforceClosedMode()) return;
+
   if (isClosed()) {
     showAlert("danger", "今日訂餐已截止，無法新增或修改訂單。");
     return;
@@ -400,6 +438,8 @@ function buildReview() {
 }
 
 function confirmSubmit() {
+  if (enforceClosedMode()) return;
+
   if (!state.pendingOrder || state.isSubmitting) return;
 
   if (state.pendingOrder.guestQty > 10 && !confirm("外賓數量大於 10，請再次確認是否送出？")) {
@@ -446,7 +486,7 @@ function confirmSubmit() {
 function backHome() {
   state.pendingOrder = null;
   state.user = null;
-  setStep("scan");
+  enforceClosedMode() || setStep("scan");
 }
 
 function resetAll() {
@@ -459,9 +499,9 @@ function resetAll() {
 function bindEvents() {
   $("btnScan").addEventListener("click", scanQRCode);
   $("btnResetAll").addEventListener("click", resetAll);
-  $("btnBackCheck").addEventListener("click", () => setStep("check"));
+  $("btnBackCheck").addEventListener("click", () => enforceClosedMode() || setStep("check"));
   $("btnReview").addEventListener("click", buildReview);
-  $("btnBackEdit").addEventListener("click", () => setStep("order"));
+  $("btnBackEdit").addEventListener("click", () => enforceClosedMode() || setStep("order"));
   $("btnConfirmSubmit").addEventListener("click", confirmSubmit);
   $("btnHome").addEventListener("click", backHome);
 
@@ -478,5 +518,10 @@ document.addEventListener("DOMContentLoaded", () => {
   updateHeader();
   cleanupLocalOrders();
   bindEvents();
-  setInterval(updateHeader, 30000);
+  enforceClosedMode() || setStep("scan");
+
+  setInterval(() => {
+    updateHeader();
+    enforceClosedMode();
+  }, 30000);
 });

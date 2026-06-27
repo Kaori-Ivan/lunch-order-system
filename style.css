@@ -261,17 +261,30 @@ input[readonly], input:disabled {
 .btn.secondary { background: #eef2ff; color: var(--primary); }
 .btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
 
-.done-icon {
+.done-icon,
+.lock-icon {
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: #dcfce7;
-  color: #15803d;
   display: grid;
   place-items: center;
   font-size: 38px;
   font-weight: 900;
   margin-bottom: 16px;
+}
+
+.done-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.lock-icon {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.lock-screen {
+  max-width: 720px;
 }
 
 .hidden { display: none !important; }

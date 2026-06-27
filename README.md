@@ -1,4 +1,4 @@
-# 企業午餐訂餐系統 V7 測試版
+# 企業午餐訂餐系統 V7 Lock 測試版
 
 ## 測試帳號
 
@@ -6,26 +6,19 @@
 - B001 / 林主管：主管
 - C001 / 陳助理：助理
 
+## 新增功能
+
+- 每日 10:00 後整個員工端系統鎖定。
+- 超過截止時間後無法掃 QRCode、驗證、建立或修改訂單。
+- 已在填寫中的使用者，若時間超過 10:00，會自動切換到截止畫面。
+- 助理端未來仍可查看 Summary 與下載報表。
+- 測試時如需暫時解除鎖定，可在 app.js 將 TEST_FORCE_OPEN 改為 true。
+
 ## GitHub Pages 部署
 
-將下列檔案放到 Repository 根目錄：
+將以下檔案放到 Repository 根目錄：
 
 - index.html
 - style.css
 - app.js
-
-Settings → Pages → Deploy from branch → main / root
-
-## 功能
-
-- RWD 支援手機、平板、電腦
-- 工號 + 姓名驗證
-- 身分自動判斷
-- 一般員工外賓鎖定
-- 葷 + 素至少 1 份
-- 葷 + 素不可超過警戒值
-- 10:00 截止
-- 訂單總覽二次確認
-- 修改訂單覆蓋原資料
-- LocalStorage 每天自動清除非今日訂單暫存
-- Google Apps Script 串接預留
+- README.md
