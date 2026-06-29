@@ -87,13 +87,17 @@ async function verifyEmployee(){
   if(!empId||!empName){ notice("verifyNotice","danger","請輸入工號與姓名。"); return; }
   setButtonLoading("btnVerify","驗證中...",true); notice("verifyNotice","info","資料驗證中，請稍候...");
   try{
-    const result = await apiPost({
-      action: "verifyUser",
-      empId,
-      name: empName,
-      dept: state.dept,
-      group: state.group
-    });
+    const payload = {
+    action: "verifyUser",
+    empId,
+    name: empName,
+    dept: state.dept,
+    group: state.group
+};
+
+console.log("Verify Payload:", payload);
+
+const result = await apiPost(payload);
     if(!result.success){ notice("verifyNotice","danger",result.message||"資料錯誤：工號或姓名不相符。"); return; }
     const user=result.user;
     state.user={userId:user.userId,empId:user.empId,name:user.name,nameMasked:maskName(user.name),nameEncoded:encodeName(user.name),dept:user.dept||state.dept,group:user.group||state.group,role:user.role};
