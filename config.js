@@ -1,15 +1,7 @@
-// ===============================
-// V8 系統設定
-// ===============================
-//
-// MODE 可選：
-// TEST  = 永遠開放，方便測試，不受星期幾與時間影響
-// AUTO  = 每日 10:00 後自動鎖定
-// CLOSE = 強制關閉，進入後直接顯示未開放訂餐
-//
 const APP_CONFIG = {
   MODE: "TEST",
   DEADLINE_HOUR: 10,
   DEADLINE_MINUTE: 0,
-  API_URL: "https://script.google.com/macros/s/AKfycbycUcCxk0nPzR8iS5_J9jwttu1Dvftwg9kJFJtnd_0abTksYgvCMabvl0gvis5ov78/exec"
+  API_TIMEOUT_MS: 10000,
+  API_URL: "請貼上你的 Apps Script Web App URL"
 };
