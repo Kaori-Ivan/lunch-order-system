@@ -3,5 +3,5 @@ const APP_CONFIG = {
   DEADLINE_HOUR: 10,
   DEADLINE_MINUTE: 0,
   API_TIMEOUT_MS: 10000,
-  API_URL: "請貼上你的 Apps Script Web App URL"
+  API_URL: "https://kaori-ivan.github.io/lunch-order-system/"
 };
