@@ -1,216 +1,62 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>企業午餐訂餐系統 V9 Enterprise</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企業午餐訂餐系統｜測試版</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-logo">L</div>
-        <div>
-          <h1>企業午餐訂餐系統</h1>
-          <p>Lunch Order Portal｜Enterprise V9</p>
-        </div>
-      </div>
-      <div class="status-card">
-        <div id="todayText"></div>
-        <div id="systemStatusText"></div>
-      </div>
-    </header>
-
-    <section class="layout">
-      <aside class="steps">
-        <div class="step active" data-step="scan"><span>1</span>部門 QRCode</div>
-        <div class="step" data-step="verify"><span>2</span>使用者驗證</div>
-        <div class="step" data-step="check"><span>3</span>今日訂單</div>
-        <div class="step" data-step="order"><span>4</span>填寫訂單</div>
-        <div class="step" data-step="review"><span>5</span>總覽確認</div>
-        <div class="step" data-step="done"><span>6</span>完成</div>
-      </aside>
-
-      <section class="content">
-        <div id="alertBox" class="alert hidden"></div>
-
-        <section id="page-closed" class="page hidden">
-          <div class="lock-icon">🔒</div>
-          <div class="page-title">
-            <div class="eyebrow">SYSTEM CLOSED</div>
-            <h2>目前未開放訂餐</h2>
-            <p>員工端系統已鎖定，無法進行驗證、訂餐或修改訂單。</p>
-          </div>
-          <div class="info-box">
-            <div class="row"><span>截止時間</span><strong>每日 10:00</strong></div>
-            <div class="row"><span>目前狀態</span><strong id="closedReason">未開放訂餐</strong></div>
-            <div class="row"><span>處理方式</span><strong>如需異動請聯絡助理</strong></div>
-          </div>
-          <div class="notice warning">助理仍可查看統整資料與下載報表；一般員工端不開放訂餐。</div>
-        </section>
-
-        <section id="page-scan" class="page hidden">
-          <div class="page-title">
-            <div class="eyebrow">STEP 01</div>
-            <h2>掃描部門 QRCode</h2>
-            <p>正式環境由 QRCode 自動帶入部門與組別。測試頁可手動選擇模擬。</p>
-          </div>
-
-          <div class="grid">
-            <label class="field">
-              <span>部門</span>
-              <select id="deptSelect">
-                <option value="燃料電池生產部">燃料電池生產部</option>
-                <option value="熱處理部">熱處理部</option>
-                <option value="品保部">品保部</option>
-                <option value="工程部">工程部</option>
-              </select>
-            </label>
-            <label class="field">
-              <span>組別</span>
-              <select id="groupSelect">
-                <option value="A組">A組</option>
-                <option value="B組">B組</option>
-                <option value="C組">C組</option>
-                <option value="主管組">主管組</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="notice info">
-            測試帳號：C5454 / KOOK（一般員工）、B001 / 林主管（主管）、C001 / 陳助理（助理）
-          </div>
-
-          <div class="actions">
-            <button class="btn primary" id="btnScan">模擬掃描 QRCode</button>
-            <button class="btn ghost" id="btnClear">清除本機測試資料</button>
-          </div>
-        </section>
-
-        <section id="page-verify" class="page hidden">
-          <div class="page-title">
-            <div class="eyebrow">STEP 02</div>
-            <h2>使用者驗證</h2>
-            <p id="verifyDesc">請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。</p>
-          </div>
-
-          <div id="savedUserBox" class="info-box hidden"></div>
-
-          <div id="verifyForm">
-            <div class="grid">
-              <label class="field"><span>工號</span><input id="empId" placeholder="例如 C5454" autocomplete="off" /></label>
-              <label class="field"><span>姓名</span><input id="empName" placeholder="例如 KOOK" autocomplete="off" /></label>
-              <label class="field"><span>部門</span><input id="deptReadonly" readonly /></label>
-              <label class="field"><span>組別</span><input id="groupReadonly" readonly /></label>
-            </div>
-          </div>
-
-          <div id="verifyNotice"></div>
-
-          <div class="actions" id="verifyActions">
-            <button class="btn primary" id="btnVerify">查詢</button>
-            <button class="btn ghost" id="btnBackToScan">返回</button>
-          </div>
-        </section>
-
-        <section id="page-check" class="page hidden">
-          <div class="page-title">
-            <div class="eyebrow">STEP 03</div>
-            <h2>今日訂單判斷</h2>
-            <p>修改訂單時會覆蓋今日原資料，不會新增第二筆。</p>
-          </div>
-          <div id="checkBox" class="info-box"></div>
-          <div class="actions" id="checkActions"></div>
-        </section>
-
-        <section id="page-order" class="page hidden">
-          <div class="page-title">
-            <div class="eyebrow">STEP 04</div>
-            <h2 id="orderTitle">填寫訂單</h2>
-            <p>完成後會進入總覽確認頁。確認送出後才會正式建立訂單。</p>
-          </div>
-
-          <div id="ruleBox" class="notice warning"></div>
-
-          <div class="order-grid">
-            <label class="food-card"><strong>葷食</strong><small>固定團膳葷食</small><input id="meatQty" type="number" min="0" value="0" /></label>
-            <label class="food-card"><strong>素食</strong><small>固定團膳素食</small><input id="vegQty" type="number" min="0" value="0" /></label>
-            <label class="food-card"><strong>外賓</strong><small>一般員工不可填寫</small><input id="guestQty" type="number" min="0" value="0" /></label>
-          </div>
-
-          <div id="orderNotice"></div>
-
-          <div class="actions">
-            <button class="btn primary" id="btnReview">下一步：總覽訂單</button>
-            <button class="btn ghost" id="btnBackToCheck">返回</button>
-          </div>
-        </section>
-
-        <section id="page-review" class="page hidden">
-          <div class="review-hero">
-            <div>
-              <div class="eyebrow">STEP 05</div>
-              <h2>訂單總覽確認</h2>
-              <p>請再次確認訂單內容。按下「確認送出」後，系統才會正式儲存訂單。</p>
-            </div>
-            <div class="review-badge">待確認</div>
-          </div>
-
-          <div id="reviewSummary" class="review-summary"></div>
-
-          <div class="review-layout">
-            <div class="review-card">
-              <div class="review-card-title">
-                <span class="review-icon">👤</span>
-                <div>
-                  <h3>使用者資訊</h3>
-                  <p>確認訂餐人員與部門資料</p>
-                </div>
-              </div>
-              <div id="reviewUser" class="review-list"></div>
-            </div>
-
-            <div class="review-card">
-              <div class="review-card-title">
-                <span class="review-icon">🍱</span>
-                <div>
-                  <h3>訂餐資訊</h3>
-                  <p>確認葷食、素食與外賓數量</p>
-                </div>
-              </div>
-              <div id="reviewOrder" class="review-list"></div>
-            </div>
-          </div>
-
-          <div class="review-warning">
-            <strong>送出前提醒</strong>
-            <span>若資料有誤，請點選「返回修改」。截止時間前再次修改會覆蓋原資料，不會新增第二筆。</span>
-          </div>
-
-          <div class="actions review-actions">
-            <button class="btn secondary" id="btnEdit">返回修改</button>
-            <button class="btn primary" id="btnSubmit">確認送出</button>
-          </div>
-        </section>
-
-        <section id="page-done" class="page hidden">
-          <div class="done-icon">✓</div>
-          <div class="page-title">
-            <div class="eyebrow">COMPLETE</div>
-            <h2>訂單已送出</h2>
-            <p>您的午餐訂單已成功送出。以下為本次訂單資訊。</p>
-          </div>
-          <div id="doneBox" class="info-box"></div>
-          <div class="actions">
-            <button class="btn primary" id="btnHome">回到主畫面</button>
-          </div>
-        </section>
-      </section>
-    </section>
-  </main>
-
-  <script src="config.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+<main class="app">
+<header class="topbar">
+  <div class="brand"><div class="logo">L</div><div><h1>企業午餐訂餐系統</h1><p>Lunch Order Portal｜Test V11</p></div></div>
+  <div class="status"><div id="todayText"></div><strong id="systemStatusText"></strong></div>
+</header>
+<section class="layout">
+<aside class="steps">
+  <div class="step active" data-step="scan"><span>1</span>部門 QRCode</div>
+  <div class="step" data-step="verify"><span>2</span>使用者驗證</div>
+  <div class="step" data-step="check"><span>3</span>今日訂單</div>
+  <div class="step" data-step="order"><span>4</span>填寫訂單</div>
+  <div class="step" data-step="review"><span>5</span>總覽確認</div>
+  <div class="step" data-step="done"><span>6</span>完成</div>
+</aside>
+<section class="content">
+<div id="alertBox" class="alert hidden"></div>
+<section id="page-closed" class="page hidden"><h2>目前未開放訂餐</h2><p id="closedReason"></p></section>
+<section id="page-scan" class="page">
+  <p class="eyebrow">STEP 01</p><h2>部門 QRCode</h2><p class="desc">測試版以選單模擬 QR Code 掃描。</p>
+  <div class="form-grid">
+    <label><span>部門</span><select id="deptSelect"><option>燃料電池生產部</option><option>工程部</option><option>品保部</option></select></label>
+    <label><span>組別</span><select id="groupSelect"><option>A組</option><option>B組</option><option>C組</option></select></label>
+  </div>
+  <div class="actions"><button id="btnScan" class="btn primary">模擬掃描 QRCode</button><button id="btnClear" class="btn ghost">清除本機測試資料</button></div>
+</section>
+<section id="page-verify" class="page hidden">
+  <p class="eyebrow">STEP 02</p><h2>使用者驗證</h2><p id="verifyDesc" class="desc">請輸入工號與姓名，系統會比對資料庫。</p>
+  <div id="savedUserBox" class="info-card hidden"></div>
+  <div id="verifyForm" class="form-grid">
+    <label><span>工號</span><input id="empId" placeholder="例如 C5454"></label>
+    <label><span>姓名</span><input id="empName" placeholder="例如 KOOK"></label>
+    <label><span>部門</span><input id="deptReadonly" readonly></label>
+    <label><span>組別</span><input id="groupReadonly" readonly></label>
+  </div>
+  <div id="verifyNotice"></div><div id="verifyActions" class="actions"></div>
+</section>
+<section id="page-check" class="page hidden"><p class="eyebrow">STEP 03</p><h2>今日訂單判斷</h2><p class="desc">修改訂單會覆蓋今日原資料，不會新增第二筆。</p><div id="checkBox"></div><div id="checkActions" class="actions"></div></section>
+<section id="page-order" class="page hidden">
+  <p class="eyebrow">STEP 04</p><h2 id="orderTitle">填寫訂單</h2><div id="ruleBox" class="notice info"></div>
+  <div class="qty-grid"><label class="qty-card meat"><span>葷食</span><input id="meatQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card veg"><span>素食</span><input id="vegQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card guest"><span>外賓</span><input id="guestQty" type="number" min="0" value="0"><small>人</small></label></div>
+  <div id="orderNotice"></div><div class="actions"><button id="btnBackToCheck" class="btn ghost">返回</button><button id="btnReview" class="btn primary">下一步：總覽訂單</button></div>
+</section>
+<section id="page-review" class="page hidden">
+  <div class="review-hero"><div><p class="eyebrow">STEP 05</p><h2>訂單總覽確認</h2><p class="desc">請再次確認訂單內容。按下「確認送出」後，系統才會正式儲存訂單。</p></div><span class="pill">待確認</span></div>
+  <div id="reviewSummary" class="summary-grid"></div>
+  <div class="two-col"><div class="panel"><div class="panel-title">👤 使用者資訊</div><div id="reviewUser"></div></div><div class="panel"><div class="panel-title">🍱 訂餐資訊</div><div id="reviewOrder"></div></div></div>
+  <div class="notice warning"><strong>送出前提醒</strong>　若資料有誤，請點選「返回修改」。截止時間前再次修改會覆蓋原資料，不會新增第二筆。</div>
+  <div class="actions split"><button id="btnEdit" class="btn ghost">← 返回修改</button><button id="btnSubmit" class="btn primary">確認送出</button></div>
+</section>
+<section id="page-done" class="page hidden"><div class="hero">✅</div><p class="eyebrow">STEP 06</p><h2>訂單已送出</h2><p class="desc">系統已完成訂單儲存。</p><div id="doneBox" class="info-card"></div><div class="actions"><button id="btnHome" class="btn primary">回到主畫面</button></div></section>
+</section></section>
+</main><script src="config.js"></script><script src="app.js"></script>
+</body></html>
