@@ -37,7 +37,18 @@ function profileHTML(user){ return [row("工號",user.empId),row("姓名",user.n
 function maskName(name){ if(!name) return ""; if(name.length<=2) return name[0]+"○"; return name[0]+"○"+name[name.length-1]; }
 function encodeName(name){ return btoa(unescape(encodeURIComponent(name))); }
 function getSavedUser(){ try{return JSON.parse(localStorage.getItem(STORAGE_USER)||"null");}catch{return null;} }
-function saveUser(user){ localStorage.setItem(STORAGE_USER,JSON.stringify(user)); }
+function saveUser(user) {
+  const safeUser = {
+    userId: user.userId,
+    empId: user.empId,
+    name: user.name,
+    nameMasked: user.nameMasked,
+    nameEncoded: user.nameEncoded,
+    role: user.role
+  };
+
+  localStorage.setItem(STORAGE_USER, JSON.stringify(safeUser));
+}
 function clearSavedUser(){ localStorage.removeItem(STORAGE_USER); }
 
 async function apiPost(payload){
@@ -67,6 +78,12 @@ function scanQRCode() {
 
   state.dept = String(deptValue || "").trim();
   state.group = String(groupValue || "").trim();
+
+  if (!state.dept || !state.group) {
+    showAlert("未取得部門或組別，請重新掃描 QR Code。");
+    showPage("scan");
+  return;
+  }
 
   console.log("QR Dept:", state.dept);
   console.log("QR Group:", state.group);
