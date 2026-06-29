@@ -158,7 +158,18 @@ const result = await apiPost(payload);
   finally{ setButtonLoading("btnVerify","查詢",false); }
 }
 
-async function confirmProfile(){ if(!guardOpen()) return; await checkTodayOrder(); showPage("check"); }
+async function confirmProfile() {
+  if (!guardOpen()) return;
+
+  if (!state.dept || !state.group) {
+    showAlert("未取得部門或組別，請回到主畫面重新掃描 QR Code。");
+    showPage("scan");
+    return;
+  }
+
+  await checkTodayOrder();
+  showPage("check");
+}
 async function checkTodayOrder(){
   if(!state.user) return;
   setHTML("checkBox",profileHTML(state.user)+`<div class="notice info">正在確認今日訂單...</div>`); setHTML("checkActions","");
@@ -224,7 +235,20 @@ async function submitOrder(){
   finally{ state.isSubmitting=false; setButtonLoading("btnSubmit","確認送出",false); }
 }
 
-function goHome(){ state.user=null; state.pendingOrder=null; state.existingOrder=null; if(isSystemClosed()){ setText("closedReason",getClosedReason()); showPage("closed"); } else showPage("scan"); }
+ffunction goHome() {
+  state.user = null;
+  state.pendingOrder = null;
+  state.existingOrder = null;
+  state.dept = "";
+  state.group = "";
+
+  if (isSystemClosed()) {
+    setText("closedReason", getClosedReason());
+    showPage("closed");
+  } else {
+    showPage("scan");
+  }
+}
 function clearLocalData(){ if(!confirm("確定要清除此裝置記憶的使用者資料？")) return; clearSavedUser(); location.reload(); }
 function bindEvents(){
   on("btnScan","click",scanQRCode); on("btnClear","click",clearLocalData); on("btnBackToCheck","click",()=>guardOpen()&&showPage("check")); on("btnReview","click",buildReview); on("btnEdit","click",()=>guardOpen()&&showPage("order")); on("btnSubmit","click",submitOrder); on("btnHome","click",goHome);
