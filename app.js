@@ -56,21 +56,54 @@ function setButtonLoading(id,loadingText,isLoading){
   else{ btn.textContent=btn.dataset.originalText||btn.textContent; btn.disabled=false; }
 }
 
-function scanQRCode(){
-  if(!guardOpen()) return;
-  state.dept=$("deptSelect")?.value||""; state.group=$("groupSelect")?.value||"";
-  if($("deptReadonly")) $("deptReadonly").value=state.dept;
-  if($("groupReadonly")) $("groupReadonly").value=state.group;
+function scanQRCode() {
+  if (!guardOpen()) return;
+
+  const deptEl = $("deptSelect");
+  const groupEl = $("groupSelect");
+
+  const deptValue = deptEl ? deptEl.value : "";
+  const groupValue = groupEl ? groupEl.value : "";
+
+  state.dept = String(deptValue || "").trim();
+  state.group = String(groupValue || "").trim();
+
+  console.log("QR Dept/Group:", {
+    dept: state.dept,
+    group: state.group
+  });
+
+  if ($("deptReadonly")) $("deptReadonly").value = state.dept;
+  if ($("groupReadonly")) $("groupReadonly").value = state.group;
+
   clearNotice("verifyNotice");
-  const saved=getSavedUser();
-  if(saved){
-    state.user={...saved,dept:state.dept,group:state.group};
-    $("verifyForm")?.classList.add("hidden"); $("savedUserBox")?.classList.remove("hidden");
-    setHTML("savedUserBox",profileHTML(state.user));
-    setText("verifyDesc","系統已讀取此裝置上次使用者資料，請確認是否正確。");
-    setHTML("verifyActions",`<button class="btn primary" id="btnStartSaved">開始點餐</button><button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>`);
-    on("btnStartSaved","click",confirmProfile); on("btnWrongSaved","click",resetVerify);
-  }else showVerifyForm();
+
+  const saved = getSavedUser();
+
+  if (saved) {
+    state.user = {
+      ...saved,
+      dept: state.dept,
+      group: state.group
+    };
+
+    $("verifyForm")?.classList.add("hidden");
+    $("savedUserBox")?.classList.remove("hidden");
+    setHTML("savedUserBox", profileHTML(state.user));
+    setText("verifyDesc", "系統已讀取此裝置上次使用者資料，請確認是否正確。");
+
+    setHTML("verifyActions", `
+      <button class="btn primary" id="btnStartSaved">開始點餐</button>
+      <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
+    `);
+
+    on("btnStartSaved", "click", confirmProfile);
+    on("btnWrongSaved", "click", resetVerify);
+
+  } else {
+    showVerifyForm();
+  }
+
   showPage("verify");
 }
 function showVerifyForm(){
