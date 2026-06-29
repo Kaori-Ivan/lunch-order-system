@@ -235,7 +235,7 @@ async function submitOrder(){
   finally{ state.isSubmitting=false; setButtonLoading("btnSubmit","確認送出",false); }
 }
 
-ffunction goHome() {
+function goHome() {
   state.user = null;
   state.pendingOrder = null;
   state.existingOrder = null;
