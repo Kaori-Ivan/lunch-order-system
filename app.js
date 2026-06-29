@@ -68,10 +68,8 @@ function scanQRCode() {
   state.dept = String(deptValue || "").trim();
   state.group = String(groupValue || "").trim();
 
-  console.log("QR Dept/Group:", {
-    dept: state.dept,
-    group: state.group
-  });
+  console.log("QR Dept:", state.dept);
+  console.log("QR Group:", state.group);
 
   if ($("deptReadonly")) $("deptReadonly").value = state.dept;
   if ($("groupReadonly")) $("groupReadonly").value = state.group;
