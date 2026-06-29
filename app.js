@@ -221,18 +221,60 @@ function buildReview(){
   showPage("review");
 }
 
-async function submitOrder(){
-  if(!guardOpen()) return; if(!state.pendingOrder||state.isSubmitting) return;
-  if(state.pendingOrder.guestQty>10&&!confirm("外賓數量大於 10，請再次確認是否送出？")) return;
-  state.isSubmitting=true; setButtonLoading("btnSubmit","送出中...",true);
-  try{
-    const result=await apiPost({action:"saveOrder",empId:state.user.empId,name:state.user.name,dept: state.dept,group: state.group,meatQty:state.pendingOrder.meatQty,vegQty:state.pendingOrder.vegQty,guestQty:state.pendingOrder.guestQty});
-    if(!result.success){ notice("orderNotice","danger",result.message||"訂單送出失敗。"); showPage("order"); return; }
-    const order=result.order||state.pendingOrder;
-    setHTML("doneBox",[row("日期",order.date||state.pendingOrder.date),row("工號",order.empId||state.user.empId),row("姓名",order.name||state.user.name),row("部門",order.dept||state.user.dept),row("組別",order.group||state.user.group),row("身分",order.role||state.user.role),row("葷食",order.meatQty??state.pendingOrder.meatQty),row("素食",order.vegQty??state.pendingOrder.vegQty),row("外賓",order.guestQty??state.pendingOrder.guestQty),row("送出時間",order.updatedAt||new Date().toLocaleString("zh-TW"))].join(""));
-    state.existingOrder=order; showPage("done");
-  }catch(error){ console.error(error); notice("orderNotice","danger",error.name==="AbortError"?"系統回應逾時，請稍後再試。":"無法連線至訂餐系統伺服器，請稍後再試。"); showPage("order"); }
-  finally{ state.isSubmitting=false; setButtonLoading("btnSubmit","確認送出",false); }
+async function submitOrder() {
+  if (!guardOpen()) return;
+  if (!state.pendingOrder || state.isSubmitting) return;
+
+  if (state.pendingOrder.guestQty > 10 && !confirm("外賓數量大於 10，請再次確認是否送出？")) return;
+
+  state.isSubmitting = true;
+  setButtonLoading("btnSubmit", "送出中...", true);
+
+  try {
+    const result = await apiPost({
+      action: "saveOrder",
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.dept,
+      group: state.group,
+      meatQty: state.pendingOrder.meatQty,
+      vegQty: state.pendingOrder.vegQty,
+      guestQty: state.pendingOrder.guestQty
+    });
+
+    if (!result.success) {
+      notice("orderNotice", "danger", result.message || "訂單送出失敗。");
+      showPage("order");
+      return;
+    }
+
+    const order = result.order || state.pendingOrder;
+
+    setHTML("doneBox", [
+      row("日期", order.date || state.pendingOrder.date),
+      row("工號", order.empId || state.user.empId),
+      row("姓名", order.name || state.user.name),
+      row("部門", order.dept || state.user.dept),
+      row("組別", order.group || state.user.group),
+      row("身分", order.role || state.user.role),
+      row("葷食", order.meatQty ?? state.pendingOrder.meatQty),
+      row("素食", order.vegQty ?? state.pendingOrder.vegQty),
+      row("外賓", order.guestQty ?? state.pendingOrder.guestQty),
+      row("送出時間", order.updatedAt || new Date().toLocaleString("zh-TW"))
+    ].join(""));
+
+    state.existingOrder = order;
+    showPage("done");
+
+  } catch (error) {
+    console.error(error);
+    notice("orderNotice", "danger", error.name === "AbortError" ? "系統回應逾時，請稍後再試。" : "無法連線至訂餐系統伺服器，請稍後再試。");
+    showPage("order");
+
+  } finally {
+    state.isSubmitting = false;
+    setButtonLoading("btnSubmit", "確認送出", false);
+  }
 }
 
 function goHome() {
