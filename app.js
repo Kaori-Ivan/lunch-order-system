@@ -42,16 +42,22 @@ async function apiPost(payload){if(APP_CONFIG.USE_MOCK_API)return mockApi(payloa
 function setButtonLoading(id,text,on){const btn=$(id);if(!btn)return;if(on){btn.dataset.originalText=btn.textContent;btn.textContent=text;btn.disabled=true;}else{btn.textContent=btn.dataset.originalText||btn.textContent;btn.disabled=false;}}
 function setBusy(message) {
   state.isBusy = true;
-  showAlert(message || "處理中，請稍候...");
+
+  const overlay = $("busyOverlay");
+  const text = $("busyText");
+
+  if (text) text.textContent = message || "處理中，請稍候...";
+  if (overlay) overlay.classList.remove("hidden");
 
   document.querySelectorAll("button").forEach(btn => {
     btn.disabled = true;
   });
 }
-
 function clearBusy() {
   state.isBusy = false;
-  hideAlert();
+
+  const overlay = $("busyOverlay");
+  if (overlay) overlay.classList.add("hidden");
 
   document.querySelectorAll("button").forEach(btn => {
     btn.disabled = false;
