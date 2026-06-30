@@ -31,3 +31,35 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+.busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+}
+
+.busy-box {
+  background: #fff;
+  border-radius: 22px;
+  padding: 32px 40px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.busy-spinner {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 16px;
+  border: 5px solid #dbeafe;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: busySpin .8s linear infinite;
+}
+
+@keyframes busySpin {
+  to { transform: rotate(360deg); }
+}
