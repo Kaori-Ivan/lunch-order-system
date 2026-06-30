@@ -70,7 +70,7 @@ async function confirmProfile() {
   await checkTodayOrder();
   showPage("check");
 }
-async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder","click",()=>startOrder(true));}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder","click",()=>startOrder(false));}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
+async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder", "click", () => {lockButton("btnEditOrder", "載入中...");startOrder(true);});}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder", "click", () => {lockButton("btnNewOrder", "載入中...");startOrder(false);});}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
 function getLimit(){return state.user.role==="主管"||state.user.role==="助理"?5:1;}
 function startOrder(isEdit){if(!guardOpen())return;const old=state.existingOrder,limit=getLimit();setText("orderTitle",isEdit?"修改今日訂單":"建立新訂單");setHTML("ruleBox",`目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`);$("meatQty").value=old?old.meatQty:0;$("vegQty").value=old?old.vegQty:0;$("guestQty").value=old?old.guestQty:0;$("guestQty").disabled=state.user.role==="一般員工";if($("guestQty").disabled)$("guestQty").value=0;validateOrder();showPage("order");}
 function num(id){return Math.max(0,Number($(id).value||0));}
@@ -83,3 +83,11 @@ function clearLocalData(){if(!confirm("確定要清除本機測試資料？"))re
 function bindEvents(){on("btnScan","click",scanQRCode);on("btnClear","click",clearLocalData);on("btnBackToCheck","click",()=>guardOpen()&&showPage("check"));on("btnReview","click",buildReview);on("btnEdit","click",()=>guardOpen()&&showPage("order"));on("btnSubmit","click",submitOrder);on("btnHome","click",goHome);["meatQty","vegQty","guestQty"].forEach(id=>on(id,"input",validateOrder));}
 window.addEventListener("error",e=>{showAlert("系統錯誤："+e.message);console.error(e.error||e.message);});
 document.addEventListener("DOMContentLoaded",()=>{bindEvents();updateHeader();showPage(isSystemClosed()?"closed":"scan");});
+function lockButton(buttonId, text) {
+  const btn = $(buttonId);
+  if (!btn) return;
+
+  btn.disabled = true;
+  btn.dataset.originalText = btn.textContent;
+  btn.textContent = text;
+}
