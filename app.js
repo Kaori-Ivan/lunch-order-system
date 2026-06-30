@@ -55,9 +55,37 @@ async function confirmProfile() {
     return;
   }
 
-  await checkTodayOrder();
-  showPage("check");
+  state.isBusy = true;
+  showAlert("正在確認使用者與部門資料，請稍候...");
 
+  try {
+    const result = await apiPost({
+      action: "verifyUser",
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.dept,
+      group: state.group
+    });
+
+    if (!result.success) {
+      clearSavedUser();
+      state.user = null;
+      setHTML("savedUserBox", "");
+      $("savedUserBox").classList.add("hidden");
+      $("verifyForm").classList.remove("hidden");
+      notice("verifyNotice", "danger", result.message || "使用者資料與目前部門不相符，請重新輸入。");
+      showVerifyForm();
+      showPage("verify");
+      return;
+    }
+
+    await checkTodayOrder();
+    showPage("check");
+
+  } finally {
+    state.isBusy = false;
+    hideAlert();
+  }
 }
 async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder", "click", () => {lockButton("btnEditOrder", "載入中...");startOrder(true);});}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder", "click", () => {lockButton("btnNewOrder", "載入中...");startOrder(false);});}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
 function getLimit(){return state.user.role==="主管"||state.user.role==="助理"?5:1;}
