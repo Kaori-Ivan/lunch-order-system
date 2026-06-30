@@ -35,7 +35,41 @@ function scanQRCode(){if(!guardOpen())return;state.dept=String($("deptSelect")?.
 function showVerifyForm(){$("verifyForm").classList.remove("hidden");$("savedUserBox").classList.add("hidden");setText("verifyDesc","請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。");setHTML("verifyActions",`<button class="btn primary" id="btnVerify">查詢</button><button class="btn ghost" id="btnBackToScan">返回</button>`);on("btnVerify","click",verifyEmployee);on("btnBackToScan","click",()=>showPage("scan"));}
 function resetVerify(){clearSavedUser();state.user=null;$("empId").value="";$("empName").value="";clearNotice("verifyNotice");showVerifyForm();}
 async function verifyEmployee(){if(!guardOpen())return;const empId=$("empId").value.trim(),empName=$("empName").value.trim();if(!empId||!empName){notice("verifyNotice","danger","請輸入工號與姓名。");return;}setButtonLoading("btnVerify","驗證中...",true);notice("verifyNotice","info","資料驗證中，請稍候...");try{const result=await apiPost({action:"verifyUser",empId,name:empName,dept:state.dept,group:state.group});if(!result.success){notice("verifyNotice","danger",result.message||"資料錯誤：工號或姓名不相符。");return;}const u=result.user;state.user={userId:u.userId,empId:u.empId,name:u.name,nameMasked:maskName(u.name),nameEncoded:encodeName(u.name),dept:u.dept,group:u.group,role:u.role};saveUser(state.user);$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));notice("verifyNotice","success","驗證成功，已自動帶入身分："+state.user.role+"。");setHTML("verifyActions",`<button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button><button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>`);on("btnConfirmProfile","click",confirmProfile);on("btnWrongProfile","click",resetVerify);}catch(e){console.error(e);notice("verifyNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");}finally{setButtonLoading("btnVerify","查詢",false);}}
-async function confirmProfile(){if(!guardOpen())return;if(!state.dept||!state.group){showAlert("未取得部門或組別，請回到主畫面重新掃描 QR Code。");showPage("scan");return;}showAlert("正在確認今日訂單，請稍候...");await checkTodayOrder();hideAlert();showPage("check");}
+async function confirmProfile() {
+  if (!guardOpen()) return;
+
+  if (!state.dept || !state.group) {
+    showAlert("未取得部門或組別，請回到主畫面重新掃描 QR Code。");
+    showPage("scan");
+    return;
+  }
+
+  const result = await apiPost({
+    action: "verifyUser",
+    empId: state.user.empId,
+    name: state.user.name,
+    dept: state.dept,
+    group: state.group
+  });
+
+  if (!result.success) {
+    clearSavedUser();
+    state.user = null;
+
+    setHTML("savedUserBox", "");
+    $("savedUserBox").classList.add("hidden");
+    $("verifyForm").classList.remove("hidden");
+
+    notice("verifyNotice", "danger", result.message || "使用者資料與目前掃描部門不相符，請重新輸入。");
+
+    showVerifyForm();
+    showPage("verify");
+    return;
+  }
+
+  await checkTodayOrder();
+  showPage("check");
+}
 async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user)+`<div class="notice info">正在確認今日訂單...</div>`);setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder","click",()=>startOrder(true));}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder","click",()=>startOrder(false));}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
 function getLimit(){return state.user.role==="主管"||state.user.role==="助理"?5:1;}
 function startOrder(isEdit){if(!guardOpen())return;const old=state.existingOrder,limit=getLimit();setText("orderTitle",isEdit?"修改今日訂單":"建立新訂單");setHTML("ruleBox",`目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`);$("meatQty").value=old?old.meatQty:0;$("vegQty").value=old?old.vegQty:0;$("guestQty").value=old?old.guestQty:0;$("guestQty").disabled=state.user.role==="一般員工";if($("guestQty").disabled)$("guestQty").value=0;validateOrder();showPage("order");}
