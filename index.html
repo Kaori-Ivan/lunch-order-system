@@ -19,9 +19,20 @@
     <div id="busyText">處理中，請稍候...</div>
   </div>
 </div>
+<div id="confirmDialog" class="dialog-overlay hidden">
+  <div class="dialog-box">
+    <div class="dialog-icon">⚠️</div>
+    <h3 id="dialogTitle">確認</h3>
+    <p id="dialogMessage">請確認是否繼續。</p>
+    <div class="dialog-actions">
+      <button id="dialogCancel" class="btn ghost">返回修改</button>
+      <button id="dialogConfirm" class="btn primary">確認送出</button>
+    </div>
+  </div>
+</div>
 <main class="app">
 <header class="topbar">
-  <div class="brand"><div class="logo">L</div><div><h1>企業午餐訂餐系統</h1><p>Lunch Order Portal｜Test V11</p></div></div>
+  <div class="brand"><div class="logo">L</div><div><h1>企業午餐訂餐系統</h1>Test V1111</div></div>
   <div class="status"><div id="todayText"></div><strong id="systemStatusText"></strong></div>
 </header>
 <section class="layout">
