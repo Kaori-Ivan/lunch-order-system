@@ -43,15 +43,82 @@ function setButtonLoading(id,text,on){const btn=$(id);if(!btn)return;if(on){btn.
 function scanQRCode(){if(!guardOpen())return;state.dept=String($("deptSelect")?.value||"").trim();state.group=String($("groupSelect")?.value||"").trim();if(!state.dept||!state.group){showAlert("未取得部門或組別，請重新掃描 QR Code。");showPage("scan");return;}$("deptReadonly").value=state.dept;$("groupReadonly").value=state.group;clearNotice("verifyNotice");const saved=getSavedUser();if(saved){state.user={...saved,dept:state.dept,group:state.group};$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));setText("verifyDesc","系統已讀取此裝置上次使用者資料，請確認是否正確。");setHTML("verifyActions",`<button class="btn primary" id="btnStartSaved">確認並開始點餐</button><button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>`);on("btnStartSaved","click",confirmProfile);on("btnWrongSaved","click",resetVerify);}else{showVerifyForm();}showPage("verify");}
 function showVerifyForm(){$("verifyForm").classList.remove("hidden");$("savedUserBox").classList.add("hidden");setText("verifyDesc","請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。");setHTML("verifyActions",`<button class="btn primary" id="btnVerify">查詢</button><button class="btn ghost" id="btnBackToScan">返回</button>`);on("btnVerify","click",verifyEmployee);on("btnBackToScan","click",()=>showPage("scan"));}
 function resetVerify(){clearSavedUser();state.user=null;$("empId").value="";$("empName").value="";clearNotice("verifyNotice");showVerifyForm();}
-async function verifyEmployee(){if(!guardOpen())return;const empId=$("empId").value.trim(),empName=$("empName").value.trim();if(!empId||!empName){notice("verifyNotice","danger","請輸入工號與姓名。");return;}setButtonLoading("btnVerify","驗證中...",true);notice("verifyNotice","info","資料驗證中，請稍候...");try{const result=await apiPost({action:"verifyUser",empId,name:empName,dept:state.dept,group:state.group});if(!result.success){notice("verifyNotice","danger",result.message||"資料錯誤：工號或姓名不相符。")if (result.user.dept !== state.dept || result.user.group !== state.group) {
-  notice(
-    "verifyNotice",
-    "danger",
-    `您目前隸屬於「${result.user.dept}／${result.user.group}」，但目前掃描的是「${state.dept}／${state.group}」。請掃描正確的部門 QR Code。`
-  );
-  clearSavedUser();
-  return;
-};return;}const u=result.user;state.user={userId:u.userId,empId:u.empId,name:u.name,nameMasked:maskName(u.name),nameEncoded:encodeName(u.name),dept:u.dept,group:u.group,role:u.role};saveUser(state.user);$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));notice("verifyNotice","success","驗證成功，已自動帶入身分："+state.user.role+"。");setHTML("verifyActions",`<button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button><button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>`);on("btnConfirmProfile","click",confirmProfile);on("btnWrongProfile","click",resetVerify);}catch(e){console.error(e);notice("verifyNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");}finally{setButtonLoading("btnVerify","查詢",false);}}
+async function verifyEmployee() {
+  if (!guardOpen()) return;
+
+  const empId = $("empId").value.trim();
+  const empName = $("empName").value.trim();
+
+  if (!empId || !empName) {
+    notice("verifyNotice", "danger", "請輸入工號與姓名。");
+    return;
+  }
+
+  setButtonLoading("btnVerify", "驗證中...", true);
+  notice("verifyNotice", "info", "資料驗證中，請稍候...");
+
+  try {
+    const result = await apiPost({
+      action: "verifyUser",
+      empId,
+      name: empName,
+      dept: state.dept,
+      group: state.group
+    });
+
+    if (!result.success) {
+      notice("verifyNotice", "danger", result.message || "資料錯誤：工號或姓名不相符。");
+      clearSavedUser();
+      return;
+    }
+
+    const u = result.user;
+
+    if (u.dept !== state.dept || u.group !== state.group) {
+      notice(
+        "verifyNotice",
+        "danger",
+        `您目前隸屬於「${u.dept}／${u.group}」，但目前掃描的是「${state.dept}／${state.group}」。請掃描正確的部門 QR Code。`
+      );
+      clearSavedUser();
+      return;
+    }
+
+    state.user = {
+      userId: u.userId,
+      empId: u.empId,
+      name: u.name,
+      nameMasked: maskName(u.name),
+      nameEncoded: encodeName(u.name),
+      dept: u.dept,
+      group: u.group,
+      role: u.role
+    };
+
+    saveUser(state.user);
+
+    $("verifyForm").classList.add("hidden");
+    $("savedUserBox").classList.remove("hidden");
+
+    setHTML("savedUserBox", profileHTML(state.user));
+
+    notice("verifyNotice", "success", "驗證成功，已自動帶入身分：" + state.user.role + "。");
+
+    setHTML("verifyActions", `
+      <button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button>
+      <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
+    `);
+
+    on("btnConfirmProfile", "click", confirmProfile);
+    on("btnWrongProfile", "click", resetVerify);
+
+  } catch (e) {
+    console.error(e);
+    notice("verifyNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
+  } finally {
+    setButtonLoading("btnVerify", "查詢", false);
+  }
+}
 async function confirmProfile() {
   console.log("confirmProfile 被呼叫");
   if (state.isBusy) return;
