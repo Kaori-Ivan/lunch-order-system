@@ -172,8 +172,63 @@ function num(id){return Math.max(0,Number($(id).value||0));}
 function validateOrder(){const meat=num("meatQty"),veg=num("vegQty"),guest=num("guestQty"),limit=getLimit();if(meat+veg<1){notice("orderNotice","danger","葷食 + 素食至少需要填寫 1 份。");return false;}if(meat+veg>limit){notice("orderNotice","danger",`葷食 + 素食不可超過警戒值 ${limit}。目前合計 ${meat+veg}。`);return false;}if(state.user.role==="一般員工"&&guest>0){notice("orderNotice","danger","一般員工不可填寫外賓數量。");return false;}notice("orderNotice","success","目前訂單符合規則。");return true;}
 function statCard(type,icon,label,value,unit){return `<div class="stat-card ${type}"><div class="stat-label">${icon} ${label}</div><div class="stat-number">${value}</div><div class="stat-unit">${unit}</div></div>`;}
 function buildReview(){if(!guardOpen())return;if(!validateOrder())return;state.pendingOrder={date:todayKey(),empId:state.user.empId,name:state.user.name,dept:state.user.dept,group:state.user.group,role:state.user.role,meatQty:num("meatQty"),vegQty:num("vegQty"),guestQty:num("guestQty"),updatedAt:""};const total=state.pendingOrder.meatQty+state.pendingOrder.vegQty+state.pendingOrder.guestQty;setHTML("reviewSummary",[statCard("meat","🥩","葷食",state.pendingOrder.meatQty,"份"),statCard("veg","🌱","素食",state.pendingOrder.vegQty,"份"),statCard("guest","👥","外賓",state.pendingOrder.guestQty,"人"),statCard("total","📋","合計總數",total,"總數")].join(""));setHTML("reviewUser",[row("工號",state.user.empId),row("姓名",state.user.name),row("部門",state.user.dept),row("組別",state.user.group),row("身分",state.user.role)].join(""));setHTML("reviewOrder",[row("日期",state.pendingOrder.date),row("葷食",state.pendingOrder.meatQty),row("素食",state.pendingOrder.vegQty),row("外賓",state.pendingOrder.guestQty)].join(""));showPage("review");}
-async function submitOrder(){if (state.isBusy) return;beginLoading("正在送出訂單...");showAlert("訂單送出中，請稍候...");if(!guardOpen())return;if(!state.pendingOrder||state.isSubmitting)return;state.isSubmitting=true;setButtonLoading("btnSubmit","送出中...",true);try{const result=await apiPost({action:"saveOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group,meatQty:state.pendingOrder.meatQty,vegQty:state.pendingOrder.vegQty,guestQty:state.pendingOrder.guestQty});if(!result.success){notice("orderNotice","danger",result.message||"訂單送出失敗。");showPage("order");return;}const order=result.order||state.pendingOrder;setHTML("doneBox",[row("日期",order.date||state.pendingOrder.date),row("工號",order.empId||state.user.empId),row("姓名",order.name||state.user.name),row("部門",order.dept||state.user.dept),row("組別",order.group||state.user.group),row("身分",order.role||state.user.role),row("葷食",order.meatQty??state.pendingOrder.meatQty),row("素食",order.vegQty??state.pendingOrder.vegQty),row("外賓",order.guestQty??state.pendingOrder.guestQty),row("送出時間",order.updatedAt||new Date().toLocaleString("zh-TW"))].join(""));hideAlert();showPage("done");}catch(e){console.error(e);notice("orderNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");showPage("order");}finally{state.isSubmitting=false;setButtonLoading("btnSubmit","確認送出",false);finishLoading();}}
-function goHome(){state.user=null;state.pendingOrder=null;state.existingOrder=null;state.dept="";state.group="";showPage("scan");}
+async function submitOrder() {
+  if (state.isBusy) return;
+  if (!guardOpen()) return;
+  if (!state.pendingOrder || state.isSubmitting) return;
+
+  state.isBusy = true;
+  state.isSubmitting = true;
+
+  beginLoading("正在送出訂單，請稍候...");
+  setButtonLoading("btnSubmit", "送出中...", true);
+
+  try {
+    const result = await apiPost({
+      action: "saveOrder",
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.dept,
+      group: state.group,
+      meatQty: state.pendingOrder.meatQty,
+      vegQty: state.pendingOrder.vegQty,
+      guestQty: state.pendingOrder.guestQty
+    });
+
+    if (!result.success) {
+      notice("orderNotice", "danger", result.message || "訂單送出失敗。");
+      showPage("order");
+      return;
+    }
+
+    const order = result.order || state.pendingOrder;
+
+    setHTML("doneBox", [
+      row("日期", order.date || state.pendingOrder.date),
+      row("工號", order.empId || state.user.empId),
+      row("姓名", order.name || state.user.name),
+      row("部門", order.dept || state.user.dept),
+      row("組別", order.group || state.user.group),
+      row("身分", order.role || state.user.role),
+      row("葷食", order.meatQty ?? state.pendingOrder.meatQty),
+      row("素食", order.vegQty ?? state.pendingOrder.vegQty),
+      row("外賓", order.guestQty ?? state.pendingOrder.guestQty),
+      row("送出時間", order.updatedAt || new Date().toLocaleString("zh-TW"))
+    ].join(""));
+
+    showPage("done");
+
+  } catch (e) {
+    console.error(e);
+    notice("orderNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
+    showPage("order");
+
+  } finally {
+    state.isSubmitting = false;
+    setButtonLoading("btnSubmit", "確認送出", false);
+    finishLoading();
+  }
+}function goHome(){state.user=null;state.pendingOrder=null;state.existingOrder=null;state.dept="";state.group="";showPage("scan");}
 function clearLocalData(){if(!confirm("確定要清除本機測試資料？"))return;clearSavedUser();localStorage.removeItem(STORAGE_ORDERS);location.reload();}
 function bindEvents(){on("btnScan","click",scanQRCode);on("btnClear","click",clearLocalData);on("btnBackToCheck","click",()=>guardOpen()&&showPage("check"));on("btnReview","click",buildReview);on("btnEdit","click",()=>guardOpen()&&showPage("order"));on("btnSubmit","click",submitOrder);on("btnHome","click",goHome);["meatQty","vegQty","guestQty"].forEach(id=>on(id,"input",validateOrder));}
 window.addEventListener("error",e=>{showAlert("系統錯誤："+e.message);console.error(e.error||e.message);});
@@ -188,11 +243,21 @@ function lockButton(buttonId, text) {
 }
 function beginLoading(message) {
   state.isBusy = true;
-  setText("loadingText", message || "處理中，請稍候...");
-  $("loadingOverlay").classList.remove("hidden");
+
+  const text = $("loadingText");
+  const overlay = $("loadingOverlay");
+
+  if (text) text.textContent = message || "處理中，請稍候...";
+  if (overlay) overlay.classList.remove("hidden");
+
+  showAlert(message || "處理中，請稍候...");
 }
 
 function finishLoading() {
   state.isBusy = false;
-  $("loadingOverlay").classList.add("hidden");
+
+  const overlay = $("loadingOverlay");
+  if (overlay) overlay.classList.add("hidden");
+
+  hideAlert();
 }
