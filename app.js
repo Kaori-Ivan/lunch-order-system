@@ -53,7 +53,6 @@ async function verifyEmployee(){if(!guardOpen())return;const empId=$("empId").va
   return;
 };return;}const u=result.user;state.user={userId:u.userId,empId:u.empId,name:u.name,nameMasked:maskName(u.name),nameEncoded:encodeName(u.name),dept:u.dept,group:u.group,role:u.role};saveUser(state.user);$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));notice("verifyNotice","success","驗證成功，已自動帶入身分："+state.user.role+"。");setHTML("verifyActions",`<button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button><button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>`);on("btnConfirmProfile","click",confirmProfile);on("btnWrongProfile","click",resetVerify);}catch(e){console.error(e);notice("verifyNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");}finally{setButtonLoading("btnVerify","查詢",false);}}
 async function confirmProfile() {
-
   if (state.isBusy) return;
   if (!guardOpen()) return;
 
@@ -76,13 +75,15 @@ async function confirmProfile() {
     });
 
     if (!result.success) {
-      
       clearSavedUser();
       state.user = null;
+
       setHTML("savedUserBox", "");
       $("savedUserBox").classList.add("hidden");
       $("verifyForm").classList.remove("hidden");
+
       notice("verifyNotice", "danger", result.message || "使用者資料與目前部門不相符，請重新輸入。");
+
       showVerifyForm();
       showPage("verify");
       return;
