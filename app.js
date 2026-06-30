@@ -55,7 +55,7 @@ async function confirmProfile() {
     return;
   }
 
-  beginLoading("正在確認今日訂單...");
+  //beginLoading("正在確認今日訂單...");
 
   try {
 
@@ -87,7 +87,7 @@ async function confirmProfile() {
 
   } finally {
 
-    finishLoading();
+    //finishLoading();
 
   }
 
