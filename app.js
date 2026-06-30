@@ -5,7 +5,7 @@ const MOCK_USERS=[
   {userId:"U0002",empId:"B001",name:"林主管",dept:"工程部",group:"A組",role:"主管",enabled:true},
   {userId:"U0003",empId:"C001",name:"陳助理",dept:"品保部",group:"A組",role:"助理",enabled:true}
 ];
-const state={step:"scan",dept:"",group:"",user:null,existingOrder:null,pendingOrder:null,isSubmitting:false;isBusy: false;};
+const state={step:"scan",dept:"",group:"",user:null,existingOrder:null,pendingOrder:null,isSubmitting:false,isBusy: false};
 const $=id=>document.getElementById(id);
 function on(id,event,handler){const el=$(id);if(el)el.addEventListener(event,handler);}
 function setHTML(id,html){const el=$(id);if(el)el.innerHTML=html;}
