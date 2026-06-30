@@ -36,6 +36,8 @@ function showVerifyForm(){$("verifyForm").classList.remove("hidden");$("savedUse
 function resetVerify(){clearSavedUser();state.user=null;$("empId").value="";$("empName").value="";clearNotice("verifyNotice");showVerifyForm();}
 async function verifyEmployee(){if(!guardOpen())return;const empId=$("empId").value.trim(),empName=$("empName").value.trim();if(!empId||!empName){notice("verifyNotice","danger","請輸入工號與姓名。");return;}setButtonLoading("btnVerify","驗證中...",true);notice("verifyNotice","info","資料驗證中，請稍候...");try{const result=await apiPost({action:"verifyUser",empId,name:empName,dept:state.dept,group:state.group});if(!result.success){notice("verifyNotice","danger",result.message||"資料錯誤：工號或姓名不相符。");return;}const u=result.user;state.user={userId:u.userId,empId:u.empId,name:u.name,nameMasked:maskName(u.name),nameEncoded:encodeName(u.name),dept:u.dept,group:u.group,role:u.role};saveUser(state.user);$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));notice("verifyNotice","success","驗證成功，已自動帶入身分："+state.user.role+"。");setHTML("verifyActions",`<button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button><button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>`);on("btnConfirmProfile","click",confirmProfile);on("btnWrongProfile","click",resetVerify);}catch(e){console.error(e);notice("verifyNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");}finally{setButtonLoading("btnVerify","查詢",false);}}
 async function confirmProfile() {
+
+  if (state.isBusy) return;
   if (!guardOpen()) return;
 
   if (!state.dept || !state.group) {
@@ -44,31 +46,42 @@ async function confirmProfile() {
     return;
   }
 
-  const result = await apiPost({
-    action: "verifyUser",
-    empId: state.user.empId,
-    name: state.user.name,
-    dept: state.dept,
-    group: state.group
-  });
+  beginLoading("正在確認今日訂單...");
 
-  if (!result.success) {
-    clearSavedUser();
-    state.user = null;
+  try {
 
-    setHTML("savedUserBox", "");
-    $("savedUserBox").classList.add("hidden");
-    $("verifyForm").classList.remove("hidden");
+    const result = await apiPost({
+      action: "verifyUser",
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.dept,
+      group: state.group
+    });
 
-    notice("verifyNotice", "danger", result.message || "使用者資料與目前掃描部門不相符，請重新輸入。");
+    if (!result.success) {
+      clearSavedUser();
+      state.user = null;
 
-    showVerifyForm();
-    showPage("verify");
-    return;
+      setHTML("savedUserBox", "");
+      $("savedUserBox").classList.add("hidden");
+      $("verifyForm").classList.remove("hidden");
+
+      notice("verifyNotice", "danger", result.message);
+
+      showVerifyForm();
+      showPage("verify");
+      return;
+    }
+
+    await checkTodayOrder();
+    showPage("check");
+
+  } finally {
+
+    finishLoading();
+
   }
 
-  await checkTodayOrder();
-  showPage("check");
 }
 async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder", "click", () => {lockButton("btnEditOrder", "載入中...");startOrder(true);});}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder", "click", () => {lockButton("btnNewOrder", "載入中...");startOrder(false);});}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
 function getLimit(){return state.user.role==="主管"||state.user.role==="助理"?5:1;}
@@ -77,7 +90,7 @@ function num(id){return Math.max(0,Number($(id).value||0));}
 function validateOrder(){const meat=num("meatQty"),veg=num("vegQty"),guest=num("guestQty"),limit=getLimit();if(meat+veg<1){notice("orderNotice","danger","葷食 + 素食至少需要填寫 1 份。");return false;}if(meat+veg>limit){notice("orderNotice","danger",`葷食 + 素食不可超過警戒值 ${limit}。目前合計 ${meat+veg}。`);return false;}if(state.user.role==="一般員工"&&guest>0){notice("orderNotice","danger","一般員工不可填寫外賓數量。");return false;}notice("orderNotice","success","目前訂單符合規則。");return true;}
 function statCard(type,icon,label,value,unit){return `<div class="stat-card ${type}"><div class="stat-label">${icon} ${label}</div><div class="stat-number">${value}</div><div class="stat-unit">${unit}</div></div>`;}
 function buildReview(){if(!guardOpen())return;if(!validateOrder())return;state.pendingOrder={date:todayKey(),empId:state.user.empId,name:state.user.name,dept:state.user.dept,group:state.user.group,role:state.user.role,meatQty:num("meatQty"),vegQty:num("vegQty"),guestQty:num("guestQty"),updatedAt:""};const total=state.pendingOrder.meatQty+state.pendingOrder.vegQty+state.pendingOrder.guestQty;setHTML("reviewSummary",[statCard("meat","🥩","葷食",state.pendingOrder.meatQty,"份"),statCard("veg","🌱","素食",state.pendingOrder.vegQty,"份"),statCard("guest","👥","外賓",state.pendingOrder.guestQty,"人"),statCard("total","📋","合計總數",total,"總數")].join(""));setHTML("reviewUser",[row("工號",state.user.empId),row("姓名",state.user.name),row("部門",state.user.dept),row("組別",state.user.group),row("身分",state.user.role)].join(""));setHTML("reviewOrder",[row("日期",state.pendingOrder.date),row("葷食",state.pendingOrder.meatQty),row("素食",state.pendingOrder.vegQty),row("外賓",state.pendingOrder.guestQty)].join(""));showPage("review");}
-async function submitOrder(){showAlert("訂單送出中，請稍候...");if(!guardOpen())return;if(!state.pendingOrder||state.isSubmitting)return;state.isSubmitting=true;setButtonLoading("btnSubmit","送出中...",true);try{const result=await apiPost({action:"saveOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group,meatQty:state.pendingOrder.meatQty,vegQty:state.pendingOrder.vegQty,guestQty:state.pendingOrder.guestQty});if(!result.success){notice("orderNotice","danger",result.message||"訂單送出失敗。");showPage("order");return;}const order=result.order||state.pendingOrder;setHTML("doneBox",[row("日期",order.date||state.pendingOrder.date),row("工號",order.empId||state.user.empId),row("姓名",order.name||state.user.name),row("部門",order.dept||state.user.dept),row("組別",order.group||state.user.group),row("身分",order.role||state.user.role),row("葷食",order.meatQty??state.pendingOrder.meatQty),row("素食",order.vegQty??state.pendingOrder.vegQty),row("外賓",order.guestQty??state.pendingOrder.guestQty),row("送出時間",order.updatedAt||new Date().toLocaleString("zh-TW"))].join(""));hideAlert();showPage("done");}catch(e){console.error(e);notice("orderNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");showPage("order");}finally{state.isSubmitting=false;setButtonLoading("btnSubmit","確認送出",false);}}
+async function submitOrder(){if (state.isBusy) return;beginLoading("正在送出訂單...");showAlert("訂單送出中，請稍候...");if(!guardOpen())return;if(!state.pendingOrder||state.isSubmitting)return;state.isSubmitting=true;setButtonLoading("btnSubmit","送出中...",true);try{const result=await apiPost({action:"saveOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group,meatQty:state.pendingOrder.meatQty,vegQty:state.pendingOrder.vegQty,guestQty:state.pendingOrder.guestQty});if(!result.success){notice("orderNotice","danger",result.message||"訂單送出失敗。");showPage("order");return;}const order=result.order||state.pendingOrder;setHTML("doneBox",[row("日期",order.date||state.pendingOrder.date),row("工號",order.empId||state.user.empId),row("姓名",order.name||state.user.name),row("部門",order.dept||state.user.dept),row("組別",order.group||state.user.group),row("身分",order.role||state.user.role),row("葷食",order.meatQty??state.pendingOrder.meatQty),row("素食",order.vegQty??state.pendingOrder.vegQty),row("外賓",order.guestQty??state.pendingOrder.guestQty),row("送出時間",order.updatedAt||new Date().toLocaleString("zh-TW"))].join(""));hideAlert();showPage("done");}catch(e){console.error(e);notice("orderNotice","danger","無法連線至訂餐系統伺服器，請稍後再試。");showPage("order");}finally{state.isSubmitting=false;setButtonLoading("btnSubmit","確認送出",false);finishLoading();}}
 function goHome(){state.user=null;state.pendingOrder=null;state.existingOrder=null;state.dept="";state.group="";showPage("scan");}
 function clearLocalData(){if(!confirm("確定要清除本機測試資料？"))return;clearSavedUser();localStorage.removeItem(STORAGE_ORDERS);location.reload();}
 function bindEvents(){on("btnScan","click",scanQRCode);on("btnClear","click",clearLocalData);on("btnBackToCheck","click",()=>guardOpen()&&showPage("check"));on("btnReview","click",buildReview);on("btnEdit","click",()=>guardOpen()&&showPage("order"));on("btnSubmit","click",submitOrder);on("btnHome","click",goHome);["meatQty","vegQty","guestQty"].forEach(id=>on(id,"input",validateOrder));}
@@ -90,4 +103,14 @@ function lockButton(buttonId, text) {
   btn.disabled = true;
   btn.dataset.originalText = btn.textContent;
   btn.textContent = text;
+}
+function beginLoading(message) {
+  state.isBusy = true;
+  setText("loadingText", message || "處理中，請稍候...");
+  $("loadingOverlay").classList.remove("hidden");
+}
+
+function finishLoading() {
+  state.isBusy = false;
+  $("loadingOverlay").classList.add("hidden");
 }
