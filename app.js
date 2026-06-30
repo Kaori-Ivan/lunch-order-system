@@ -40,10 +40,28 @@ function clearSavedUser(){localStorage.removeItem(STORAGE_USER);}
 function mockApi(p){return new Promise(resolve=>setTimeout(()=>{if(p.action==="verifyUser"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name&&x.enabled);if(!u){resolve({success:false,message:"資料錯誤：工號或姓名不相符。"});return;}if(u.dept!==p.dept||u.group!==p.group){resolve({success:false,message:`您目前隸屬於「${u.dept}／${u.group}」，但目前掃描的是「${p.dept}／${p.group}」。請掃描正確的部門 QR Code。`});return;}resolve({success:true,message:"驗證成功",user:u});return;}if(p.action==="getOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const key=`${todayKey()}_${u?.userId}`;const order=getOrders()[key]||null;resolve({success:true,hasOrder:!!order,order});return;}if(p.action==="saveOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const order={date:todayKey(),userId:u.userId,empId:u.empId,name:u.name,dept:u.dept,group:u.group,role:u.role,meatQty:Number(p.meatQty||0),vegQty:Number(p.vegQty||0),guestQty:Number(p.guestQty||0),updatedAt:new Date().toLocaleString("zh-TW")};const orders=getOrders();orders[`${todayKey()}_${u.userId}`]=order;saveOrders(orders);resolve({success:true,message:"訂單已儲存",order});return;}resolve({success:false,message:"未知的 action"});},300));}
 async function apiPost(payload){if(APP_CONFIG.USE_MOCK_API)return mockApi(payload);const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),APP_CONFIG.API_TIMEOUT_MS||30000);try{const res=await fetch(APP_CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:controller.signal});return await res.json();}finally{clearTimeout(timeout);}}
 function setButtonLoading(id,text,on){const btn=$(id);if(!btn)return;if(on){btn.dataset.originalText=btn.textContent;btn.textContent=text;btn.disabled=true;}else{btn.textContent=btn.dataset.originalText||btn.textContent;btn.disabled=false;}}
+function setBusy(message) {
+  state.isBusy = true;
+  showAlert(message || "處理中，請稍候...");
+
+  document.querySelectorAll("button").forEach(btn => {
+    btn.disabled = true;
+  });
+}
+
+function clearBusy() {
+  state.isBusy = false;
+  hideAlert();
+
+  document.querySelectorAll("button").forEach(btn => {
+    btn.disabled = false;
+  });
+}
 function scanQRCode(){if(!guardOpen())return;state.dept=String($("deptSelect")?.value||"").trim();state.group=String($("groupSelect")?.value||"").trim();if(!state.dept||!state.group){showAlert("未取得部門或組別，請重新掃描 QR Code。");showPage("scan");return;}$("deptReadonly").value=state.dept;$("groupReadonly").value=state.group;clearNotice("verifyNotice");const saved=getSavedUser();if(saved){state.user={...saved,dept:state.dept,group:state.group};$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));setText("verifyDesc","系統已讀取此裝置上次使用者資料，請確認是否正確。");setHTML("verifyActions",`<button class="btn primary" id="btnStartSaved">確認並開始點餐</button><button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>`);on("btnStartSaved","click",confirmProfile);on("btnWrongSaved","click",resetVerify);}else{showVerifyForm();}showPage("verify");}
 function showVerifyForm(){$("verifyForm").classList.remove("hidden");$("savedUserBox").classList.add("hidden");setText("verifyDesc","請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。");setHTML("verifyActions",`<button class="btn primary" id="btnVerify">查詢</button><button class="btn ghost" id="btnBackToScan">返回</button>`);on("btnVerify","click",verifyEmployee);on("btnBackToScan","click",()=>showPage("scan"));}
 function resetVerify(){clearSavedUser();state.user=null;$("empId").value="";$("empName").value="";clearNotice("verifyNotice");showVerifyForm();}
 async function verifyEmployee() {
+  setBusy("正在驗證身分，請稍候...");
   if (!guardOpen()) return;
 
   const empId = $("empId").value.trim();
@@ -117,6 +135,7 @@ async function verifyEmployee() {
     notice("verifyNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
   } finally {
     setButtonLoading("btnVerify", "查詢", false);
+    clearBusy();
   }
 }
 async function confirmProfile() {
@@ -130,8 +149,7 @@ async function confirmProfile() {
     return;
   }
 
-  state.isBusy = true;
-  showAlert("正在確認使用者與部門資料，請稍候...");
+  setBusy("正在確認使用者與部門資料，請稍候...");
 
   try {
     const result = await apiPost({
@@ -161,8 +179,7 @@ async function confirmProfile() {
     showPage("check");
 
   } finally {
-    state.isBusy = false;
-    hideAlert();
+    clearBusy();
   }
 }
 async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder", "click", () => {startOrder(true);});}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder", "click", () => {;startOrder(false);});}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
@@ -180,7 +197,7 @@ async function submitOrder() {
   state.isBusy = true;
   state.isSubmitting = true;
 
-  beginLoading("正在送出訂單，請稍候...");
+  setBusy("正在送出訂單，請稍候...");
   setButtonLoading("btnSubmit", "送出中...", true);
 
   try {
@@ -226,7 +243,7 @@ async function submitOrder() {
   } finally {
     state.isSubmitting = false;
     setButtonLoading("btnSubmit", "確認送出", false);
-    finishLoading();
+    clearBusy();
   }
 }function goHome(){state.user=null;state.pendingOrder=null;state.existingOrder=null;state.dept="";state.group="";showPage("scan");}
 function clearLocalData(){if(!confirm("確定要清除本機測試資料？"))return;clearSavedUser();localStorage.removeItem(STORAGE_ORDERS);location.reload();}
