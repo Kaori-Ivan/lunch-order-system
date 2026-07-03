@@ -1,3 +1,4 @@
+console.log("新版 app.js 已載入");
 const STORAGE_USER="lunch_user_profile_test_v11";
 const STORAGE_ORDERS="lunch_orders_test_v11";
 const MOCK_USERS=[
@@ -129,7 +130,7 @@ async function verifyEmployee() {
       notice(
         "verifyNotice",
         "danger",
-        `您目前隸屬於「${u.dept}／${u.group}」，但目前掃描的是「${state.dept}／${state.group}」。請掃描正確的部門 QR Code。`
+        `您目前隸屬於「${u.dept}／${u.group}」，請掃描正確的部門 QR Code。`
       );
       clearSavedUser();
       return;
@@ -156,8 +157,8 @@ async function verifyEmployee() {
     notice("verifyNotice", "success", "驗證成功，已自動帶入身分：" + state.user.role + "。");
 
     setHTML("verifyActions", `
-      <button class="btn primary" id="btnConfirmProfile">確認並開始點餐</button>
-      <button class="btn secondary" id="btnWrongProfile">資料錯誤，重新輸入</button>
+      <button class="btn primary" id="btnConfirmProfile">開始點餐</button>
+      <button class="btn secondary" id="btnWrongProfile">重建使用者</button>
     `);
 
     on("btnConfirmProfile", "click", confirmProfile);
