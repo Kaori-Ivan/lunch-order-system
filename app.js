@@ -38,7 +38,7 @@ function saveOrders(o){localStorage.setItem(STORAGE_ORDERS,JSON.stringify(o));}
 function saveUser(u){const safe={userId:u.userId,empId:u.empId,name:u.name,nameMasked:u.nameMasked,nameEncoded:u.nameEncoded,role:u.role};localStorage.setItem(STORAGE_USER,JSON.stringify(safe));}
 function getSavedUser(){try{return JSON.parse(localStorage.getItem(STORAGE_USER)||"null");}catch{return null;}}
 function clearSavedUser(){localStorage.removeItem(STORAGE_USER);}
-function mockApi(p){return new Promise(resolve=>setTimeout(()=>{if(p.action==="verifyUser"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name&&x.enabled);if(!u){resolve({success:false,message:"資料錯誤：工號或姓名不相符。"});return;}if(u.dept!==p.dept||u.group!==p.group){resolve({success:false,message:`您目前隸屬於「${u.dept}／${u.group}」，但目前掃描的是「${p.dept}／${p.group}」。請掃描正確的部門 QR Code。`});return;}resolve({success:true,message:"驗證成功",user:u});return;}if(p.action==="getOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const key=`${todayKey()}_${u?.userId}`;const order=getOrders()[key]||null;resolve({success:true,hasOrder:!!order,order});return;}if(p.action==="saveOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const order={date:todayKey(),userId:u.userId,empId:u.empId,name:u.name,dept:u.dept,group:u.group,role:u.role,meatQty:Number(p.meatQty||0),vegQty:Number(p.vegQty||0),guestQty:Number(p.guestQty||0),updatedAt:new Date().toLocaleString("zh-TW")};const orders=getOrders();orders[`${todayKey()}_${u.userId}`]=order;saveOrders(orders);resolve({success:true,message:"訂單已儲存",order});return;}resolve({success:false,message:"未知的 action"});},300));}
+function mockApi(p){return new Promise(resolve=>setTimeout(()=>{if(p.action==="verifyUser"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name&&x.enabled);if(!u){resolve({success:false,message:"資料錯誤：工號或姓名不相符。"});return;}if(u.dept!==p.dept||u.group!==p.group){resolve({success:false,message: `您目前隸屬於【${u.dept}／${u.group}】，請掃描所屬部門 QR Code。`});return;}resolve({success:true,message:"驗證成功",user:u});return;}if(p.action==="getOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const key=`${todayKey()}_${u?.userId}`;const order=getOrders()[key]||null;resolve({success:true,hasOrder:!!order,order});return;}if(p.action==="saveOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const order={date:todayKey(),userId:u.userId,empId:u.empId,name:u.name,dept:u.dept,group:u.group,role:u.role,meatQty:Number(p.meatQty||0),vegQty:Number(p.vegQty||0),guestQty:Number(p.guestQty||0),updatedAt:new Date().toLocaleString("zh-TW")};const orders=getOrders();orders[`${todayKey()}_${u.userId}`]=order;saveOrders(orders);resolve({success:true,message:"訂單已儲存",order});return;}resolve({success:false,message:"未知的 action"});},300));}
 async function apiPost(payload){if(APP_CONFIG.USE_MOCK_API)return mockApi(payload);const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),APP_CONFIG.API_TIMEOUT_MS||30000);try{const res=await fetch(APP_CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:controller.signal});return await res.json();}finally{clearTimeout(timeout);}}
 function setButtonLoading(id,text,on){const btn=$(id);if(!btn)return;if(on){btn.dataset.originalText=btn.textContent;btn.textContent=text;btn.disabled=true;}else{btn.textContent=btn.dataset.originalText||btn.textContent;btn.disabled=false;}}
 function setBusy(message) {
@@ -126,7 +126,7 @@ async function verifyEmployee() {
 
     const u = result.user;
 
-    if (u.dept !== state.dept || u.group !== state.group) {
+    /* if (u.dept !== state.dept || u.group !== state.group) {
       notice(
         "verifyNotice",
         "danger",
@@ -134,7 +134,7 @@ async function verifyEmployee() {
       );
       clearSavedUser();
       return;
-    }
+    } */
 
     state.user = {
       userId: u.userId,
@@ -201,7 +201,7 @@ async function confirmProfile() {
       $("savedUserBox").classList.add("hidden");
       $("verifyForm").classList.remove("hidden");
 
-      notice("verifyNotice", "danger", result.message || "使用者資料與目前部門不相符，請重新輸入。");
+      notice("verifyNotice", "danger", result.message );
 
       showVerifyForm();
       showPage("verify");
@@ -218,17 +218,166 @@ async function confirmProfile() {
     clearBusy();
   }
 }
-async function checkTodayOrder(){if(!state.user)return;setHTML("checkBox",profileHTML(state.user));setHTML("checkActions","");try{const result=await apiPost({action:"getOrder",empId:state.user.empId,name:state.user.name,dept:state.dept,group:state.group});state.existingOrder=result.hasOrder?result.order:null;if(result.hasOrder){const old=result.order;setHTML("checkBox",profileHTML(state.user)+`<div class="notice warning">今日已有訂單：葷 ${old.meatQty}、素 ${old.vegQty}、外賓 ${old.guestQty}。修改後會覆蓋原資料。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnEditOrder">修改今日訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnEditOrder", "click", () => {
-  if (state.isBusy) return;
-  startOrder(true);
-});}else{setHTML("checkBox",profileHTML(state.user)+`<div class="notice success">今日尚未建立訂單，可建立新訂單。</div>`);setHTML("checkActions",`<button class="btn primary" id="btnNewOrder">建立新訂單</button><button class="btn ghost" id="btnBackVerify">返回</button>`);on("btnNewOrder", "click", () => {
-  if (state.isBusy) return;
-  startOrder(false);
-});}on("btnBackVerify","click",()=>showPage("verify"));}catch(e){console.error(e);setHTML("checkBox",profileHTML(state.user)+`<div class="notice danger">無法連線至訂餐系統伺服器，請稍後再試。</div>`);}}
+async function checkTodayOrder() {
+  if (!state.user) return;
+
+  setHTML("checkBox", `
+    <div class="order-status-card loading">
+      <div class="status-icon">⏳</div>
+      <h3>正在確認今日訂單</h3>
+      <p>系統正在查詢今日是否已有訂單...</p>
+    </div>
+  `);
+
+  setHTML("checkActions", "");
+
+  try {
+    const result = await apiPost({
+      action: "getOrder",
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.dept,
+      group: state.group
+    });
+
+    state.existingOrder = result.hasOrder ? result.order : null;
+
+    if (result.hasOrder) {
+      const old = result.order;
+
+      setHTML("checkBox", `
+        <div class="order-status-card has-order">
+          <div class="status-icon">🍱</div>
+          <h3>今日已有訂單</h3>
+          <p>修改後將覆蓋原訂單，不會新增第二筆。</p>
+
+          <div class="order-count-grid">
+            <div class="count-item meat">
+              <span>葷食</span>
+              <strong>${old.meatQty}</strong>
+              <small>份</small>
+            </div>
+            <div class="count-item veg">
+              <span>素食</span>
+              <strong>${old.vegQty}</strong>
+              <small>份</small>
+            </div>
+            <div class="count-item guest">
+              <span>外賓</span>
+              <strong>${old.guestQty}</strong>
+              <small>人</small>
+            </div>
+          </div>
+        </div>
+      `);
+
+      setHTML("checkActions", `
+        <button class="btn primary full-mobile" id="btnEditOrder">修改今日訂單</button>
+        <button class="btn ghost full-mobile" id="btnBackVerify">返回</button>
+      `);
+
+      on("btnEditOrder", "click", () => {
+        if (state.isBusy) return;
+        startOrder(true);
+      });
+
+    } else {
+      setHTML("checkBox", `
+        <div class="order-status-card no-order">
+          <div class="status-icon">✅</div>
+          <h3>今日尚未建立訂單</h3>
+          <p>目前沒有今日訂單，可以建立新訂單。</p>
+        </div>
+      `);
+
+      setHTML("checkActions", `
+        <button class="btn primary full-mobile" id="btnNewOrder">建立</button>
+        <button class="btn ghost full-mobile" id="btnBackVerify">返回</button>
+      `);
+
+      on("btnNewOrder", "click", () => {
+        if (state.isBusy) return;
+        startOrder(false);
+      });
+    }
+
+    on("btnBackVerify", "click", () => showPage("verify"));
+
+  } catch (e) {
+    console.error(e);
+
+    setHTML("checkBox", `
+      <div class="order-status-card error">
+        <div class="status-icon">⚠️</div>
+        <h3>查詢失敗</h3>
+        <p>無法連線至訂餐系統，請稍後再試。</p>
+      </div>
+    `);
+  }
+}
 function getLimit(){return state.user.role==="主管"||state.user.role==="助理"?5:1;}
-function startOrder(isEdit){if(!guardOpen())return;const old=state.existingOrder,limit=getLimit();setText("orderTitle",isEdit?"修改今日訂單":"建立新訂單");setHTML("ruleBox",`目前身分：${state.user.role}｜警戒值：${limit}<br>葷食 + 素食至少 1 份，且不可超過警戒值。一般員工不可填寫外賓。`);$("meatQty").value=old?old.meatQty:0;$("vegQty").value=old?old.vegQty:0;$("guestQty").value=old?old.guestQty:0;$("guestQty").disabled=state.user.role==="一般員工";if($("guestQty").disabled)$("guestQty").value=0;validateOrder();showPage("order");}
+function startOrder(isEdit){
+  if(!guardOpen()) return;
+
+  const old = state.existingOrder;
+
+  setText("orderTitle", isEdit ? "修改今日訂單" : "建立新訂單");
+
+  // 不顯示提醒文字
+  setHTML("ruleBox", "");
+
+  $("meatQty").value = old ? old.meatQty : 0;
+  $("vegQty").value = old ? old.vegQty : 0;
+  $("guestQty").value = old ? old.guestQty : 0;
+
+  $("guestQty").disabled = state.user.role === "一般員工";
+
+  if ($("guestQty").disabled) {
+    $("guestQty").value = 0;
+  }
+
+  validateOrder();
+  showPage("order");
+}
 function num(id){return Math.max(0,Number($(id).value||0));}
-function validateOrder(){const meat=num("meatQty"),veg=num("vegQty"),guest=num("guestQty"),limit=getLimit();if(meat+veg<1){notice("orderNotice","danger","葷食 + 素食至少需要填寫 1 份。");return false;}if(meat+veg>limit){notice("orderNotice","danger",`葷食 + 素食不可超過警戒值 ${limit}。目前合計 ${meat+veg}。`);return false;}if(state.user.role==="一般員工"&&guest>0){notice("orderNotice","danger","一般員工不可填寫外賓數量。");return false;}notice("orderNotice","success","目前訂單符合規則。");return true;}
+function validateOrder() {
+
+    const meat = num("meatQty");
+    const veg = num("vegQty");
+    const guest = num("guestQty");
+    const limit = getLimit();
+
+    if (meat + veg < 1) {
+        notice(
+            "orderNotice",
+            "danger",
+            "請至少選擇 1 份餐點。"
+        );
+        return false;
+    }
+
+    if (meat + veg > limit) {
+        notice(
+            "orderNotice",
+            "danger",
+            `葷食 + 素食不可超過 ${limit} 份。`
+        );
+        return false;
+    }
+
+    if (state.user.role === "一般員工" && guest > 0) {
+        notice(
+            "orderNotice",
+            "danger",
+            "一般員工不可填寫外賓數量。"
+        );
+        return false;
+    }
+
+    // 驗證成功，不顯示任何訊息
+    setHTML("orderNotice", "");
+    return true;
+}
 function statCard(type,icon,label,value,unit){return `<div class="stat-card ${type}"><div class="stat-label">${icon} ${label}</div><div class="stat-number">${value}</div><div class="stat-unit">${unit}</div></div>`;}
 async function buildReview() {
   if (!guardOpen()) return;
