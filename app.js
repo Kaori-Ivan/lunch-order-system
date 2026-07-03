@@ -295,7 +295,6 @@ async function checkTodayOrder() {
         <div class="order-status-card no-order">
           <div class="status-icon">✅</div>
           <h3>今日尚未建立訂單</h3>
-          <p>目前沒有今日訂單，可以建立新訂單。</p>
         </div>
       `);
 
@@ -416,18 +415,6 @@ async function buildReview() {
     if (!ok) return;
   }
 
-  const total =
-    state.pendingOrder.meatQty +
-    state.pendingOrder.vegQty +
-    state.pendingOrder.guestQty;
-
-  setHTML("reviewSummary", [
-    statCard("meat", "🥩", "葷食", state.pendingOrder.meatQty, "份"),
-    statCard("veg", "🌱", "素食", state.pendingOrder.vegQty, "份"),
-    statCard("guest", "👥", "外賓", state.pendingOrder.guestQty, "人"),
-    statCard("total", "📋", "合計總數", total, "總數")
-  ].join(""));
-
   setHTML("reviewUser", [
     row("工號", state.user.empId),
     row("姓名", state.user.name),
@@ -476,20 +463,14 @@ async function submitOrder() {
 
     const order = result.order || state.pendingOrder;
 
-    setHTML("doneBox", [
-      row("日期", order.date || state.pendingOrder.date),
-      row("工號", order.empId || state.user.empId),
-      row("姓名", order.name || state.user.name),
-      row("部門", order.dept || state.user.dept),
-      row("組別", order.group || state.user.group),
-      row("身分", order.role || state.user.role),
-      row("葷食", order.meatQty ?? state.pendingOrder.meatQty),
-      row("素食", order.vegQty ?? state.pendingOrder.vegQty),
-      row("外賓", order.guestQty ?? state.pendingOrder.guestQty),
-      row("送出時間", order.updatedAt || new Date().toLocaleString("zh-TW"))
-    ].join(""));
+    setHTML("doneBox", "");
 
     showPage("done");
+
+    // 10 秒後自動回首頁
+    setTimeout(() => {
+        goHome();
+    }, 10000);
 
   } catch (e) {
     console.error(e);

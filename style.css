@@ -255,3 +255,92 @@
     font-size:15px;
     color:#64748b;
 }
+@media (max-width: 600px) {
+  #page-order {
+    padding: 18px;
+  }
+
+  #page-order .eyebrow {
+    margin-bottom: 4px;
+    font-size: 12px;
+  }
+
+  #page-order h2 {
+    margin-bottom: 14px;
+    font-size: 28px;
+  }
+
+  #page-order .qty-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  #page-order .qty-card {
+    padding: 14px 8px;
+    border-radius: 18px;
+    text-align: center;
+  }
+
+  #page-order .qty-card span {
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+
+  #page-order .qty-card input {
+    height: 58px;
+    padding: 0;
+    font-size: 34px;
+    border-radius: 14px;
+  }
+
+  #page-order .qty-card small {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+  }
+
+  #orderNotice {
+    min-height: 0;
+  }
+
+  #orderNotice .notice {
+    margin: 14px 0 0;
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+
+  #page-order .actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  #page-order .btn {
+    height: 54px;
+    border-radius: 16px;
+    font-size: 17px;
+  }
+}
+#page-done{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    min-height:70vh;
+}
+
+#page-done .hero{
+    font-size:72px;
+    margin-bottom:16px;
+}
+
+#page-done h2{
+    margin-bottom:10px;
+}
+
+#page-done .desc{
+    margin-bottom:28px;
+}
