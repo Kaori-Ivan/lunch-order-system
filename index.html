@@ -35,6 +35,40 @@
   <div class="brand"><div class="logo">L</div><div><h1>企業午餐訂餐系統</h1>Test V1111</div></div>
   <div class="status"><div id="todayText"></div><strong id="systemStatusText"></strong></div>
 </header>
+<div class="mobile-stepper">
+  <div class="progress-step" data-step="verify">
+    <div class="circle">1</div>
+    <span>驗證</span>
+  </div>
+
+  <div class="progress-line"></div>
+
+  <div class="progress-step" data-step="check">
+    <div class="circle">2</div>
+    <span>訂單</span>
+  </div>
+
+  <div class="progress-line"></div>
+
+  <div class="progress-step" data-step="order">
+    <div class="circle">3</div>
+    <span>點餐</span>
+  </div>
+
+  <div class="progress-line"></div>
+
+  <div class="progress-step" data-step="review">
+    <div class="circle">4</div>
+    <span>確認</span>
+  </div>
+
+  <div class="progress-line"></div>
+
+  <div class="progress-step" data-step="done">
+    <div class="circle">5</div>
+    <span>完成</span>
+  </div>
+</div>
 <section class="layout">
 <aside class="steps">
   <div class="step active" data-step="scan"><span>1</span>部門 QRCode</div>
@@ -78,22 +112,16 @@
   <div class="notice warning"><strong>送出前提醒</strong>　若資料有誤，請點選「返回修改」。</div>
   <div class="actions split"><button id="btnEdit" class="btn ghost">← 返回修改</button><button id="btnSubmit" class="btn primary">確認送出</button></div>
 </section>
-<section id="page-done" class="page hidden"><section id="page-done" class="page hidden">
-
+<section id="page-done" class="page hidden">
+  <div class="done-simple">
     <div class="hero">✅</div>
-
     <h2>訂單已送出</h2>
-
-    <p class="desc">
-        感謝您的訂餐，10 秒後將自動返回首頁。
-    </p>
+    <p>10 秒後將自動返回首頁</p>
 
     <div class="actions">
-        <button id="btnHome" class="btn primary">
-            回到首頁
-        </button>
+      <button id="btnHome" class="btn primary">回到首頁</button>
     </div>
-
+  </div>
 </section>
 </main><script src="config.js"></script><script src="app.js"></script>
 </body></html>
