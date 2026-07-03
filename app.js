@@ -35,10 +35,22 @@ function maskName(n){if(!n)return"";if(n.length<=2)return n[0]+"○";return n[0]
 function encodeName(n){return btoa(unescape(encodeURIComponent(n)));}
 function getOrders(){try{return JSON.parse(localStorage.getItem(STORAGE_ORDERS)||"{}");}catch{return {};}}
 function saveOrders(o){localStorage.setItem(STORAGE_ORDERS,JSON.stringify(o));}
-function saveUser(u){const safe={userId:u.userId,empId:u.empId,name:u.name,nameMasked:u.nameMasked,nameEncoded:u.nameEncoded,role:u.role};localStorage.setItem(STORAGE_USER,JSON.stringify(safe));}
-function getSavedUser(){try{return JSON.parse(localStorage.getItem(STORAGE_USER)||"null");}catch{return null;}}
+function saveUser(u){
+  const safe = {
+    userId: u.userId,
+    empId: u.empId,
+    name: u.name,
+    nameMasked: u.nameMasked,
+    nameEncoded: u.nameEncoded,
+    dept: u.dept,
+    group: u.group,
+    role: u.role
+  };
+
+  localStorage.setItem(STORAGE_USER, JSON.stringify(safe));
+}function getSavedUser(){try{return JSON.parse(localStorage.getItem(STORAGE_USER)||"null");}catch{return null;}}
 function clearSavedUser(){localStorage.removeItem(STORAGE_USER);}
-function mockApi(p){return new Promise(resolve=>setTimeout(()=>{if(p.action==="verifyUser"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name&&x.enabled);if(!u){resolve({success:false,message:"資料錯誤：工號或姓名不相符。"});return;}if(u.dept!==p.dept||u.group!==p.group){resolve({success:false,message: `您目前隸屬於【${u.dept}／${u.group}】，請掃描所屬部門 QR Code。`});return;}resolve({success:true,message:"驗證成功",user:u});return;}if(p.action==="getOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const key=`${todayKey()}_${u?.userId}`;const order=getOrders()[key]||null;resolve({success:true,hasOrder:!!order,order});return;}if(p.action==="saveOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const order={date:todayKey(),userId:u.userId,empId:u.empId,name:u.name,dept:u.dept,group:u.group,role:u.role,meatQty:Number(p.meatQty||0),vegQty:Number(p.vegQty||0),guestQty:Number(p.guestQty||0),updatedAt:new Date().toLocaleString("zh-TW")};const orders=getOrders();orders[`${todayKey()}_${u.userId}`]=order;saveOrders(orders);resolve({success:true,message:"訂單已儲存",order});return;}resolve({success:false,message:"未知的 action"});},300));}
+function mockApi(p){return new Promise(resolve=>setTimeout(()=>{if(p.action==="verifyUser"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name&&x.enabled);if(!u){resolve({success:false,message:"資料錯誤：工號或姓名不相符。"});return;}if(u.dept!==p.dept||u.group!==p.group){resolve({success:false,message: `隸屬於【${u.dept}／${u.group}】。`});return;}resolve({success:true,message:"驗證成功",user:u});return;}if(p.action==="getOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const key=`${todayKey()}_${u?.userId}`;const order=getOrders()[key]||null;resolve({success:true,hasOrder:!!order,order});return;}if(p.action==="saveOrder"){const u=MOCK_USERS.find(x=>x.empId===p.empId&&x.name===p.name);const order={date:todayKey(),userId:u.userId,empId:u.empId,name:u.name,dept:u.dept,group:u.group,role:u.role,meatQty:Number(p.meatQty||0),vegQty:Number(p.vegQty||0),guestQty:Number(p.guestQty||0),updatedAt:new Date().toLocaleString("zh-TW")};const orders=getOrders();orders[`${todayKey()}_${u.userId}`]=order;saveOrders(orders);resolve({success:true,message:"訂單已儲存",order});return;}resolve({success:false,message:"未知的 action"});},300));}
 async function apiPost(payload){if(APP_CONFIG.USE_MOCK_API)return mockApi(payload);const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),APP_CONFIG.API_TIMEOUT_MS||30000);try{const res=await fetch(APP_CONFIG.API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload),signal:controller.signal});return await res.json();}finally{clearTimeout(timeout);}}
 function setButtonLoading(id,text,on){const btn=$(id);if(!btn)return;if(on){btn.dataset.originalText=btn.textContent;btn.textContent=text;btn.disabled=true;}else{btn.textContent=btn.dataset.originalText||btn.textContent;btn.disabled=false;}}
 function setBusy(message) {
@@ -89,7 +101,14 @@ function showConfirmDialog({
     $("dialogCancel").onclick = () => close(false);
   });
 }
-function scanQRCode(){if(!guardOpen())return;state.dept=String($("deptSelect")?.value||"").trim();state.group=String($("groupSelect")?.value||"").trim();if(!state.dept||!state.group){showAlert("未取得部門或組別，請重新掃描 QR Code。");showPage("scan");return;}$("deptReadonly").value=state.dept;$("groupReadonly").value=state.group;clearNotice("verifyNotice");const saved=getSavedUser();if(saved){state.user={...saved,dept:state.dept,group:state.group};$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));setText("verifyDesc","系統已讀取此裝置上次使用者資料，請確認是否正確。");setHTML("verifyActions",`<button class="btn primary" id="btnStartSaved">確認並開始點餐</button><button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>`);on("btnStartSaved","click",confirmProfile);on("btnWrongSaved","click",resetVerify);}else{showVerifyForm();}showPage("verify");}
+function scanQRCode(){if(!guardOpen())return;state.dept=String($("deptSelect")?.value||"").trim();state.group=String($("groupSelect")?.value||"").trim();if(!state.dept||!state.group){showAlert("未取得部門或組別，請重新掃描 QR Code。");showPage("scan");return;}$("deptReadonly").value=state.dept;$("groupReadonly").value=state.group;clearNotice("verifyNotice");const saved=getSavedUser();if(saved){
+  state.user = saved;
+
+  state.dept = saved.dept;
+  state.group = saved.group;
+
+  $("deptReadonly").value = saved.dept;
+  $("groupReadonly").value = saved.group;$("verifyForm").classList.add("hidden");$("savedUserBox").classList.remove("hidden");setHTML("savedUserBox",profileHTML(state.user));setText("verifyDesc","系統已讀取此裝置上次使用者資料，請確認是否正確。");setHTML("verifyActions",`<button class="btn primary" id="btnStartSaved">確認並開始點餐</button><button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>`);on("btnStartSaved","click",confirmProfile);on("btnWrongSaved","click",resetVerify);}else{showVerifyForm();}showPage("verify");}
 function showVerifyForm(){$("verifyForm").classList.remove("hidden");$("savedUserBox").classList.add("hidden");setText("verifyDesc","請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。");setHTML("verifyActions",`<button class="btn primary" id="btnVerify">查詢</button><button class="btn ghost" id="btnBackToScan">返回</button>`);on("btnVerify","click",verifyEmployee);on("btnBackToScan","click",()=>showPage("scan"));}
 function resetVerify(){clearSavedUser();state.user=null;$("empId").value="";$("empName").value="";clearNotice("verifyNotice");showVerifyForm();}
 async function verifyEmployee() {
@@ -125,16 +144,6 @@ async function verifyEmployee() {
     }
 
     const u = result.user;
-
-    /* if (u.dept !== state.dept || u.group !== state.group) {
-      notice(
-        "verifyNotice",
-        "danger",
-        `您目前隸屬於「${u.dept}／${u.group}」，請掃描正確的部門 QR Code。`
-      );
-      clearSavedUser();
-      return;
-    } */
 
     state.user = {
       userId: u.userId,
@@ -249,7 +258,7 @@ async function checkTodayOrder() {
         <div class="order-status-card has-order">
           <div class="status-icon">🍱</div>
           <h3>今日已有訂單</h3>
-          <p>修改後將覆蓋原訂單，不會新增第二筆。</p>
+          <p>修改後將覆蓋原訂單。</p>
 
           <div class="order-count-grid">
             <div class="count-item meat">
@@ -272,7 +281,7 @@ async function checkTodayOrder() {
       `);
 
       setHTML("checkActions", `
-        <button class="btn primary full-mobile" id="btnEditOrder">修改今日訂單</button>
+        <button class="btn primary full-mobile" id="btnEditOrder">修改訂單</button>
         <button class="btn ghost full-mobile" id="btnBackVerify">返回</button>
       `);
 
@@ -360,7 +369,7 @@ function validateOrder() {
         notice(
             "orderNotice",
             "danger",
-            `葷食 + 素食不可超過 ${limit} 份。`
+            `葷食 或 素食不可超過 ${limit} 份。`
         );
         return false;
     }
@@ -504,7 +513,46 @@ async function clearLocalData(){const ok = await showConfirmDialog({
 if (!ok) return;clearSavedUser();localStorage.removeItem(STORAGE_ORDERS);location.reload();}
 function bindEvents(){on("btnScan","click",scanQRCode);on("btnClear","click",clearLocalData);on("btnBackToCheck","click",()=>guardOpen()&&showPage("check"));on("btnReview","click",buildReview);on("btnEdit","click",()=>guardOpen()&&showPage("order"));on("btnSubmit","click",submitOrder);on("btnHome","click",goHome);["meatQty","vegQty","guestQty"].forEach(id=>on(id,"input",validateOrder));}
 window.addEventListener("error",e=>{showAlert("系統錯誤："+e.message);console.error(e.error||e.message);});
-document.addEventListener("DOMContentLoaded",()=>{bindEvents();updateHeader();showPage(isSystemClosed()?"closed":"scan");});
+document.addEventListener("DOMContentLoaded", () => {
+  bindEvents();
+  updateHeader();
+
+  if (isSystemClosed()) {
+    showPage("closed");
+    return;
+  }
+
+  const saved = getSavedUser();
+
+  if (saved && saved.empId && saved.name && saved.dept && saved.group) {
+    state.user = saved;
+    state.dept = saved.dept;
+    state.group = saved.group;
+
+    $("deptReadonly").value = saved.dept;
+    $("groupReadonly").value = saved.group;
+
+    $("verifyForm").classList.add("hidden");
+    $("savedUserBox").classList.remove("hidden");
+
+    setHTML("savedUserBox", profileHTML(state.user));
+
+    setText("verifyDesc", "系統已帶入此裝置儲存的使用者資料，請確認後開始點餐。");
+
+    setHTML("verifyActions", `
+      <button class="btn primary" id="btnStartSaved">開始點餐</button>
+      <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
+    `);
+
+    on("btnStartSaved", "click", confirmProfile);
+    on("btnWrongSaved", "click", resetVerify);
+
+    showPage("verify");
+    return;
+  }
+
+  showPage("scan");
+});
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
   if (!btn) return;
