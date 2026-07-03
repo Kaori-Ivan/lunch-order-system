@@ -462,3 +462,109 @@
     margin:0 auto 20px;
   }
 }
+@media (max-width: 600px) {
+  #page-review {
+    padding: 18px;
+  }
+
+  #page-review h2 {
+    font-size: 28px;
+    margin-bottom: 14px;
+  }
+
+  #page-review .desc {
+    display: none;
+  }
+
+  #page-review .two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  #page-review .panel {
+    padding: 16px 18px;
+    border-radius: 18px;
+  }
+
+  #page-review .panel-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  #page-review .row {
+    padding: 8px 0;
+    font-size: 16px;
+  }
+
+  #page-review .actions {
+    margin-top: 16px;
+  }
+
+  #page-review .btn {
+    height: 54px;
+    font-size: 17px;
+  }
+}
+@media (max-width: 600px) {
+
+  #page-review {
+    padding: 16px;
+  }
+
+  #page-review .review-hero {
+    margin-bottom: 14px;
+  }
+
+  #page-review h2 {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  #page-review .desc,
+  #page-review .pill {
+    display: none;
+  }
+
+  #page-review .two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  #page-review .panel {
+    padding: 14px 16px;
+    border-radius: 16px;
+  }
+
+  #page-review .panel-title {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  #page-review .row {
+    padding: 7px 0;
+    font-size: 15px;
+  }
+
+  #page-review .row strong {
+    font-size: 15px;
+  }
+
+  #page-review .notice {
+    display: none;
+  }
+
+  #page-review .actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  #page-review .btn {
+    height: 52px;
+    font-size: 16px;
+    border-radius: 15px;
+  }
+}

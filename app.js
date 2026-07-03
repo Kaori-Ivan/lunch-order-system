@@ -366,8 +366,21 @@ function scanQRCode() {
   if (saved) {
     state.user = saved;
 
-    state.dept = saved.dept;
-    state.group = saved.group;
+    const qrDept = state.dept;
+    const qrGroup = state.group;
+
+    if (saved.dept !== qrDept || saved.group !== qrGroup) {
+
+      notice(
+        "verifyNotice",
+        "danger",
+        `您目前屬於【${saved.dept}-${saved.group}】，請掃描正確的部門 QR Code。`
+      );
+
+    return;
+}
+
+state.user = saved;
 
     $("deptReadonly").value = saved.dept;
     $("groupReadonly").value = saved.group;
@@ -652,7 +665,7 @@ function startOrder(isEdit) {
 
   const old = state.existingOrder;
 
-  setText("orderTitle", isEdit ? "修改今日訂單" : "建立新訂單");
+  setText("orderTitle", isEdit ? "編輯訂單" : "建立新訂單");
 
   // 不顯示提醒文字
   setHTML("ruleBox", "");
@@ -685,7 +698,7 @@ function validateOrder() {
   }
 
   if (meat + veg > limit) {
-    notice("orderNotice", "danger", `葷食 或 素食不可超過 ${limit} 份。`);
+    notice("orderNotice", "danger", `葷食 或 素食合計不可超過 ${limit} 份。`);
     return false;
   }
 
@@ -864,14 +877,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setText(
       "verifyDesc",
-      "系統已帶入此裝置儲存的使用者資料，請確認後開始點餐。",
+      "系統已自動帶入此裝置儲存的使用者資料。",
     );
 
     setHTML(
       "verifyActions",
       `
       <button class="btn primary" id="btnStartSaved">開始點餐</button>
-      <button class="btn secondary" id="btnWrongSaved">資料錯誤，重新輸入</button>
+      <button class="btn secondary" id="btnWrongSaved">重建使用者</button>
     `,
     );
 
