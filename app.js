@@ -172,6 +172,15 @@ function profileHTML(u) {
     row("身分", u.role),
   ].join("");
 }
+function renderSavedUser(u) {
+  if (!u) return;
+
+  setText("showDept", u.dept);
+  setText("showGroup", u.group);
+  setText("showEmpId", u.empId);
+  setText("showEmpName", u.name);
+  setText("showRole", u.role);
+}
 function maskName(n) {
   if (!n) return "";
   if (n.length <= 2) return n[0] + "○";
@@ -386,7 +395,7 @@ state.user = saved;
     $("groupReadonly").value = saved.group;
     $("verifyForm").classList.add("hidden");
     $("savedUserBox").classList.remove("hidden");
-    setHTML("savedUserBox", profileHTML(state.user));
+    renderSavedUser(state.user);
     setText("verifyDesc", "系統已讀取此裝置上次使用者資料，請確認是否正確。");
     setHTML(
       "verifyActions",
@@ -474,8 +483,7 @@ async function verifyEmployee() {
     $("verifyForm").classList.add("hidden");
     $("savedUserBox").classList.remove("hidden");
 
-    setHTML("savedUserBox", profileHTML(state.user));
-
+    renderSavedUser(state.user);
     notice(
       "verifyNotice",
       "success",
@@ -873,8 +881,7 @@ document.addEventListener("DOMContentLoaded", () => {
     $("verifyForm").classList.add("hidden");
     $("savedUserBox").classList.remove("hidden");
 
-    setHTML("savedUserBox", profileHTML(state.user));
-
+    renderSavedUser(state.user);
     setText(
       "verifyDesc",
       "系統已自動帶入此裝置儲存的使用者資料。",

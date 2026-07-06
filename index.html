@@ -32,8 +32,18 @@
 </div>
 <main class="app">
 <header class="topbar">
-  <div class="brand"><div class="logo">L</div><div><h1>企業午餐訂餐系統</h1>Test V1111</div></div>
-  <div class="status"><div id="todayText"></div><strong id="systemStatusText"></strong></div>
+  <div class="brand">
+    <div class="logo">🍱</div>
+    <div class="brand-text">
+      <h1>午餐管理系統</h1>
+      <span>Test V1111</span>
+    </div>
+  </div>
+
+  <div class="status">
+    <div id="todayText"></div>
+    <strong id="systemStatusText"></strong>
+  </div>
 </header>
 <div class="mobile-stepper">
   <div class="progress-step" data-step="verify">
@@ -91,8 +101,28 @@
 </section>
 <section id="page-verify" class="page hidden">
   <p id="verifyDesc" class="desc">請輸入工號與姓名，系統會比對資料庫。</p>
-  <div id="savedUserBox" class="info-card hidden"></div>
-  <div id="verifyForm" class="form-grid">
+<div id="savedUserBox" class="info-card hidden">
+  <div class="row">
+    <span>部門</span>
+    <strong id="showDept"></strong>
+  </div>
+  <div class="row">
+    <span>組別</span>
+    <strong id="showGroup"></strong>
+  </div>
+  <div class="row">
+    <span>工號</span>
+    <strong id="showEmpId"></strong>
+  </div>
+  <div class="row">
+    <span>姓名</span>
+    <strong id="showEmpName"></strong>
+  </div>
+  <div class="row">
+    <span>身分</span>
+    <strong id="showRole"></strong>
+  </div>
+</div>  <div id="verifyForm" class="form-grid">
     <label><span>工號</span><input id="empId" placeholder="例如 C5454"></label>
     <label><span>姓名</span><input id="empName" placeholder="例如 KOOK"></label>
     <label><span>部門</span><input id="deptReadonly" readonly></label>
@@ -102,7 +132,7 @@
 </section>
 <section id="page-check" class="page hidden"><div id="checkBox"></div><div id="checkActions" class="actions"></div></section>
 <section id="page-order" class="page hidden">
-  <div id="ruleBox"></div>
+  <h2 id="orderTitle">填寫訂單</h2><div id="ruleBox"></div>
   <div class="qty-grid"><label class="qty-card meat"><span>葷食</span><input id="meatQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card veg"><span>素食</span><input id="vegQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card guest"><span>外賓</span><input id="guestQty" type="number" min="0" value="0"><small>人</small></label></div>
   <div id="orderNotice"></div><div class="actions"><button id="btnBackToCheck" class="btn ghost">返回</button><button id="btnReview" class="btn primary">下一步</button></div>
 </section>
@@ -121,5 +151,12 @@
     </div>
   </div>
 </section>
-</main><script src="config.js"></script><script src="app.js"></script>
-</body></html>
+
+</section> <!-- content 結束 -->
+</section> <!-- layout 結束 -->
+</main>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
