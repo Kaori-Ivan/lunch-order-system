@@ -888,7 +888,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderSavedUser(state.user);
     setText(
       "verifyDesc",
-      "系統已自動帶入此裝置儲存的使用者資料。",
+      "已自動帶入此裝置儲存的使用者資料。",
     );
 
     setHTML(
