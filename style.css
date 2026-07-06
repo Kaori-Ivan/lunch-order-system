@@ -628,29 +628,31 @@
 ========================= */
 
 .topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:8px;
-  padding:8px 10px;
-  background:#ffffff;
-  border:1px solid #edf2f7;
-  border-radius:14px;
-  box-shadow:0 8px 18px rgba(15,23,42,.06);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;              
+    gap:12px;                
+    margin-bottom:12px;      
+    padding:10px 16px;       
+    background:#ffffff;
+    border:1px solid #edf2f7;
+    border-radius:14px;
+    box-shadow:0 8px 18px rgba(15,23,42,.06);
 }
 
-.header-left{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  min-width:0;
+ .header-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    flex:1;
 }
 
 .logo{
-  width:32px;
-  height:32px;
-  border-radius:10px;
+  width:42px;
+  height:42px;
+  border-radius:12px;
   background:#2563eb;
   color:#ffffff;
   display:flex;
@@ -666,7 +668,7 @@
 
 .header-title h1{
   margin:0;
-  font-size:15px;
+  font-size:17px;
   line-height:1.15;
   font-weight:800;
   color:#071326;
@@ -678,7 +680,7 @@
 .header-title span{
   display:block;
   margin-top:2px;
-  font-size:10px;
+  font-size:13px;
   line-height:1;
   color:#64748b;
   white-space:nowrap;
@@ -687,12 +689,14 @@
 .header-date{
   display:flex;
   align-items:center;
-  gap:3px;
+  gap:6px;
   flex-shrink:0;
-  font-size:11px;
+  font-size:15px;
   font-weight:700;
   color:#475569;
   white-space:nowrap;
+  min-width:180px;
+  justify-content:flex-end;
 }
 
 .calendar{
