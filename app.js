@@ -65,15 +65,27 @@ function isSystemClosed() {
   return n >= d;
 }
 function updateHeader() {
-  setText(
-    "todayText",
-    new Date().toLocaleDateString("zh-TW", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      weekday: "short",
-    })
-  );
+
+    const isMobile = window.innerWidth <= 768;
+
+    const options = isMobile
+        ? {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }
+        : {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            weekday: "short"
+        };
+
+    setText(
+        "todayText",
+        new Date().toLocaleDateString("zh-TW", options)
+    );
+
 }
 function showPage(page){
     console.log("切換頁面：", page);
