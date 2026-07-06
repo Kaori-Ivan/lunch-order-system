@@ -757,3 +757,34 @@
     white-space:nowrap;
 
 }
+@media (max-width:768px){
+
+  .topbar{
+    display:block;
+    overflow:hidden;
+  }
+
+  .header-date{
+    width:100%;
+    max-width:100%;
+    margin-top:6px;
+
+    display:flex;
+    justify-content:flex-start;
+    align-items:center;
+
+    font-size:12px;
+    white-space:nowrap;
+    overflow:hidden;
+  }
+
+  .header-date span{
+    min-width:0;
+  }
+
+  #todayText{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
