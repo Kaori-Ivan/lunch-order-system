@@ -71,16 +71,8 @@ function updateHeader() {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      weekday: "long",
-    }),
-  );
-  setText(
-    "systemStatusText",
-    APP_CONFIG.MODE === "TEST"
-      ? "測試模式：系統開放中"
-      : isSystemClosed()
-        ? "今日訂餐已截止"
-        : "截止時間：10:00",
+      weekday: "short",
+    })
   );
 }
 function showPage(page){
