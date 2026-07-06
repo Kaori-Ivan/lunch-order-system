@@ -730,3 +730,82 @@
     transform:scale(.88);
   }
 }
+/* ===== 強制手機 Header 小型化 ===== */
+
+@media (max-width: 768px){
+
+  .app{
+    padding:8px !important;
+  }
+
+  .topbar{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:8px !important;
+
+    margin-bottom:6px !important;
+    padding:8px 10px !important;
+
+    background:#ffffff !important;
+    border:1px solid #edf2f7 !important;
+    border-radius:14px !important;
+    box-shadow:0 8px 18px rgba(15,23,42,.06) !important;
+  }
+
+  .header-left,
+  .brand{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    min-width:0 !important;
+  }
+
+  .logo{
+    width:32px !important;
+    height:32px !important;
+    border-radius:10px !important;
+    font-size:16px !important;
+    flex-shrink:0 !important;
+  }
+
+  .header-title h1,
+  .brand-text h1{
+    margin:0 !important;
+    font-size:15px !important;
+    line-height:1.15 !important;
+    font-weight:800 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  .header-title span{
+    display:block !important;
+    margin-top:2px !important;
+    font-size:10px !important;
+    color:#64748b !important;
+  }
+
+  .header-date,
+  .today-box{
+    display:flex !important;
+    align-items:center !important;
+    gap:3px !important;
+    flex-shrink:0 !important;
+    font-size:11px !important;
+    font-weight:700 !important;
+    color:#475569 !important;
+    white-space:nowrap !important;
+  }
+
+  .mobile-stepper{
+    margin:6px auto 10px !important;
+    transform:scale(.88) !important;
+  }
+
+  .content{
+    margin:8px 0 !important;
+  }
+}
