@@ -772,3 +772,156 @@
     white-space:nowrap;
   }
 }
+.condition-box {
+  display: grid;
+  gap: 22px;
+}
+
+.condition-badge {
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #15803d;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.option-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.factory-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.food-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.option-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  padding: 18px;
+  border: 1px solid #d9e0ea;
+  border-radius: 18px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.option-card input {
+  display: none;
+}
+
+.option-card span {
+  font-size: 42px;
+}
+
+.option-card strong {
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+.option-card:has(input:checked) {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  color: #15803d;
+  box-shadow: inset 0 0 0 1px #22c55e;
+}
+
+.hint {
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.week-table {
+  display: grid;
+  gap: 12px;
+}
+
+.week-row {
+  display: grid;
+  grid-template-columns: 70px 40px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e5eaf2;
+}
+
+.week-date,
+.week-day {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.meal-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.meal-options label {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9e0ea;
+  border-radius: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.meal-options input {
+  display: none;
+}
+
+.meal-options label:has(input:checked) {
+  border-color: #22c55e;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+@media (max-width: 600px) {
+  .factory-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .option-card {
+    min-height: 105px;
+    padding: 12px 8px;
+  }
+
+  .option-card span {
+    font-size: 34px;
+  }
+
+  .option-card strong {
+    font-size: 18px;
+  }
+
+  .week-row {
+    grid-template-columns: 42px 28px 1fr;
+    gap: 6px;
+  }
+
+  .week-date,
+  .week-day {
+    font-size: 15px;
+  }
+
+  .meal-options {
+    gap: 5px;
+  }
+
+  .meal-options label {
+    min-height: 42px;
+    font-size: 13px;
+  }
+}

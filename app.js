@@ -56,6 +56,16 @@ function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+function weekKey() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+
+  return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
+}
 function isSystemClosed() {
   if (APP_CONFIG.MODE === "TEST") return false;
   if (APP_CONFIG.MODE === "CLOSE") return true;
@@ -92,8 +102,7 @@ function showPage(page){
 
     state.step = page;
 
-    ["closed","scan","verify","check","order","review","done"].forEach(n=>{
-        const el = $("page-"+n);
+    ["closed","scan","verify","check","condition","weekOrder","review","done"].forEach(n=>{        const el = $("page-"+n);
 
         console.log("page-"+n, el);
 
@@ -112,12 +121,13 @@ function showPage(page){
 function updateProgress(current){
 
   const order = [
-    "verify",
-    "check",
-    "order",
-    "review",
-    "done"
-  ];
+  "verify",
+  "check",
+  "condition",
+  "weekOrder",
+  "review",
+  "done"
+];
 
   const currentIndex = order.indexOf(current);
 
@@ -252,7 +262,7 @@ function mockApi(p) {
         const u = MOCK_USERS.find(
           (x) => x.empId === p.empId && x.name === p.name,
         );
-        const key = `${todayKey()}_${u?.userId}`;
+        const key = `${weekKey()}_${u?.userId}`;
         const order = getOrders()[key] || null;
         resolve({ success: true, hasOrder: !!order, order });
         return;
@@ -275,7 +285,7 @@ function mockApi(p) {
           updatedAt: new Date().toLocaleString("zh-TW"),
         };
         const orders = getOrders();
-        orders[`${todayKey()}_${u.userId}`] = order;
+        orders[`${weekKey()}_${u.userId}`] = order;
         saveOrders(orders);
         resolve({ success: true, message: "訂單已儲存", order });
         return;
@@ -292,7 +302,7 @@ async function apiPost(payload) {
     APP_CONFIG.API_TIMEOUT_MS || 30000,
   );
   try {
-    const res = await fetch(APP_CONFIG.API_URL, {
+    const res = await fetch(APP_CONFIG.USER_API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
@@ -364,6 +374,7 @@ function showConfirmDialog({
   });
 }
 function scanQRCode() {
+  state.isBusy = false;
   if (!guardOpen()) return;
   state.dept = String($("deptSelect")?.value || "").trim();
   state.group = String($("groupSelect")?.value || "").trim();
@@ -565,8 +576,8 @@ async function checkTodayOrder() {
     `
     <div class="order-status-card loading">
       <div class="status-icon">⏳</div>
-      <h3>正在確認今日訂單</h3>
-      <p>系統正在查詢今日是否已有訂單...</p>
+      <h3>正在確認本周訂單</h3>
+      <p>系統正在查詢本周是否已有訂單...</p>
     </div>
   `,
   );
@@ -580,6 +591,7 @@ async function checkTodayOrder() {
       name: state.user.name,
       dept: state.dept,
       group: state.group,
+      weekKey: weekKey(),
     });
 
     state.existingOrder = result.hasOrder ? result.order : null;
@@ -592,8 +604,8 @@ async function checkTodayOrder() {
         `
         <div class="order-status-card has-order">
           <div class="status-icon">🍱</div>
-          <h3>今日已有訂單</h3>
-          <p>修改後將覆蓋原訂單。</p>
+          <h3>本周已有訂單</h3>
+          <p>修改後將覆蓋原訂單</p>
 
           <div class="order-count-grid">
             <div class="count-item meat">
@@ -634,7 +646,7 @@ async function checkTodayOrder() {
         `
         <div class="order-status-card no-order">
           <div class="status-icon">✅</div>
-          <h3>今日尚未建立訂單</h3>
+          <h3>本周尚未建立訂單</h3>
         </div>
       `,
       );
@@ -653,7 +665,7 @@ async function checkTodayOrder() {
       });
     }
 
-    on("btnBackVerify", "click", () => showPage("verify"));
+    on("btnBackVerify", "click", () => showPage("pageverify"));
   } catch (e) {
     console.error(e);
 
@@ -677,23 +689,42 @@ function startOrder(isEdit) {
 
   const old = state.existingOrder;
 
-  setText("orderTitle", isEdit ? "編輯訂單" : "建立新訂單");
-
-  // 不顯示提醒文字
-  setHTML("ruleBox", "");
-
-  $("meatQty").value = old ? old.meatQty : 0;
-  $("vegQty").value = old ? old.vegQty : 0;
-  $("guestQty").value = old ? old.guestQty : 0;
-
-  $("guestQty").disabled = state.user.role === "一般員工";
-
-  if ($("guestQty").disabled) {
-    $("guestQty").value = 0;
+  if (old) {
+    state.pendingOrder = old;
+  } else {
+    state.pendingOrder = {
+      date: todayKey(),
+      weekKey: weekKey(),
+      empId: state.user.empId,
+      name: state.user.name,
+      dept: state.user.dept,
+      group: state.user.group,
+      role: state.user.role,
+      defaultFactory: "一廠",
+      defaultFoodType: "葷食",
+      weeklyMeals: {}
+    };
   }
 
-  validateOrder();
-  showPage("order");
+  showPage("condition");
+}
+function goWeekOrder() {
+  const factory = document.querySelector('input[name="factory"]:checked')?.value;
+  const foodType = document.querySelector('input[name="foodType"]:checked')?.value;
+
+  if (!factory || !foodType) {
+    notice("orderNotice", "danger", "請選擇廠區與餐點。");
+    return;
+  }
+
+  state.pendingOrder.defaultFactory = factory;
+  state.pendingOrder.defaultFoodType = foodType;
+
+  showPage("weekOrder");
+}
+
+function getMealValue(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
 }
 function num(id) {
   return Math.max(0, Number($(id).value || 0));
@@ -728,31 +759,50 @@ function statCard(type, icon, label, value, unit) {
 }
 async function buildReview() {
   if (!guardOpen()) return;
-  if (!validateOrder()) return;
 
-  state.pendingOrder = {
-    date: todayKey(),
-    empId: state.user.empId,
-    name: state.user.name,
-    dept: state.user.dept,
-    group: state.user.group,
-    role: state.user.role,
-    meatQty: num("meatQty"),
-    vegQty: num("vegQty"),
-    guestQty: num("guestQty"),
-    updatedAt: "",
+  const factory = state.pendingOrder.defaultFactory;
+  const foodType = state.pendingOrder.defaultFoodType;
+
+  const weeklyMeals = {
+    monday: {
+      date: "7/7",
+      day: "星期一",
+      mealType: getMealValue("meal_mon")
+    },
+    tuesday: {
+      date: "7/8",
+      day: "星期二",
+      mealType: getMealValue("meal_tue")
+    },
+    wednesday: {
+      date: "7/9",
+      day: "星期三",
+      mealType: getMealValue("meal_wed")
+    },
+    thursday: {
+      date: "7/10",
+      day: "星期四",
+      mealType: getMealValue("meal_thu")
+    },
+    friday: {
+      date: "7/11",
+      day: "星期五",
+      mealType: getMealValue("meal_fri")
+    }
   };
 
-  if (state.pendingOrder.guestQty > 10) {
-    const ok = await showConfirmDialog({
-      title: "外賓數量確認",
-      message: `目前外賓數量為 ${state.pendingOrder.guestQty} 人，請再次確認是否進入總覽確認？`,
-      confirmText: "繼續總覽",
-      cancelText: "返回修改",
-    });
+  Object.keys(weeklyMeals).forEach(key => {
+    if (weeklyMeals[key].mealType === "便當") {
+      weeklyMeals[key].factory = factory;
+      weeklyMeals[key].foodType = foodType;
+    } else {
+      weeklyMeals[key].factory = "";
+      weeklyMeals[key].foodType = "";
+    }
+  });
 
-    if (!ok) return;
-  }
+  state.pendingOrder.weeklyMeals = weeklyMeals;
+  state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
 
   setHTML(
     "reviewUser",
@@ -762,18 +812,20 @@ async function buildReview() {
       row("部門", state.user.dept),
       row("組別", state.user.group),
       row("身分", state.user.role),
-    ].join(""),
+    ].join("")
   );
 
-  setHTML(
-    "reviewOrder",
-    [
-      row("日期", state.pendingOrder.date),
-      row("葷食", state.pendingOrder.meatQty),
-      row("素食", state.pendingOrder.vegQty),
-      row("外賓", state.pendingOrder.guestQty),
-    ].join(""),
-  );
+  const reviewRows = [
+    row("本週便當廠區", factory),
+    row("本週便當餐點", foodType),
+    row("星期一", weeklyMeals.monday.mealType),
+    row("星期二", weeklyMeals.tuesday.mealType),
+    row("星期三", weeklyMeals.wednesday.mealType),
+    row("星期四", weeklyMeals.thursday.mealType),
+    row("星期五", weeklyMeals.friday.mealType),
+  ];
+
+  setHTML("reviewOrder", reviewRows.join(""));
 
   showPage("review");
 }
@@ -795,9 +847,10 @@ async function submitOrder() {
       name: state.user.name,
       dept: state.dept,
       group: state.group,
-      meatQty: state.pendingOrder.meatQty,
-      vegQty: state.pendingOrder.vegQty,
-      guestQty: state.pendingOrder.guestQty,
+      weekKey: weekKey(),
+      defaultFactory: state.pendingOrder.defaultFactory,
+      defaultFoodType: state.pendingOrder.defaultFoodType,
+      weeklyMeals: state.pendingOrder.weeklyMeals,
     });
 
     if (!result.success) {
@@ -808,7 +861,7 @@ async function submitOrder() {
 
     const order = result.order || state.pendingOrder;
 
-    clearBusy();
+  
 
 clearBusy();
 showPage("done");
@@ -827,11 +880,9 @@ setTimeout(() => {
   }
 }
 function goHome() {
-  state.user = null;
-  state.pendingOrder = null;
-  state.existingOrder = null;
-  state.dept = "";
-  state.group = "";
+
+  resetOrderFlow();
+
   showPage("scan");
 }
 async function clearLocalData() {
@@ -851,6 +902,8 @@ function bindEvents() {
   on("btnScan", "click", scanQRCode);
   on("btnClear", "click", clearLocalData);
   on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
+  on("btnConditionNext", "click", goWeekOrder);
+  on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
   on("btnEdit", "click", () => guardOpen() && showPage("order"));
   on("btnSubmit", "click", submitOrder);
@@ -936,4 +989,27 @@ function finishLoading() {
 
   hideAlert();
 }
+function resetOrderFlow() {
 
+  state.user = null;
+  state.pendingOrder = null;
+  state.existingOrder = null;
+  state.dept = "";
+  state.group = "";
+  state.isSubmitting = false;
+  state.isBusy = false;
+
+  $("deptSelect").value = "";
+  $("groupSelect").value = "";
+
+  $("empId").value = "";
+  $("empName").value = "";
+
+  $("meatQty").value = 0;
+  $("vegQty").value = 0;
+  $("guestQty").value = 0;
+
+  clearNotice("verifyNotice");
+  clearNotice("orderNotice");
+
+}

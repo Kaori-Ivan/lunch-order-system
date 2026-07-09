@@ -129,10 +129,116 @@
   <div id="verifyNotice"></div><div id="verifyActions" class="actions"></div>
 </section>
 <section id="page-check" class="page hidden"><div id="checkBox"></div><div id="checkActions" class="actions"></div></section>
-<section id="page-order" class="page hidden">
-  <h2 id="orderTitle">填寫訂單</h2><div id="ruleBox"></div>
-  <div class="qty-grid"><label class="qty-card meat"><span>葷食</span><input id="meatQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card veg"><span>素食</span><input id="vegQty" type="number" min="0" value="0"><small>份</small></label><label class="qty-card guest"><span>外賓</span><input id="guestQty" type="number" min="0" value="0"><small>人</small></label></div>
-  <div id="orderNotice"></div><div class="actions"><button id="btnBackToCheck" class="btn ghost">返回</button><button id="btnReview" class="btn primary">下一步</button></div>
+<section id="page-condition" class="page hidden">
+  <h2>選擇用餐條件</h2>
+
+  <div class="condition-box">
+    <div class="condition-badge">用餐方式：便當</div>
+
+    <h3>廠區選擇</h3>
+    <div class="option-grid factory-grid">
+      <label class="option-card">
+        <input type="radio" name="factory" value="一廠" checked>
+        <span>🏭</span>
+        <strong>一廠</strong>
+      </label>
+      <label class="option-card">
+        <input type="radio" name="factory" value="二廠">
+        <span>🏢</span>
+        <strong>二廠</strong>
+      </label>
+      <label class="option-card">
+        <input type="radio" name="factory" value="三廠">
+        <span>🏢</span>
+        <strong>三廠</strong>
+      </label>
+    </div>
+
+    <h3>餐點選擇</h3>
+    <div class="option-grid food-grid">
+      <label class="option-card">
+        <input type="radio" name="foodType" value="葷食" checked>
+        <span>🍱</span>
+        <strong>葷食</strong>
+      </label>
+      <label class="option-card">
+        <input type="radio" name="foodType" value="素食">
+        <span>🌱</span>
+        <strong>素食</strong>
+      </label>
+    </div>
+
+    <p class="hint">※ 上樓用餐 / 不用餐不需選擇此項</p>
+  </div>
+
+  <div class="actions">
+    <button id="btnBackToCheck" class="btn ghost">返回</button>
+    <button id="btnConditionNext" class="btn primary">下一步</button>
+  </div>
+</section>
+
+<section id="page-weekOrder" class="page hidden">
+  <h2>選擇一週用餐方式</h2>
+  <p class="desc">請依實際需求選擇每日用餐方式</p>
+
+  <div class="week-table">
+    <div class="week-row">
+      <div class="week-date">7/7</div>
+      <div class="week-day">一</div>
+      <div class="meal-options">
+        <label><input type="radio" name="meal_mon" value="便當" checked> 便當</label>
+        <label><input type="radio" name="meal_mon" value="不用餐"> 不用餐</label>
+        <label><input type="radio" name="meal_mon" value="上樓用餐"> 上樓用餐</label>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-date">7/8</div>
+      <div class="week-day">二</div>
+      <div class="meal-options">
+        <label><input type="radio" name="meal_tue" value="便當" checked> 便當</label>
+        <label><input type="radio" name="meal_tue" value="不用餐"> 不用餐</label>
+        <label><input type="radio" name="meal_tue" value="上樓用餐"> 上樓用餐</label>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-date">7/9</div>
+      <div class="week-day">三</div>
+      <div class="meal-options">
+        <label><input type="radio" name="meal_wed" value="便當" checked> 便當</label>
+        <label><input type="radio" name="meal_wed" value="不用餐"> 不用餐</label>
+        <label><input type="radio" name="meal_wed" value="上樓用餐"> 上樓用餐</label>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-date">7/10</div>
+      <div class="week-day">四</div>
+      <div class="meal-options">
+        <label><input type="radio" name="meal_thu" value="便當" checked> 便當</label>
+        <label><input type="radio" name="meal_thu" value="不用餐"> 不用餐</label>
+        <label><input type="radio" name="meal_thu" value="上樓用餐"> 上樓用餐</label>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div class="week-date">7/11</div>
+      <div class="week-day">五</div>
+      <div class="meal-options">
+        <label><input type="radio" name="meal_fri" value="便當" checked> 便當</label>
+        <label><input type="radio" name="meal_fri" value="不用餐"> 不用餐</label>
+        <label><input type="radio" name="meal_fri" value="上樓用餐"> 上樓用餐</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="orderNotice"></div>
+
+  <div class="actions">
+    <button id="btnBackToCondition" class="btn ghost">上一步</button>
+    <button id="btnReview" class="btn primary">下一步</button>
+  </div>
 </section>
 <section id="page-review" class="page hidden">
   <div class="review-hero"><div><p class="desc">按下「確認送出」後，系統才會正式儲存訂單。</p></div><span class="pill">待確認</span></div>
