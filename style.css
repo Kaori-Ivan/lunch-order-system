@@ -1783,3 +1783,67 @@ input[readonly] {
     font-size: 13px;
   }
 }
+/* 一週訂餐：星期在上、日期在下 */
+#page-weekOrder .week-row {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+#page-weekOrder .week-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#page-weekOrder .week-day {
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+#page-weekOrder .week-date {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #607086;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* 手機：避免三個按鈕擠爆 */
+@media (max-width: 600px) {
+  #page-weekOrder .week-row {
+    grid-template-columns: 70px 1fr;
+    gap: 8px;
+  }
+
+  #page-weekOrder .meal-options {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  #page-weekOrder .meal-options label {
+    justify-content: flex-start;
+    min-height: 42px;
+    font-size: 13px;
+  }
+}
+
+/* 電腦：只放大 */
+@media (min-width: 901px) {
+  #page-weekOrder .week-row {
+    grid-template-columns: 150px 1fr;
+    gap: 24px;
+  }
+
+  #page-weekOrder .week-day {
+    font-size: 24px;
+  }
+
+  #page-weekOrder .week-date {
+    font-size: 20px;
+  }
+}
