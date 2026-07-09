@@ -58,22 +58,31 @@
 
   <div class="progress-line"></div>
 
-  <div class="progress-step" data-step="order">
-    <div class="circle">3</div>
+<div class="progress-step" data-step="condition">
+      <div class="circle">3</div>
     <span>點餐</span>
   </div>
+  <div class="progress-line"></div>
+
+<div class="progress-step" data-step="weekOrder">
+
+<div class="circle">4</div>
+
+<span>點餐</span>
+
+</div>
 
   <div class="progress-line"></div>
 
   <div class="progress-step" data-step="review">
-    <div class="circle">4</div>
+    <div class="circle">5</div>
     <span>確認</span>
   </div>
 
   <div class="progress-line"></div>
 
   <div class="progress-step" data-step="done">
-    <div class="circle">5</div>
+    <div class="circle">6</div>
     <span>完成</span>
   </div>
 </div>
@@ -82,9 +91,10 @@
   <div class="step active" data-step="scan"><span>1</span>部門 QRCode</div>
   <div class="step" data-step="verify"><span>2</span>使用者驗證</div>
   <div class="step" data-step="check"><span>3</span>今日訂單</div>
-  <div class="step" data-step="order"><span>4</span>填寫訂單</div>
-  <div class="step" data-step="review"><span>5</span>總覽確認</div>
-  <div class="step" data-step="done"><span>6</span>完成</div>
+  <div class="step" data-step="condition"><span>4</span>填寫訂單</div>
+  <div class="step" data-step="weekOrder"><span>5</span>一週訂餐</div>
+  <div class="step" data-step="review"><span>6</span>總覽確認</div>
+  <div class="step" data-step="done"><span>7</span>完成</div>
 </aside>
 <section class="content">
 <div id="alertBox" class="alert hidden"></div>
@@ -181,58 +191,7 @@
   <h2>選擇一週用餐方式</h2>
   <p class="desc">請依實際需求選擇每日用餐方式</p>
 
-  <div class="week-table">
-    <div class="week-row">
-      <div class="week-date">7/7</div>
-      <div class="week-day">一</div>
-      <div class="meal-options">
-        <label><input type="radio" name="meal_mon" value="便當" checked> 便當</label>
-        <label><input type="radio" name="meal_mon" value="不用餐"> 不用餐</label>
-        <label><input type="radio" name="meal_mon" value="上樓用餐"> 上樓用餐</label>
-      </div>
-    </div>
-
-    <div class="week-row">
-      <div class="week-date">7/8</div>
-      <div class="week-day">二</div>
-      <div class="meal-options">
-        <label><input type="radio" name="meal_tue" value="便當" checked> 便當</label>
-        <label><input type="radio" name="meal_tue" value="不用餐"> 不用餐</label>
-        <label><input type="radio" name="meal_tue" value="上樓用餐"> 上樓用餐</label>
-      </div>
-    </div>
-
-    <div class="week-row">
-      <div class="week-date">7/9</div>
-      <div class="week-day">三</div>
-      <div class="meal-options">
-        <label><input type="radio" name="meal_wed" value="便當" checked> 便當</label>
-        <label><input type="radio" name="meal_wed" value="不用餐"> 不用餐</label>
-        <label><input type="radio" name="meal_wed" value="上樓用餐"> 上樓用餐</label>
-      </div>
-    </div>
-
-    <div class="week-row">
-      <div class="week-date">7/10</div>
-      <div class="week-day">四</div>
-      <div class="meal-options">
-        <label><input type="radio" name="meal_thu" value="便當" checked> 便當</label>
-        <label><input type="radio" name="meal_thu" value="不用餐"> 不用餐</label>
-        <label><input type="radio" name="meal_thu" value="上樓用餐"> 上樓用餐</label>
-      </div>
-    </div>
-
-    <div class="week-row">
-      <div class="week-date">7/11</div>
-      <div class="week-day">五</div>
-      <div class="meal-options">
-        <label><input type="radio" name="meal_fri" value="便當" checked> 便當</label>
-        <label><input type="radio" name="meal_fri" value="不用餐"> 不用餐</label>
-        <label><input type="radio" name="meal_fri" value="上樓用餐"> 上樓用餐</label>
-      </div>
-    </div>
-  </div>
-
+  <div id="weekTable" class="week-table"></div>
   <div id="orderNotice"></div>
 
   <div class="actions">
@@ -240,10 +199,46 @@
     <button id="btnReview" class="btn primary">下一步</button>
   </div>
 </section>
-<section id="page-review" class="page hidden">
-  <div class="review-hero"><div><p class="desc">按下「確認送出」後，系統才會正式儲存訂單。</p></div><span class="pill">待確認</span></div>
-  <div class="two-col"><div class="panel"><div class="panel-title">👤 使用者資訊</div><div id="reviewUser"></div></div><div class="panel"><div class="panel-title">🍱 訂餐資訊</div><div id="reviewOrder"></div></div></div>
-  <div class="actions split"><button id="btnEdit" class="btn ghost">← 返回修改</button><button id="btnSubmit" class="btn primary">確認送出</button></div>
+<section id="page-review" class="page review-mobile hidden">
+
+  <div class="review-top">
+    <button id="btnEdit" class="back-link">← 返回修改</button>
+    <h2>確認訂單</h2>
+    <span class="safe-text">🛡 資料安全保護中</span>
+  </div>
+
+  <div class="review-card">
+    <div class="review-card-title">
+      <div class="review-icon user">👤</div>
+      <div>
+        <h3>使用者資訊</h3>
+      </div>
+    </div>
+
+    <div id="reviewUser" class="review-user-grid"></div>
+  </div>
+
+  <div class="review-card meal-card">
+    <div class="review-card-title">
+      <div class="review-icon meal">🍴</div>
+      <div>
+        <h3>一週用餐方式</h3>
+        <p>請為每一天選擇用餐方式</p>
+      </div>
+    </div>
+
+    <div id="reviewOrder" class="review-week-list"></div>
+  </div>
+
+  <div class="review-warning">
+    ⚠️ 送出後，若需修改請於截止時間前完成
+  </div>
+
+  <div class="review-bottom-actions">
+    <button id="btnEditBottom" class="btn ghost">✏️ 返回修改</button>
+    <button id="btnSubmit" class="btn primary">✈️ 確認送出</button>
+  </div>
+
 </section>
 <section id="page-done" class="page hidden">
   <div class="done-simple">

@@ -66,6 +66,30 @@ function weekKey() {
 
   return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, "0")}-${String(monday.getDate()).padStart(2, "0")}`;
 }
+function getThisWeekDates() {
+  const today = new Date();
+  const day = today.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+
+  const weekNames = ["星期一", "星期二", "星期三", "星期四", "星期五"];
+  const shortDays = ["一", "二", "三", "四", "五"];
+
+  return weekNames.map((weekName, index) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + index);
+
+    return {
+      key: ["mon", "tue", "wed", "thu", "fri"][index],
+      day: weekName,
+      shortDay: shortDays[index],
+      date: `${d.getMonth() + 1}月${d.getDate()}日`,
+      reviewDate: `${d.getMonth() + 1}/${d.getDate()}`
+    };
+  });
+}
 function isSystemClosed() {
   if (APP_CONFIG.MODE === "TEST") return false;
   if (APP_CONFIG.MODE === "CLOSE") return true;
@@ -102,7 +126,8 @@ function showPage(page){
 
     state.step = page;
 
-    ["closed","scan","verify","check","condition","weekOrder","review","done"].forEach(n=>{        const el = $("page-"+n);
+    ["closed","scan","verify","check","condition","weekOrder","review","done"].forEach(n=>{        
+        const el = document.getElementById("page-" + n);
 
         console.log("page-"+n, el);
 
@@ -272,17 +297,20 @@ function mockApi(p) {
           (x) => x.empId === p.empId && x.name === p.name,
         );
         const order = {
-          date: todayKey(),
-          userId: u.userId,
-          empId: u.empId,
-          name: u.name,
-          dept: u.dept,
-          group: u.group,
-          role: u.role,
-          meatQty: Number(p.meatQty || 0),
-          vegQty: Number(p.vegQty || 0),
-          guestQty: Number(p.guestQty || 0),
-          updatedAt: new Date().toLocaleString("zh-TW"),
+            date: todayKey(),
+            weekKey: weekKey(),
+            userId: u.userId,
+            empId: u.empId,
+            name: u.name,
+            dept: u.dept,
+            group: u.group,
+            role: u.role,
+
+            defaultFactory: p.defaultFactory,
+            defaultFoodType: p.defaultFoodType,
+            weeklyMeals: p.weeklyMeals,
+
+            updatedAt: new Date().toLocaleString("zh-TW")
         };
         const orders = getOrders();
         orders[`${weekKey()}_${u.userId}`] = order;
@@ -600,32 +628,20 @@ async function checkTodayOrder() {
       const old = result.order;
 
       setHTML(
-        "checkBox",
-        `
-        <div class="order-status-card has-order">
-          <div class="status-icon">🍱</div>
-          <h3>本周已有訂單</h3>
-          <p>修改後將覆蓋原訂單</p>
+      "checkBox",
+      `
+      <div class="order-status-card has-order">
 
-          <div class="order-count-grid">
-            <div class="count-item meat">
-              <span>葷食</span>
-              <strong>${old.meatQty}</strong>
-              <small>份</small>
-            </div>
-            <div class="count-item veg">
-              <span>素食</span>
-              <strong>${old.vegQty}</strong>
-              <small>份</small>
-            </div>
-            <div class="count-item guest">
-              <span>外賓</span>
-              <strong>${old.guestQty}</strong>
-              <small>人</small>
-            </div>
-          </div>
-        </div>
-      `,
+      <div class="status-icon">🍱</div>
+
+      <h3>已有訂單</h3>
+
+      <p>您本週已建立訂單</p>
+
+      <p>可點擊下方按鈕修改</p>
+
+      </div>
+      `
       );
 
       setHTML(
@@ -665,8 +681,8 @@ async function checkTodayOrder() {
       });
     }
 
-    on("btnBackVerify", "click", () => showPage("pageverify"));
-  } catch (e) {
+on("btnBackVerify", "click", () => showPage("verify"));  
+} catch (e) {
     console.error(e);
 
     setHTML(
@@ -681,9 +697,9 @@ async function checkTodayOrder() {
     );
   }
 }
-function getLimit() {
+/* function getLimit() {
   return state.user.role === "主管" || state.user.role === "助理" ? 5 : 1;
-}
+} */
 function startOrder(isEdit) {
   if (!guardOpen()) return;
 
@@ -720,16 +736,48 @@ function goWeekOrder() {
   state.pendingOrder.defaultFactory = factory;
   state.pendingOrder.defaultFoodType = foodType;
 
+  renderWeekOrder();
+
   showPage("weekOrder");
 }
 
 function getMealValue(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
 }
-function num(id) {
-  return Math.max(0, Number($(id).value || 0));
+function renderWeekOrder() {
+  const weeks = getThisWeekDates();
+
+  setHTML(
+    "weekTable",
+    weeks.map(item => `
+      <div class="week-row">
+        <div class="week-info">
+          <div class="week-day">${item.day}</div>
+          <div class="week-date">${item.date}</div>
+        </div>
+
+        <div class="meal-options">
+          <label>
+            <input type="radio" name="meal_${item.key}" value="便當" checked>
+            便當
+          </label>
+          <label>
+            <input type="radio" name="meal_${item.key}" value="不用餐">
+            不用餐
+          </label>
+          <label>
+            <input type="radio" name="meal_${item.key}" value="上樓用餐">
+            上樓用餐
+          </label>
+        </div>
+      </div>
+    `).join("")
+  );
 }
-function validateOrder() {
+/* function num(id) {
+  return Math.max(0, Number($(id).value || 0));
+} */
+/* function validateOrder() {
   const meat = num("meatQty");
   const veg = num("vegQty");
   const guest = num("guestQty");
@@ -753,43 +801,45 @@ function validateOrder() {
   // 驗證成功，不顯示任何訊息
   setHTML("orderNotice", "");
   return true;
-}
-function statCard(type, icon, label, value, unit) {
+} */
+/* function statCard(type, icon, label, value, unit) {
   return `<div class="stat-card ${type}"><div class="stat-label">${icon} ${label}</div><div class="stat-number">${value}</div><div class="stat-unit">${unit}</div></div>`;
-}
+} */
 async function buildReview() {
   if (!guardOpen()) return;
 
   const factory = state.pendingOrder.defaultFactory;
   const foodType = state.pendingOrder.defaultFoodType;
 
-  const weeklyMeals = {
-    monday: {
-      date: "7/7",
-      day: "星期一",
-      mealType: getMealValue("meal_mon")
-    },
-    tuesday: {
-      date: "7/8",
-      day: "星期二",
-      mealType: getMealValue("meal_tue")
-    },
-    wednesday: {
-      date: "7/9",
-      day: "星期三",
-      mealType: getMealValue("meal_wed")
-    },
-    thursday: {
-      date: "7/10",
-      day: "星期四",
-      mealType: getMealValue("meal_thu")
-    },
-    friday: {
-      date: "7/11",
-      day: "星期五",
-      mealType: getMealValue("meal_fri")
-    }
-  };
+  const weeks = getThisWeekDates();
+
+const weeklyMeals = {
+  monday: {
+    date: weeks[0].reviewDate,
+    day: weeks[0].day,
+    mealType: getMealValue("meal_mon")
+  },
+  tuesday: {
+    date: weeks[1].reviewDate,
+    day: weeks[1].day,
+    mealType: getMealValue("meal_tue")
+  },
+  wednesday: {
+    date: weeks[2].reviewDate,
+    day: weeks[2].day,
+    mealType: getMealValue("meal_wed")
+  },
+  thursday: {
+    date: weeks[3].reviewDate,
+    day: weeks[3].day,
+    mealType: getMealValue("meal_thu")
+  },
+  friday: {
+    date: weeks[4].reviewDate,
+    day: weeks[4].day,
+    mealType: getMealValue("meal_fri")
+  }
+};
 
   Object.keys(weeklyMeals).forEach(key => {
     if (weeklyMeals[key].mealType === "便當") {
@@ -805,27 +855,63 @@ async function buildReview() {
   state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
 
   setHTML(
-    "reviewUser",
-    [
-      row("工號", state.user.empId),
-      row("姓名", state.user.name),
-      row("部門", state.user.dept),
-      row("組別", state.user.group),
-      row("身分", state.user.role),
-    ].join("")
-  );
+  "reviewUser",
+  `
+  <div class="user-item">💼<span>工號</span><strong>${state.user.empId}</strong></div>
+  <div class="user-item">👤<span>姓名</span><strong>${state.user.name}</strong></div>
+  <div class="user-item">🏢<span>部門</span><strong>${state.user.dept}</strong></div>
+  <div class="user-item">👥<span>組別</span><strong>${state.user.group}</strong></div>
+  `
+);
 
-  const reviewRows = [
-    row("本週便當廠區", factory),
-    row("本週便當餐點", foodType),
-    row("星期一", weeklyMeals.monday.mealType),
-    row("星期二", weeklyMeals.tuesday.mealType),
-    row("星期三", weeklyMeals.wednesday.mealType),
-    row("星期四", weeklyMeals.thursday.mealType),
-    row("星期五", weeklyMeals.friday.mealType),
-  ];
+  const weekMap = [
+  weeklyMeals.monday,
+  weeklyMeals.tuesday,
+  weeklyMeals.wednesday,
+  weeklyMeals.thursday,
+  weeklyMeals.friday
+];
 
-  setHTML("reviewOrder", reviewRows.join(""));
+setHTML(
+  "reviewOrder",
+  weekMap.map((item, index) => {
+
+    let cls = "lunch";
+    let icon = "🍱";
+    let text = item.mealType;
+
+    if (item.mealType === "上樓用餐") {
+      cls = "upstairs";
+      icon = "👥";
+      text = "上樓用餐";
+    }
+
+    if (item.mealType === "不用餐") {
+      cls = "none";
+      icon = "✖";
+      text = "不用餐";
+    }
+
+    if (item.mealType === "便當") {
+      text = `便當（${factory} ${foodType}）`;
+    }
+
+    const dateText = item.date.replace("/", "月") + "日";
+
+
+
+return `
+  <div class="review-week-row">
+    <div class="review-day">${item.day}</div>
+    <div class="review-date">${dateText}</div>
+    <div class="meal-pill ${cls}">
+      <span>${icon}</span>
+      <strong>${text}</strong>
+    </div>
+  </div>
+`;
+  }).join("")
+);
 
   showPage("review");
 }
@@ -855,7 +941,7 @@ async function submitOrder() {
 
     if (!result.success) {
       notice("orderNotice", "danger", result.message || "訂單送出失敗。");
-      showPage("order");
+      showPage("weekOrder");
       return;
     }
 
@@ -872,7 +958,7 @@ setTimeout(() => {
   } catch (e) {
     console.error(e);
     notice("orderNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
-    showPage("order");
+    showPage("review");
   } finally {
     state.isSubmitting = false;
     setButtonLoading("btnSubmit", "確認送出", false);
@@ -905,12 +991,10 @@ function bindEvents() {
   on("btnConditionNext", "click", goWeekOrder);
   on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
-  on("btnEdit", "click", () => guardOpen() && showPage("order"));
+  on("btnEdit", "click", () => guardOpen() && showPage("weekOrder"));  
+  on("btnEditBottom", "click", () => guardOpen() && showPage("weekOrder"));
   on("btnSubmit", "click", submitOrder);
   on("btnHome", "click", goHome);
-  ["meatQty", "vegQty", "guestQty"].forEach((id) =>
-    on(id, "input", validateOrder),
-  );
 }
 window.addEventListener("error", (e) => {
   showAlert("系統錯誤：" + e.message);
@@ -1001,15 +1085,22 @@ function resetOrderFlow() {
 
   $("deptSelect").value = "";
   $("groupSelect").value = "";
-
   $("empId").value = "";
   $("empName").value = "";
 
-  $("meatQty").value = 0;
-  $("vegQty").value = 0;
-  $("guestQty").value = 0;
-
   clearNotice("verifyNotice");
   clearNotice("orderNotice");
+
+document
+.querySelectorAll('input[type="radio"]')
+.forEach(r=>{
+
+    if(r.defaultChecked){
+
+        r.checked=true;
+
+    }
+
+});
 
 }
