@@ -301,11 +301,12 @@ function mockApi(p) {
           return;
         }
         if (u.dept !== p.dept || u.group !== p.group) {
-          resolve({
-            success: false,
-            message: `隸屬於【${u.dept}／${u.group}】。`,
-          });
-          return;
+  resolve({
+    success: false,
+    message: `此使用者隸屬於【${u.dept}／${u.group}】。`,
+  });
+  return;
+
         }
         resolve({ success: true, message: "驗證成功", user: u });
         return;
@@ -658,10 +659,10 @@ async function confirmProfile() {
   showVerifyForm();
 
   notice(
-    "verifyNotice",
-    "danger",
-    `無法比對使用者資料。此使用者不屬於目前掃描的【${state.dept}／${state.group}】，請確認 QR Code 或重新輸入使用者資料。`
-  );
+  "verifyNotice",
+  "danger",
+  result.message
+);
 
   showPage("verify");
   return;
