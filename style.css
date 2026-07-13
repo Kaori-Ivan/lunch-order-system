@@ -592,6 +592,100 @@ input[readonly] {
   text-align: center;
   font-size: 16px;
 }
+/* =========================================================
+   Condition：本週不訂便當
+========================================================= */
+
+.no-lunch-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 18px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.no-lunch-option:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.no-lunch-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.no-lunch-check {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 2px solid #94a3b8;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.no-lunch-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.no-lunch-content strong {
+  color: #0f172a;
+  font-size: 19px;
+}
+
+.no-lunch-content small {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.no-lunch-option:has(input:checked) {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: inset 0 0 0 1px #2563eb;
+}
+
+.no-lunch-option:has(input:checked)
+  .no-lunch-check {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+.no-lunch-option:has(input:checked)
+  .no-lunch-check::after {
+  content: "✓";
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+/* 勾選不訂便當時，廠區與葷素呈現停用狀態 */
+.condition-box.condition-disabled {
+  opacity: 0.42;
+  filter: grayscale(0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+.option-card:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+/* 不訂便當時，兩個選項並排 */
+.meal-options.two-options {
+  grid-template-columns: repeat(2, minmax(140px, 240px));
+  justify-content: start;
+}
 
 /* =========================================================
    05 Page: Week Order
@@ -2204,5 +2298,18 @@ input[readonly] {
   .done-home-btn {
     width: 100%;
     margin-top: auto;
+  }
+}
+@media (max-width: 600px) {
+  .no-lunch-option {
+    padding: 15px 16px;
+  }
+
+  .no-lunch-content strong {
+    font-size: 17px;
+  }
+
+  .meal-options.two-options {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

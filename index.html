@@ -176,21 +176,36 @@
 <section id="page-condition" class="page hidden">
   <h2>選擇用餐條件</h2>
 
-  <div class="condition-box">
-    <div class="condition-badge">用餐方式：便當</div>
+  <!-- 不訂便當選項 -->
+  <label class="no-lunch-option" for="noLunchCheckbox">
+    <input id="noLunchCheckbox" type="checkbox">
+
+    <span class="no-lunch-check"></span>
+
+    <span class="no-lunch-content">
+      <strong>本週不訂便當</strong>
+      <small>勾選後不需設定廠區及葷素</small>
+    </span>
+  </label>
+
+  <!-- 廠區與葷素設定區 -->
+  <div id="lunchConditionBox" class="condition-box">
 
     <h3>廠區選擇</h3>
+
     <div class="option-grid factory-grid">
       <label class="option-card">
-        <input type="radio" name="factory" value="一廠" checked>
+        <input type="radio" name="factory" value="一廠">
         <span>🏭</span>
         <strong>一廠</strong>
       </label>
+
       <label class="option-card">
         <input type="radio" name="factory" value="二廠">
         <span>🏢</span>
         <strong>二廠</strong>
       </label>
+
       <label class="option-card">
         <input type="radio" name="factory" value="三廠">
         <span>🏢</span>
@@ -199,25 +214,33 @@
     </div>
 
     <h3>餐點選擇</h3>
+
     <div class="option-grid food-grid">
       <label class="option-card">
-        <input type="radio" name="foodType" value="葷食" checked>
+        <input type="radio" name="foodType" value="葷食">
         <span>🍱</span>
         <strong>葷食</strong>
       </label>
+
       <label class="option-card">
         <input type="radio" name="foodType" value="素食">
         <span>🌱</span>
         <strong>素食</strong>
       </label>
     </div>
-
-    <p class="hint">※ 上樓用餐 / 不用餐不需選擇此項</p>
   </div>
 
+  <!-- 條件頁專用提示 -->
+  <div id="conditionNotice"></div>
+
   <div class="actions">
-    <button id="btnBackToCheck" class="btn ghost">返回</button>
-    <button id="btnConditionNext" class="btn primary">下一步</button>
+    <button id="btnBackToCheck" class="btn ghost">
+      返回
+    </button>
+
+    <button id="btnConditionNext" class="btn primary" disabled>
+      下一步
+    </button>
   </div>
 </section>
 

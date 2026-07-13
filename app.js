@@ -39,6 +39,7 @@ const state = {
   pendingOrder: null,
   isSubmitting: false,
   isBusy: false,
+  noLunch: false,
 };
 const $ = (id) => document.getElementById(id);
 function on(id, event, handler) {
@@ -244,7 +245,9 @@ function saveUser(u) {
     name: u.name,
     nameMasked: u.nameMasked,
     nameEncoded: u.nameEncoded,
-    role: u.role
+    dept: u.dept,
+    group: u.group,
+    role: u.role,
   };
 
   localStorage.setItem(STORAGE_USER, JSON.stringify(safe));
@@ -488,7 +491,12 @@ function scanQRCode(qrDept = "", qrGroup = "") {
       name: saved.name,
       nameMasked: saved.nameMasked || "",
       nameEncoded: saved.nameEncoded || "",
-      role: saved.role || ""
+
+      // 部門與組別以本次 QR Code 為準
+      dept: state.dept,
+      group: state.group,
+
+      role: saved.role || "",
     };
 
     // 隱藏首次輸入欄位
@@ -797,28 +805,145 @@ function startOrder(isEdit) {
       dept: state.user.dept,
       group: state.user.group,
       role: state.user.role,
-      defaultFactory: "一廠",
-      defaultFoodType: "葷食",
+      defaultFactory: "",
+      defaultFoodType: "",
       weeklyMeals: {}
     };
   }
-
+  resetConditionForm();
   showPage("condition");
 }
+function updateConditionState() {
+  const noLunchCheckbox = $("noLunchCheckbox");
+  const lunchConditionBox = $("lunchConditionBox");
+  const nextButton = $("btnConditionNext");
+
+  if (!noLunchCheckbox || !lunchConditionBox || !nextButton) {
+    return;
+  }
+
+  const noLunch = noLunchCheckbox.checked;
+  state.noLunch = noLunch;
+
+  const factoryInputs = document.querySelectorAll('input[name="factory"]');
+
+  const foodTypeInputs = document.querySelectorAll('input[name="foodType"]');
+
+  // 勾選不訂便當：停用廠區及葷素
+  factoryInputs.forEach((input) => {
+    input.disabled = noLunch;
+  });
+
+  foodTypeInputs.forEach((input) => {
+    input.disabled = noLunch;
+  });
+
+  lunchConditionBox.classList.toggle("condition-disabled", noLunch);
+
+  if (noLunch) {
+    // 清除原本選取的廠區與葷素
+    factoryInputs.forEach((input) => {
+      input.checked = false;
+    });
+
+    foodTypeInputs.forEach((input) => {
+      input.checked = false;
+    });
+
+    nextButton.disabled = false;
+
+    notice(
+      "conditionNotice",
+      "info",
+      "已選擇本週不訂便當。下一頁僅提供「上樓用餐」及「不用餐」。",
+    );
+
+    return;
+  }
+  clearNotice("conditionNotice");
+
+  const factorySelected = document.querySelector(
+    'input[name="factory"]:checked',
+  );
+
+  const foodTypeSelected = document.querySelector(
+    'input[name="foodType"]:checked',
+  );
+
+  // 未勾不訂便當時，兩項都必須選擇
+  nextButton.disabled = !(factorySelected && foodTypeSelected);
+}
+function resetConditionForm() {
+  state.noLunch = false;
+
+  const noLunchCheckbox = $("noLunchCheckbox");
+
+  if (noLunchCheckbox) {
+    noLunchCheckbox.checked = false;
+  }
+
+  document
+    .querySelectorAll('input[name="factory"], input[name="foodType"]')
+    .forEach((input) => {
+      input.checked = false;
+      input.disabled = false;
+    });
+
+  $("lunchConditionBox")?.classList.remove("condition-disabled");
+
+  clearNotice("conditionNotice");
+
+  const nextButton = $("btnConditionNext");
+
+  if (nextButton) {
+    nextButton.disabled = true;
+  }
+}
 function goWeekOrder() {
-  const factory = document.querySelector('input[name="factory"]:checked')?.value;
-  const foodType = document.querySelector('input[name="foodType"]:checked')?.value;
+  if (!state.pendingOrder) {
+    return;
+  }
+
+  const noLunch = $("noLunchCheckbox")?.checked === true;
+
+  state.noLunch = noLunch;
+
+  // 情況一：本週不訂便當
+  if (noLunch) {
+    state.pendingOrder.defaultFactory = "";
+    state.pendingOrder.defaultFoodType = "";
+    state.pendingOrder.noLunch = true;
+
+    renderWeekOrder();
+    showPage("weekOrder");
+    return;
+  }
+
+  // 情況二：有訂便當，廠區與葷素都必填
+  const factory = document.querySelector(
+    'input[name="factory"]:checked',
+  )?.value;
+
+  const foodType = document.querySelector(
+    'input[name="foodType"]:checked',
+  )?.value;
 
   if (!factory || !foodType) {
-    notice("orderNotice", "danger", "請選擇廠區與餐點。");
+    notice(
+      "conditionNotice",
+      "danger",
+      "請完整選擇廠區及葷素，或勾選「本週不訂便當」。",
+    );
+
+    updateConditionState();
     return;
   }
 
   state.pendingOrder.defaultFactory = factory;
   state.pendingOrder.defaultFoodType = foodType;
+  state.pendingOrder.noLunch = false;
 
   renderWeekOrder();
-
   showPage("weekOrder");
 }
 
@@ -827,32 +952,77 @@ function getMealValue(name) {
 }
 function renderWeekOrder() {
   const weeks = getThisWeekDates();
+  const noLunch = state.noLunch === true;
 
   setHTML(
     "weekTable",
-    weeks.map(item => `
-      <div class="week-row">
-        <div class="week-info">
-          <div class="week-day">${item.day}</div>
-          <div class="week-date">${item.date}</div>
-        </div>
+    weeks
+      .map((item) => {
+        const mealOptions = noLunch
+          ? `
+            <label>
+              <input
+                type="radio"
+                name="meal_${item.key}"
+                value="上樓用餐"
+                checked
+              >
+              上樓用餐
+            </label>
 
-        <div class="meal-options">
-          <label>
-            <input type="radio" name="meal_${item.key}" value="便當" checked>
-            便當
-          </label>
-          <label>
-            <input type="radio" name="meal_${item.key}" value="不用餐">
-            不用餐
-          </label>
-          <label>
-            <input type="radio" name="meal_${item.key}" value="上樓用餐">
-            上樓用餐
-          </label>
-        </div>
-      </div>
-    `).join("")
+            <label>
+              <input
+                type="radio"
+                name="meal_${item.key}"
+                value="不用餐"
+              >
+              不用餐
+            </label>
+          `
+          : `
+            <label>
+              <input
+                type="radio"
+                name="meal_${item.key}"
+                value="便當"
+                checked
+              >
+              便當
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="meal_${item.key}"
+                value="上樓用餐"
+              >
+              上樓用餐
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="meal_${item.key}"
+                value="不用餐"
+              >
+              不用餐
+            </label>
+          `;
+
+        return `
+          <div class="week-row">
+            <div class="week-info">
+              <div class="week-day">${item.day}</div>
+              <div class="week-date">${item.date}</div>
+            </div>
+
+            <div class="meal-options ${noLunch ? "two-options" : ""}">
+              ${mealOptions}
+            </div>
+          </div>
+        `;
+      })
+      .join(""),
   );
 }
 /* function num(id) {
@@ -1085,6 +1255,13 @@ function bindEvents() {
   on("btnScan", "click", () => scanQRCode());
   on("btnClear", "click", clearLocalData);
   on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
+  on("noLunchCheckbox", "change", updateConditionState);
+
+  document
+    .querySelectorAll('input[name="factory"], input[name="foodType"]')
+    .forEach((input) => {
+      input.addEventListener("change", updateConditionState);
+    });
   on("btnConditionNext", "click", goWeekOrder);
   on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
