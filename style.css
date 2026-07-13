@@ -1510,87 +1510,80 @@ input[readonly] {
     font-size: 15px;
   }
 }
-/* =========================
-   一週訂餐選項：未選白色，選取後方案B
-========================= */
 
+/* =========================================================
+   10 Week Order：選取樣式與手機三欄
+========================================================= */
 .meal-options label {
   position: relative;
-  overflow: hidden;
-
+  min-width: 0;
+  min-height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  min-height: 54px;
-  padding: 0 46px 0 18px;
-
+  overflow: hidden;
+  padding: 0 42px 0 14px;
   border: 1.5px solid #d9e0ea;
   border-radius: 12px;
-  background: #ffffff;
+  background: #fff;
   color: #0f172a;
-
   font-weight: 800;
-  transition: 0.2s ease;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
-/* 隱藏原本 radio */
 .meal-options input {
   display: none;
 }
 
-/* 左側色條，未選時不顯示 */
 .meal-options label::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-
+  inset: 0 auto 0 0;
   width: 0;
-  height: 100%;
-
-  transition: 0.2s ease;
+  transition: width 0.2s ease;
 }
 
-/* 右側 radio 空心圓 */
 .meal-options label::after {
   content: "";
   position: absolute;
-  right: 16px;
   top: 50%;
-
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-
+  right: 13px;
+  width: 17px;
+  height: 17px;
   border: 2px solid #cbd5e1;
-  background: #ffffff;
-
+  border-radius: 50%;
+  background: #fff;
   transform: translateY(-50%);
 }
 
-/* 選取後通用樣式 */
+.meal-options label:hover {
+  border-color: #94a3b8;
+}
+
 .meal-options label:has(input:checked) {
   border-width: 2px;
-  background: #ffffff;
+  background: #fff;
   font-weight: 900;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
-/* 選取後左側色條 */
 .meal-options label:has(input:checked)::before {
-  width: 7px;
+  width: 6px;
 }
 
-/* 選取後右側實心圓 */
 .meal-options label:has(input:checked)::after {
-  background: currentColor;
   border-color: currentColor;
-  box-shadow: inset 0 0 0 4px #ffffff;
+  background: currentColor;
+  box-shadow: inset 0 0 0 4px #fff;
 }
 
-/* 便當：綠色 */
+/* 便當 */
 .meal-options label:has(input[value="便當"]:checked) {
   color: #15803d;
   border-color: #16a34a;
@@ -1600,17 +1593,7 @@ input[readonly] {
   background: #16a34a;
 }
 
-/* 不用餐：灰色 */
-.meal-options label:has(input[value="不用餐"]:checked) {
-  color: #475569;
-  border-color: #64748b;
-}
-
-.meal-options label:has(input[value="不用餐"]:checked)::before {
-  background: #64748b;
-}
-
-/* 上樓用餐：藍色 */
+/* 上樓用餐 */
 .meal-options label:has(input[value="上樓用餐"]:checked) {
   color: #2563eb;
   border-color: #2563eb;
@@ -1620,101 +1603,153 @@ input[readonly] {
   background: #2563eb;
 }
 
-/* 滑鼠移過未選項目 */
-.meal-options label:hover {
-  border-color: #94a3b8;
+/* 不用餐 */
+.meal-options label:has(input[value="不用餐"]:checked) {
+  color: #475569;
+  border-color: #64748b;
 }
 
-/* 手機版 */
-@media (max-width: 600px) {
-  .meal-options label {
-    min-height: 44px;
-    padding: 0 32px 0 10px;
-    font-size: 13px;
-    border-radius: 10px;
-  }
-
-  .meal-options label::after {
-    right: 9px;
-    width: 14px;
-    height: 14px;
-  }
-
-  .meal-options label:has(input:checked)::before {
-    width: 5px;
-  }
-
-  .meal-options label:has(input:checked)::after {
-    box-shadow: inset 0 0 0 3px #ffffff;
-  }
-}
-/* 確認頁：一週用餐方式改成 星期 + 中文日期 + 餐點 */
-.review-week-row {
-  display: grid;
-  grid-template-columns: 120px 150px 1fr;
-  align-items: center;
-  gap: 18px;
-  padding: 12px 0;
-  border-bottom: 1px solid #eef2f7;
+.meal-options label:has(input[value="不用餐"]:checked)::before {
+  background: #64748b;
 }
 
-.review-day {
-  font-size: 18px;
-  font-weight: 900;
-  color: #071326;
+/* 星期與日期整合為左側資訊欄 */
+#page-weekOrder .week-row {
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
 }
 
-.review-date {
+#page-weekOrder .week-info {
+  min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #2563eb;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#page-weekOrder .week-info .week-day {
+  color: #071326;
   font-size: 16px;
+  font-weight: 900;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+#page-weekOrder .week-info .week-date {
+  margin-top: 4px;
+  color: #607086;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+#page-weekOrder .meal-options {
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* =========================================================
+   11 Verify Page
+========================================================= */
+.verify-page {
+  padding: 18px;
+}
+
+.verify-badge {
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  text-align: center;
   font-weight: 800;
 }
 
-.day-circle,
-.day-name,
-.day-date {
-  display: none;
+.verify-info-card {
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  background: #fff;
 }
 
-/* 手機版 */
-@media (max-width: 600px) {
-  .review-week-row {
-    grid-template-columns: 76px 96px 1fr;
-    gap: 6px;
-    padding: 10px 0;
-  }
-
-  .review-day {
-    font-size: 14px;
-  }
-
-  .review-date {
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  .meal-pill {
-    min-height: 40px;
-    padding: 0 8px;
-    font-size: 12px;
-  }
-
-  .meal-pill b {
-    width: 18px;
-    height: 18px;
-  }
+.verify-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #e5eaf2;
 }
-/* =========================
-   Review weekly row
-   手機優先：星期 + 日期 + 餐點
-========================= */
 
+.verify-row:last-child {
+  border-bottom: 0;
+}
+
+.verify-row span {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.verify-row strong {
+  color: #071326;
+  font-weight: 900;
+}
+
+.verify-title {
+  margin: 0 0 14px;
+  color: #071326;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.verify-form {
+  display: grid;
+  gap: 12px;
+}
+
+.verify-form label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5eaf2;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.verify-form label span {
+  width: 80px;
+  margin: 0;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.verify-form input {
+  flex: 1;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+#verifyActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-top: 22px;
+}
+
+#verifyActions .btn {
+  height: 56px;
+  border-radius: 18px;
+  font-size: 18px;
+}
+
+/* =========================================================
+   12 Review：星期 + 日期 + 餐點
+========================================================= */
 .review-week-row {
   display: grid;
-  grid-template-columns: 58px 64px 1fr;
+  grid-template-columns: 58px 64px minmax(0, 1fr);
   align-items: center;
   gap: 6px;
   padding: 10px 0;
@@ -1722,16 +1757,16 @@ input[readonly] {
 }
 
 .review-day {
+  color: #071326;
   font-size: 14px;
   font-weight: 900;
-  color: #071326;
   white-space: nowrap;
 }
 
 .review-date {
+  color: #2563eb;
   font-size: 12px;
   font-weight: 800;
-  color: #2563eb;
   white-space: nowrap;
 }
 
@@ -1749,333 +1784,45 @@ input[readonly] {
   white-space: nowrap;
 }
 
-.review-week-row .meal-pill b,
+/* 新版確認頁已不使用舊欄位 */
 .review-week-row .day-circle,
 .review-week-row .day-name,
-.review-week-row .day-date {
+.review-week-row .day-date,
+.review-week-row .meal-pill b {
   display: none;
 }
 
-/* 電腦版：只放大，不改結構 */
-@media (min-width: 901px) {
-  #page-review .review-week-row {
-    grid-template-columns: 100px 110px 1fr;
-    gap: 16px;
-    padding: 12px 0;
-  }
-
-  #page-review .review-day {
-    font-size: 18px;
-  }
-
-  #page-review .review-date {
-    font-size: 17px;
-  }
-
-  #page-review .meal-pill {
-    min-height: 52px;
-    padding: 0 16px;
-    font-size: 18px;
-  }
-}
-/* 一週訂餐頁：星期在上、日期在下，手機優先 */
-.week-row {
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  align-items: center;
-  gap: 12px;
-}
-
-.week-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-width: 0;
-}
-
-.week-info .week-day {
-  font-size: 16px;
-  font-weight: 900;
-  line-height: 1.25;
-  color: #071326;
-  white-space: nowrap;
-}
-
-.week-info .week-date {
-  margin-top: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-  color: #607086;
-  white-space: nowrap;
-}
-
-/* 手機：三個選項仍維持一行 */
-.week-row .meal-options {
-  min-width: 0;
-}
-
-.week-row .meal-options label {
-  min-width: 0;
-  white-space: nowrap;
-}
-
-/* 電腦：只放大，不改結構 */
-@media (min-width: 901px) {
-  #page-weekOrder .week-row {
-    grid-template-columns: 150px 1fr;
-    gap: 24px;
-  }
-
-  #page-weekOrder .week-info .week-day {
-    font-size: 24px;
-  }
-
-  #page-weekOrder .week-info .week-date {
-    font-size: 20px;
-  }
-}
-
-/* 小手機：再縮一點，避免跑版 */
-@media (max-width: 430px) {
-  .week-row {
-    grid-template-columns: 74px 1fr;
-    gap: 8px;
-  }
-
-  .week-info .week-day {
-    font-size: 14px;
-  }
-
-  .week-info .week-date {
-    font-size: 12px;
-  }
-
-  .meal-options {
-    gap: 4px;
-  }
-
-  .meal-options label {
-    font-size: 12px;
-    padding: 0 24px 0 6px;
-  }
-}
-@media (max-width: 600px) {
-  #page-weekOrder .week-row {
-    grid-template-columns: 72px 1fr;
-    gap: 8px;
-  }
-
-  #page-weekOrder .meal-options {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  #page-weekOrder .meal-options label {
-    justify-content: flex-start;
-    min-height: 42px;
-    font-size: 13px;
-  }
-}
-/* 一週訂餐：星期在上、日期在下 */
-#page-weekOrder .week-row {
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  align-items: center;
-  gap: 12px;
-}
-
-#page-weekOrder .week-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-#page-weekOrder .week-day {
-  font-size: 16px;
-  font-weight: 900;
-  line-height: 1.25;
-  white-space: nowrap;
-}
-
-#page-weekOrder .week-date {
-  margin-top: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #607086;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-/* 手機：避免三個按鈕擠爆 */
-@media (max-width: 600px) {
-  #page-weekOrder .week-row {
-    grid-template-columns: 70px 1fr;
-    gap: 8px;
-  }
-
-  #page-weekOrder .meal-options {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  #page-weekOrder .meal-options label {
-    justify-content: flex-start;
-    min-height: 42px;
-    font-size: 13px;
-  }
-}
-
-/* 電腦：只放大 */
-@media (min-width: 901px) {
-  #page-weekOrder .week-row {
-    grid-template-columns: 150px 1fr;
-    gap: 24px;
-  }
-
-  #page-weekOrder .week-day {
-    font-size: 24px;
-  }
-
-  #page-weekOrder .week-date {
-    font-size: 20px;
-  }
-}
-.verify-page{
-  padding:18px;
-}
-
-.verify-badge{
-  margin-bottom:16px;
-  padding:14px;
-  border-radius:14px;
-  text-align:center;
-  font-weight:800;
-  color:#2563eb;
-  background:#eff6ff;
-  border:1px solid #dbeafe;
-}
-
-.verify-info-card{
-  background:#fff;
-  border:1px solid #e5eaf2;
-  border-radius:16px;
-  overflow:hidden;
-  margin-bottom:22px;
-}
-
-.verify-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:16px;
-  border-bottom:1px solid #e5eaf2;
-}
-
-.verify-row:last-child{
-  border-bottom:none;
-}
-
-.verify-row span{
-  color:#64748b;
-  font-weight:700;
-}
-
-.verify-row strong{
-  color:#071326;
-  font-weight:900;
-}
-
-.verify-title{
-  margin:0 0 14px;
-  font-size:16px;
-  font-weight:900;
-  color:#071326;
-}
-
-.verify-form{
-  display:grid;
-  gap:12px;
-}
-
-.verify-form label{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px;
-  background:#fff;
-  border:1px solid #e5eaf2;
-  border-radius:16px;
-}
-
-.verify-form label span{
-  width:80px;
-  margin:0;
-  color:#64748b;
-  font-weight:800;
-}
-
-.verify-form input{
-  flex:1;
-  height:42px;
-  font-size:15px;
-  border-radius:12px;
-}
-
-#verifyActions{
-  margin-top:22px;
-  display:grid;
-  grid-template-columns:1fr;
-}
-
-#verifyActions .btn{
-  height:56px;
-  border-radius:18px;
-  font-size:18px;
-}
-.done-container{
-
-    max-width:900px;
-
-    margin:0 auto;
-
-    padding:40px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    align-items:center;
-
-}
-/* Done page：送出完成頁 */
+/* =========================================================
+   13 Done Page
+========================================================= */
 #page-done.done-page {
+  min-height: 70vh;
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 78vh;
-  background: #f8fbff;
+  justify-content: center;
+  background: #fff;
+}
+
+.done-phone {
+  width: 100%;
+  max-width: 960px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 64px;
+  border-radius: 28px;
+  background: #fff;
   box-shadow: none;
 }
 
-/* .done-phone {
-  width: min(360px, 100%);
-  min-height: 620px;
-  padding: 28px 22px;
-  border-radius: 34px;
-  background: #fff;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-} */
-
 .done-brand {
   width: 100%;
+  align-self: flex-start;
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 70px;
+  margin-bottom: 40px;
 }
 
 .done-logo {
@@ -2102,35 +1849,36 @@ input[readonly] {
 }
 
 .done-check {
-  width: 118px;
-  height: 118px;
+  width: 140px;
+  height: 140px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   background: linear-gradient(135deg, #34d399, #10b981);
   color: #fff;
-  font-size: 74px;
+  font-size: 82px;
   font-weight: 900;
   box-shadow: 0 18px 35px rgba(16, 185, 129, 0.32);
 }
 
 .done-phone h2 {
   margin: 28px 0 8px;
-  font-size: 26px;
+  font-size: 42px;
   font-weight: 900;
 }
 
 .done-subtitle {
   margin: 0 0 28px;
   color: #64748b;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 .done-time-card {
-  width: 230px;
+  width: 420px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: 14px 18px;
   border-radius: 14px;
@@ -2154,14 +1902,13 @@ input[readonly] {
 }
 
 .done-home-btn {
-  width: 100%;
-  margin-top: auto;
+  width: 320px;
   height: 58px;
+  margin-top: 48px;
   border-radius: 16px;
   font-size: 17px;
 }
 
-/* 小彩帶 */
 .confetti {
   position: relative;
   width: 160px;
@@ -2186,77 +1933,132 @@ input[readonly] {
 .confetti span:nth-child(8) { left: 105px; top: 48px; background: #93c5fd; }
 .confetti span:nth-child(9) { left: 130px; top: 5px; background: #f97316; }
 
-@media (max-width: 600px) {
-  #page-done.done-page {
-    min-height: 100vh;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
+/* =========================================================
+   14 Final Responsive Overrides
+========================================================= */
+@media (min-width: 901px) {
+  #page-weekOrder .week-row {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 24px;
   }
 
-  .done-phone {
-    width: 100%;
-    min-height: 100vh;
-    border-radius: 0;
-    box-shadow: none;
+  #page-weekOrder .week-info .week-day {
+    font-size: 24px;
+  }
+
+  #page-weekOrder .week-info .week-date {
+    font-size: 20px;
+  }
+
+  #page-review .review-week-row {
+    grid-template-columns: 100px 110px minmax(0, 1fr);
+    gap: 16px;
+    padding: 12px 0;
+  }
+
+  #page-review .review-day {
+    font-size: 18px;
+  }
+
+  #page-review .review-date {
+    font-size: 17px;
+  }
+
+  #page-review .meal-pill {
+    min-height: 52px;
+    padding: 0 16px;
+    font-size: 18px;
   }
 }
-/* =========================
-   Done Page：手機滿版、電腦寬版
-========================= */
 
-#page-done.done-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 70vh;
-  background: #fff;
-}
-
-.done-phone {
-  width: 100%;
-  max-width: 960px;
-  min-height: 520px;
-  padding: 48px 64px;
-  border-radius: 28px;
-  background: #fff;
-  box-shadow: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.done-brand {
-  align-self: flex-start;
-  margin-bottom: 40px;
-}
-
-.done-check {
-  width: 140px;
-  height: 140px;
-  font-size: 82px;
-}
-
-.done-phone h2 {
-  font-size: 42px;
-}
-
-.done-subtitle {
-  font-size: 20px;
-}
-
-.done-time-card {
-  width: 420px;
-  justify-content: center;
-}
-
-.done-home-btn {
-  width: 320px;
-  margin-top: 48px;
-}
-
-/* 手機版 */
 @media (max-width: 600px) {
+  #page-weekOrder {
+    padding: 16px 12px;
+  }
+
+  #page-weekOrder h2 {
+    margin-bottom: 8px;
+    font-size: 28px;
+  }
+
+  #page-weekOrder .desc {
+    margin-bottom: 16px;
+    font-size: 15px;
+  }
+
+  #page-weekOrder .week-table {
+    gap: 0;
+  }
+
+  #page-weekOrder .week-row {
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 6px;
+    padding: 10px 0;
+  }
+
+  #page-weekOrder .week-info .week-day {
+    font-size: 14px;
+  }
+
+  #page-weekOrder .week-info .week-date {
+    margin-top: 3px;
+    font-size: 12px;
+  }
+
+  /* 手機固定三個選項同一排 */
+  #page-weekOrder .meal-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  #page-weekOrder .meal-options label {
+    min-height: 44px;
+    justify-content: flex-start;
+    padding: 0 24px 0 7px;
+    border-radius: 9px;
+    font-size: 11px;
+    letter-spacing: -0.4px;
+  }
+
+  #page-weekOrder .meal-options label::after {
+    right: 7px;
+    width: 13px;
+    height: 13px;
+  }
+
+  #page-weekOrder .meal-options label:has(input:checked)::before {
+    width: 4px;
+  }
+
+  #page-weekOrder .meal-options label:has(input:checked)::after {
+    box-shadow: inset 0 0 0 3px #fff;
+  }
+
+  #page-weekOrder .actions {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  #page-weekOrder .btn {
+    height: 54px;
+    padding: 0 12px;
+    font-size: 16px;
+  }
+
+  .meal-options.two-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .no-lunch-option {
+    padding: 15px 16px;
+  }
+
+  .no-lunch-content strong {
+    font-size: 17px;
+  }
+
   #page-done.done-page {
     min-height: 100vh;
     padding: 0;
@@ -2270,7 +2072,6 @@ input[readonly] {
     min-height: 100vh;
     padding: 28px 22px;
     border-radius: 0;
-    box-shadow: none;
   }
 
   .done-brand {
@@ -2300,16 +2101,27 @@ input[readonly] {
     margin-top: auto;
   }
 }
-@media (max-width: 600px) {
-  .no-lunch-option {
-    padding: 15px 16px;
+
+@media (max-width: 390px) {
+  #page-weekOrder .week-row {
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 4px;
   }
 
-  .no-lunch-content strong {
-    font-size: 17px;
+  #page-weekOrder .meal-options {
+    gap: 3px;
   }
 
-  .meal-options.two-options {
-    grid-template-columns: repeat(2, 1fr);
+  #page-weekOrder .meal-options label {
+    min-height: 42px;
+    padding: 0 20px 0 5px;
+    font-size: 10px;
+  }
+
+  #page-weekOrder .meal-options label::after {
+    right: 5px;
+    width: 12px;
+    height: 12px;
   }
 }
+
