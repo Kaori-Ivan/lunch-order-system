@@ -107,36 +107,70 @@
   </div>
   <div class="actions"><button id="btnScan" class="btn primary">模擬掃描 QRCode</button><button id="btnClear" class="btn ghost">清除本機測試資料</button></div>
 </section>
-<section id="page-verify" class="page hidden">
-  <p id="verifyDesc" class="desc">請輸入工號與姓名，系統會比對資料庫。</p>
-<div id="savedUserBox" class="info-card hidden">
-  <div class="row">
-    <span>部門</span>
-    <strong id="showDept"></strong>
+<section id="page-verify" class="page verify-page hidden">
+
+  <div class="verify-badge">
+    已帶入部門與組別
   </div>
-  <div class="row">
-    <span>組別</span>
-    <strong id="showGroup"></strong>
+
+  <div class="verify-info-card">
+
+    <div class="verify-row">
+      <span>🏢 部門</span>
+      <strong id="deptReadonlyText"></strong>
+    </div>
+
+    <div class="verify-row">
+      <span>👥 組別</span>
+      <strong id="groupReadonlyText"></strong>
+    </div>
+
   </div>
-  <div class="row">
-    <span>工號</span>
-    <strong id="showEmpId"></strong>
+
+  <h3 id="verifyTitle" class="verify-title">
+  請輸入您的資料（首次使用）
+</h3>
+
+  <div id="verifyForm" class="verify-form">
+
+    <label>
+      <span>💼 工號</span>
+      <input id="empId" placeholder="請輸入工號">
+    </label>
+
+    <label>
+      <span>👤 姓名</span>
+      <input id="empName" placeholder="請輸入姓名">
+    </label>
+
+    <input id="deptReadonly" type="hidden">
+    <input id="groupReadonly" type="hidden">
+
   </div>
-  <div class="row">
-    <span>姓名</span>
-    <strong id="showEmpName"></strong>
+
+  <div id="savedUserBox" class="saved-user-box hidden">
+
+    <div class="verify-row">
+      <span>💼 工號</span>
+      <strong id="showEmpId"></strong>
+    </div>
+
+    <div class="verify-row">
+      <span>👤 姓名</span>
+      <strong id="showEmpName"></strong>
+    </div>
+
+    <div class="verify-row">
+      <span>👤 身分</span>
+      <strong id="showRole"></strong>
+    </div>
+
   </div>
-  <div class="row">
-    <span>身分</span>
-    <strong id="showRole"></strong>
-  </div>
-</div>  <div id="verifyForm" class="form-grid">
-    <label><span>工號</span><input id="empId" placeholder="例如 C5454"></label>
-    <label><span>姓名</span><input id="empName" placeholder="例如 KOOK"></label>
-    <label><span>部門</span><input id="deptReadonly" readonly></label>
-    <label><span>組別</span><input id="groupReadonly" readonly></label>
-  </div>
-  <div id="verifyNotice"></div><div id="verifyActions" class="actions"></div>
+
+  <div id="verifyNotice"></div>
+
+  <div id="verifyActions" class="actions"></div>
+
 </section>
 <section id="page-check" class="page hidden"><div id="checkBox"></div><div id="checkActions" class="actions"></div></section>
 <section id="page-condition" class="page hidden">
@@ -240,17 +274,38 @@
   </div>
 
 </section>
-<section id="page-done" class="page hidden">
-  <div class="done-simple">
-    <div class="hero">✅</div>
-    <p>10 秒後將自動返回首頁</p>
+<section id="page-done" class="page hidden done-page">
+  <div class="done-phone">
 
-    <div class="actions">
-      <button id="btnHome" class="btn primary">回到首頁</button>
+    <div class="done-brand">
+      <div class="done-logo">🍴</div>
+      <div>
+        <h3>午餐訂餐系統</h3>
+        <p>Lunch Order System</p>
+      </div>
     </div>
+
+    <div class="confetti">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="done-check">✓</div>
+
+    <h2>訂單已送出</h2>
+    <p class="done-subtitle">感謝您的訂餐！</p>
+
+    <div class="done-time-card">
+      <div class="time-icon">🕒</div>
+      <div>
+        <strong>送出時間</strong>
+        <span id="doneTime">--</span>
+      </div>
+    </div>
+
+    <button id="btnHome" class="btn primary done-home-btn">⌂ 回首頁</button>
   </div>
 </section>
-
 </section> <!-- content 結束 -->
 </section> <!-- layout 結束 -->
 </main>

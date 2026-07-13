@@ -1,5 +1,6 @@
 const STORAGE_USER = "lunch_user_profile_test_v11";
 const STORAGE_ORDERS = "lunch_orders_test_v11";
+const STORAGE_QR = "lunch_qr_context_test_v11";
 const MOCK_USERS = [
   {
     userId: "U0001",
@@ -214,11 +215,9 @@ function profileHTML(u) {
 function renderSavedUser(u) {
   if (!u) return;
 
-  setText("showDept", u.dept);
-  setText("showGroup", u.group);
-  setText("showEmpId", u.empId);
-  setText("showEmpName", u.name);
-  setText("showRole", u.role);
+   setText("showEmpId", u.empId || "");
+  setText("showEmpName", u.name || "");
+  setText("showRole", u.role || "");
 }
 function maskName(n) {
   if (!n) return "";
@@ -245,9 +244,7 @@ function saveUser(u) {
     name: u.name,
     nameMasked: u.nameMasked,
     nameEncoded: u.nameEncoded,
-    dept: u.dept,
-    group: u.group,
-    role: u.role,
+    role: u.role
   };
 
   localStorage.setItem(STORAGE_USER, JSON.stringify(safe));
@@ -258,6 +255,36 @@ function getSavedUser() {
   } catch {
     return null;
   }
+}
+function saveQRCodeContext(dept, group) {
+
+  console.log("saveQRCodeContext");
+
+  const qrContext = {
+    dept: dept,
+    group: group
+  };
+
+  localStorage.setItem(
+    STORAGE_QR,
+    JSON.stringify(qrContext)
+  );
+
+  console.log(localStorage.getItem(STORAGE_QR));
+}
+
+function getSavedQRCodeContext() {
+  try {
+    return JSON.parse(
+      localStorage.getItem(STORAGE_QR) || "null"
+    );
+  } catch {
+    return null;
+  }
+}
+
+function clearSavedQRCodeContext() {
+  localStorage.removeItem(STORAGE_QR);
 }
 function clearSavedUser() {
   localStorage.removeItem(STORAGE_USER);
@@ -401,59 +428,109 @@ function showConfirmDialog({
     $("dialogCancel").onclick = () => close(false);
   });
 }
-function scanQRCode() {
+function getQRCodeParams() {
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    dept: String(params.get("dept") || "").trim(),
+    group: String(params.get("group") || "").trim()
+  };
+}
+function scanQRCode(qrDept = "", qrGroup = "") {
   state.isBusy = false;
+
+ 
+
   if (!guardOpen()) return;
-  state.dept = String($("deptSelect")?.value || "").trim();
-  state.group = String($("groupSelect")?.value || "").trim();
+
+   // 防止滑鼠事件被誤當成部門
+  if (qrDept instanceof Event) {
+    qrDept = "";
+    qrGroup = "";
+  }
+
+  // 正式 QR Code 參數優先
+  // 測試時沒有參數，才讀取下拉選單
+  state.dept = String(
+    qrDept || $("deptSelect")?.value || ""
+  ).trim();
+
+  state.group = String(
+    qrGroup || $("groupSelect")?.value || ""
+  ).trim();
+
   if (!state.dept || !state.group) {
     showAlert("未取得部門或組別，請重新掃描 QR Code。");
     showPage("scan");
     return;
   }
+  console.log("存QR", state.dept, state.group);
+  saveQRCodeContext(state.dept, state.group);
+  // 寫入隱藏欄位
   $("deptReadonly").value = state.dept;
   $("groupReadonly").value = state.group;
+
+  // 顯示本次 QR Code 的部門與組別
+  setText("deptReadonlyText", state.dept);
+  setText("groupReadonlyText", state.group);
+
   clearNotice("verifyNotice");
+
+  // 讀取本機已儲存使用者
   const saved = getSavedUser();
-  if (saved) {
-    state.user = saved;
 
-    const qrDept = state.dept;
-    const qrGroup = state.group;
+  if (saved && saved.empId && saved.name) {
+    // 只載入使用者資料
+    state.user = {
+      userId: saved.userId || "",
+      empId: saved.empId,
+      name: saved.name,
+      nameMasked: saved.nameMasked || "",
+      nameEncoded: saved.nameEncoded || "",
+      role: saved.role || ""
+    };
 
-    if (saved.dept !== qrDept || saved.group !== qrGroup) {
-
-      notice(
-        "verifyNotice",
-        "danger",
-        `您目前屬於【${saved.dept}-${saved.group}】，請掃描正確的部門 QR Code。`
-      );
-
-    return;
-}
-
-state.user = saved;
-
-    $("deptReadonly").value = saved.dept;
-    $("groupReadonly").value = saved.group;
+    // 隱藏首次輸入欄位
     $("verifyForm").classList.add("hidden");
+
+    // 顯示已儲存使用者
     $("savedUserBox").classList.remove("hidden");
+    setText("verifyTitle", "請確認您的使用者資料");
+
     renderSavedUser(state.user);
-    setText("verifyDesc", "系統已讀取此裝置上次使用者資料，請確認是否正確。");
+
+    setText(
+      "verifyDesc",
+      "已自動帶入此裝置儲存的使用者資料，請確認後開始點餐。"
+    );
+
     setHTML(
       "verifyActions",
-      `<button class="btn primary" id="btnStartSaved">開始點餐</button><button class="btn secondary" id="btnWrongSaved">重建使用者</button>`,
+      `
+      <button class="btn primary" id="btnStartSaved">
+        開始點餐
+      </button>
+
+      <button class="btn secondary" id="btnWrongSaved">
+        重建使用者
+      </button>
+      `
     );
+
     on("btnStartSaved", "click", confirmProfile);
     on("btnWrongSaved", "click", resetVerify);
+
   } else {
+    // 沒有已儲存使用者才顯示輸入欄位
     showVerifyForm();
   }
+
   showPage("verify");
 }
 function showVerifyForm() {
   $("verifyForm").classList.remove("hidden");
   $("savedUserBox").classList.add("hidden");
+  setText("verifyTitle", "請輸入您的資料（首次使用）");
   setText(
     "verifyDesc",
     "請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。",
@@ -573,19 +650,22 @@ async function confirmProfile() {
     });
 
     if (!result.success) {
-      clearSavedUser();
-      state.user = null;
+  clearSavedUser();
+  state.user = null;
 
-      setHTML("savedUserBox", "");
-      $("savedUserBox").classList.add("hidden");
-      $("verifyForm").classList.remove("hidden");
+  $("savedUserBox").classList.add("hidden");
 
-      notice("verifyNotice", "danger", result.message);
+  showVerifyForm();
 
-      showVerifyForm();
-      showPage("verify");
-      return;
-    }
+  notice(
+    "verifyNotice",
+    "danger",
+    `無法比對使用者資料。此使用者不屬於目前掃描的【${state.dept}／${state.group}】，請確認 QR Code 或重新輸入使用者資料。`
+  );
+
+  showPage("verify");
+  return;
+}
 
     await checkTodayOrder();
     showPage("check");
@@ -950,6 +1030,19 @@ async function submitOrder() {
   
 
 clearBusy();
+
+const doneTime = document.getElementById("doneTime");
+if (doneTime) {
+  doneTime.textContent = new Date().toLocaleString("zh-TW", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  });
+}
+
 showPage("done");
 
 setTimeout(() => {
@@ -980,12 +1073,15 @@ async function clearLocalData() {
   });
 
   if (!ok) return;
+
   clearSavedUser();
+  clearSavedQRCodeContext();     
   localStorage.removeItem(STORAGE_ORDERS);
+
   location.reload();
 }
 function bindEvents() {
-  on("btnScan", "click", scanQRCode);
+  on("btnScan", "click", () => scanQRCode());
   on("btnClear", "click", clearLocalData);
   on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
   on("btnConditionNext", "click", goWeekOrder);
@@ -1009,40 +1105,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const saved = getSavedUser();
+  // 先讀取正式 QR Code 網址參數
+  const qrParams = getQRCodeParams();
 
-  if (saved && saved.empId && saved.name && saved.dept && saved.group) {
-    state.user = saved;
-    state.dept = saved.dept;
-    state.group = saved.group;
-
-    $("deptReadonly").value = saved.dept;
-    $("groupReadonly").value = saved.group;
-
-    $("verifyForm").classList.add("hidden");
-    $("savedUserBox").classList.remove("hidden");
-
-    renderSavedUser(state.user);
-    setText(
-      "verifyDesc",
-      "已自動帶入此裝置儲存的使用者資料。",
-    );
-
-    setHTML(
-      "verifyActions",
-      `
-      <button class="btn primary" id="btnStartSaved">開始點餐</button>
-      <button class="btn secondary" id="btnWrongSaved">重建使用者</button>
-    `,
-    );
-
-    on("btnStartSaved", "click", confirmProfile);
-    on("btnWrongSaved", "click", resetVerify);
-
-    showPage("verify");
+  if (qrParams.dept && qrParams.group) {
+    scanQRCode(qrParams.dept, qrParams.group);
     return;
   }
 
+  // 網址沒有參數時，讀取上一次掃描的部門與組別
+  const savedQR = getSavedQRCodeContext();
+
+  if (savedQR && savedQR.dept && savedQR.group) {
+    scanQRCode(savedQR.dept, savedQR.group);
+    return;
+  }
+
+  // 完全沒有掃描紀錄，才顯示模擬掃描頁
   showPage("scan");
 });
 function lockButton(buttonId, text) {
@@ -1103,4 +1182,14 @@ document
 
 });
 
+}
+function renderQRCodeInfo() {
+  setText("deptReadonlyText", state.dept || "未取得");
+  setText("groupReadonlyText", state.group || "未取得");
+
+  const deptInput = $("deptReadonly");
+  const groupInput = $("groupReadonly");
+
+  if (deptInput) deptInput.value = state.dept || "";
+  if (groupInput) groupInput.value = state.group || "";
 }

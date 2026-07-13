@@ -1847,3 +1847,362 @@ input[readonly] {
     font-size: 20px;
   }
 }
+.verify-page{
+  padding:18px;
+}
+
+.verify-badge{
+  margin-bottom:16px;
+  padding:14px;
+  border-radius:14px;
+  text-align:center;
+  font-weight:800;
+  color:#2563eb;
+  background:#eff6ff;
+  border:1px solid #dbeafe;
+}
+
+.verify-info-card{
+  background:#fff;
+  border:1px solid #e5eaf2;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:22px;
+}
+
+.verify-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:16px;
+  border-bottom:1px solid #e5eaf2;
+}
+
+.verify-row:last-child{
+  border-bottom:none;
+}
+
+.verify-row span{
+  color:#64748b;
+  font-weight:700;
+}
+
+.verify-row strong{
+  color:#071326;
+  font-weight:900;
+}
+
+.verify-title{
+  margin:0 0 14px;
+  font-size:16px;
+  font-weight:900;
+  color:#071326;
+}
+
+.verify-form{
+  display:grid;
+  gap:12px;
+}
+
+.verify-form label{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px;
+  background:#fff;
+  border:1px solid #e5eaf2;
+  border-radius:16px;
+}
+
+.verify-form label span{
+  width:80px;
+  margin:0;
+  color:#64748b;
+  font-weight:800;
+}
+
+.verify-form input{
+  flex:1;
+  height:42px;
+  font-size:15px;
+  border-radius:12px;
+}
+
+#verifyActions{
+  margin-top:22px;
+  display:grid;
+  grid-template-columns:1fr;
+}
+
+#verifyActions .btn{
+  height:56px;
+  border-radius:18px;
+  font-size:18px;
+}
+.done-container{
+
+    max-width:900px;
+
+    margin:0 auto;
+
+    padding:40px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+}
+/* Done page：送出完成頁 */
+#page-done.done-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 78vh;
+  background: #f8fbff;
+  box-shadow: none;
+}
+
+/* .done-phone {
+  width: min(360px, 100%);
+  min-height: 620px;
+  padding: 28px 22px;
+  border-radius: 34px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+} */
+
+.done-brand {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 70px;
+}
+
+.done-logo {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 20px;
+}
+
+.done-brand h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.done-brand p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.done-check {
+  width: 118px;
+  height: 118px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #fff;
+  font-size: 74px;
+  font-weight: 900;
+  box-shadow: 0 18px 35px rgba(16, 185, 129, 0.32);
+}
+
+.done-phone h2 {
+  margin: 28px 0 8px;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.done-subtitle {
+  margin: 0 0 28px;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.done-time-card {
+  width: 230px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #dcfce7;
+  color: #064e3b;
+}
+
+.time-icon {
+  font-size: 30px;
+}
+
+.done-time-card strong {
+  display: block;
+  font-size: 14px;
+}
+
+.done-time-card span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+}
+
+.done-home-btn {
+  width: 100%;
+  margin-top: auto;
+  height: 58px;
+  border-radius: 16px;
+  font-size: 17px;
+}
+
+/* 小彩帶 */
+.confetti {
+  position: relative;
+  width: 160px;
+  height: 58px;
+  margin-bottom: -10px;
+}
+
+.confetti span {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+
+.confetti span:nth-child(1) { left: 10px; top: 30px; background: #10b981; }
+.confetti span:nth-child(2) { left: 35px; top: 8px; background: #60a5fa; }
+.confetti span:nth-child(3) { left: 64px; top: 18px; background: #fbbf24; }
+.confetti span:nth-child(4) { left: 92px; top: 2px; background: #f59e0b; }
+.confetti span:nth-child(5) { left: 120px; top: 20px; background: #fb7185; }
+.confetti span:nth-child(6) { left: 145px; top: 34px; background: #34d399; }
+.confetti span:nth-child(7) { left: 50px; top: 45px; background: #fbbf24; }
+.confetti span:nth-child(8) { left: 105px; top: 48px; background: #93c5fd; }
+.confetti span:nth-child(9) { left: 130px; top: 5px; background: #f97316; }
+
+@media (max-width: 600px) {
+  #page-done.done-page {
+    min-height: 100vh;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .done-phone {
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+/* =========================
+   Done Page：手機滿版、電腦寬版
+========================= */
+
+#page-done.done-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  background: #fff;
+}
+
+.done-phone {
+  width: 100%;
+  max-width: 960px;
+  min-height: 520px;
+  padding: 48px 64px;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.done-brand {
+  align-self: flex-start;
+  margin-bottom: 40px;
+}
+
+.done-check {
+  width: 140px;
+  height: 140px;
+  font-size: 82px;
+}
+
+.done-phone h2 {
+  font-size: 42px;
+}
+
+.done-subtitle {
+  font-size: 20px;
+}
+
+.done-time-card {
+  width: 420px;
+  justify-content: center;
+}
+
+.done-home-btn {
+  width: 320px;
+  margin-top: 48px;
+}
+
+/* 手機版 */
+@media (max-width: 600px) {
+  #page-done.done-page {
+    min-height: 100vh;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .done-phone {
+    width: 100%;
+    max-width: none;
+    min-height: 100vh;
+    padding: 28px 22px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .done-brand {
+    margin-bottom: 70px;
+  }
+
+  .done-check {
+    width: 118px;
+    height: 118px;
+    font-size: 74px;
+  }
+
+  .done-phone h2 {
+    font-size: 26px;
+  }
+
+  .done-subtitle {
+    font-size: 15px;
+  }
+
+  .done-time-card {
+    width: 230px;
+  }
+
+  .done-home-btn {
+    width: 100%;
+    margin-top: auto;
+  }
+}
