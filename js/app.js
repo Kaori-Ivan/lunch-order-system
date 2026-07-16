@@ -530,60 +530,41 @@ async function confirmProfile() {
 
   if (!state.dept || !state.group || !state.user) {
     showAlert("資料不完整，請回到主畫面重新掃描 QR Code。");
+
     showPage("scan");
     return;
   }
 
-  setBusy("正在確認使用者資料，請稍候...");
+  setBusy("正在重新核對使用者身分，請稍候...");
 
   try {
-    const result = await apiPost({
-      action: "verifyUser",
-      empId: state.user.empId,
-      name: state.user.name,
-      dept: state.dept,
-      group: state.group,
-    });
+    const success = await checkTodayOrder();
 
-    if (!result.success) {
-  clearSavedUser();
-  state.user = null;
+    if (success) {
+      showPage("check");
+    }
+  } catch (error) {
+    console.error("confirmProfile error:", error);
 
-  $("savedUserBox").classList.add("hidden");
-
-  showVerifyForm();
-
-  notice(
-  "verifyNotice",
-  "danger",
-  result.message
-);
-
-  showPage("verify");
-  return;
-}
-
-    await checkTodayOrder();
-    showPage("check");
-  } catch (e) {
-    console.error("confirmProfile error:", e);
-    showAlert("確認使用者資料失敗：" + e.message);
+    showAlert("核對使用者資料失敗：" + (error.message || "未知錯誤"));
   } finally {
     clearBusy();
   }
 }
 async function checkTodayOrder() {
-  if (!state.user) return;
+  if (!state.user) {
+    return false;
+  }
 
   setHTML(
     "checkBox",
     `
     <div class="order-status-card loading">
       <div class="status-icon">⏳</div>
-      <h3>正在確認本周訂單</h3>
-      <p>系統正在查詢本周是否已有訂單...</p>
+      <h3>正在確認本週訂單</h3>
+      <p>系統正在重新核對身分並查詢本週訂單...</p>
     </div>
-  `,
+    `,
   );
 
   setHTML("checkActions", "");
@@ -598,34 +579,69 @@ async function checkTodayOrder() {
       weekKey: weekKey(),
     });
 
+    /*
+     * getOrder 後端會先執行 verifyUser。
+     * 所以這裡同時完成：
+     * 1. 核對工號與姓名
+     * 2. 核對啟用狀態
+     * 3. 核對 QR Code 部門與組別
+     * 4. 查詢本週訂單
+     */
+    if (!result.success) {
+      const errorMessage =
+        result.message || "使用者身分核對失敗，請重新輸入工號與姓名。";
+
+      // 驗證失敗代表 localStorage 資料不可繼續使用
+      clearSavedUser();
+
+      state.user = null;
+      state.existingOrder = null;
+      state.pendingOrder = null;
+
+      // 切回首次輸入畫面
+      showVerifyForm();
+
+      notice("verifyNotice", "danger", errorMessage);
+
+      showPage("verify");
+
+      return false;
+    }
+
     state.existingOrder = result.hasOrder ? result.order : null;
 
     if (result.hasOrder) {
-      const old = result.order;
-
       setHTML(
-      "checkBox",
-      `
-      <div class="order-status-card has-order">
+        "checkBox",
+        `
+        <div class="order-status-card has-order">
+          <div class="status-icon">🍱</div>
 
-      <div class="status-icon">🍱</div>
+          <h3>已有訂單</h3>
 
-      <h3>已有訂單</h3>
-
-      <p>您本週已建立訂單</p>
-
-      <p>可點擊下方按鈕修改</p>
-
-      </div>
-      `
+          <p>您本週已建立訂單</p>
+          <p>可點擊下方按鈕修改</p>
+        </div>
+        `,
       );
 
       setHTML(
         "checkActions",
         `
-        <button class="btn primary full-mobile" id="btnEditOrder">修改訂單</button>
-        <button class="btn ghost full-mobile" id="btnBackVerify">返回</button>
-      `,
+        <button
+          class="btn primary full-mobile"
+          id="btnEditOrder"
+        >
+          修改訂單
+        </button>
+
+        <button
+          class="btn ghost full-mobile"
+          id="btnBackVerify"
+        >
+          返回
+        </button>
+        `,
       );
 
       on("btnEditOrder", "click", () => {
@@ -638,17 +654,28 @@ async function checkTodayOrder() {
         `
         <div class="order-status-card no-order">
           <div class="status-icon">✅</div>
-          <h3>本周尚未建立訂單</h3>
+          <h3>本週尚未建立訂單</h3>
         </div>
-      `,
+        `,
       );
 
       setHTML(
         "checkActions",
         `
-        <button class="btn primary full-mobile" id="btnNewOrder">建立</button>
-        <button class="btn ghost full-mobile" id="btnBackVerify">返回</button>
-      `,
+        <button
+          class="btn primary full-mobile"
+          id="btnNewOrder"
+        >
+          建立
+        </button>
+
+        <button
+          class="btn ghost full-mobile"
+          id="btnBackVerify"
+        >
+          返回
+        </button>
+        `,
       );
 
       on("btnNewOrder", "click", () => {
@@ -657,9 +684,13 @@ async function checkTodayOrder() {
       });
     }
 
-on("btnBackVerify", "click", () => showPage("verify"));  
-} catch (e) {
-    console.error(e);
+    on("btnBackVerify", "click", () => {
+      showPage("verify");
+    });
+
+    return true;
+  } catch (error) {
+    console.error("checkTodayOrder error:", error);
 
     setHTML(
       "checkBox",
@@ -669,8 +700,49 @@ on("btnBackVerify", "click", () => showPage("verify"));
         <h3>查詢失敗</h3>
         <p>無法連線至訂餐系統，請稍後再試。</p>
       </div>
-    `,
+      `,
     );
+
+    setHTML(
+      "checkActions",
+      `
+      <button
+        class="btn primary full-mobile"
+        id="btnRetryCheck"
+      >
+        重新查詢
+      </button>
+
+      <button
+        class="btn ghost full-mobile"
+        id="btnBackVerify"
+      >
+        返回
+      </button>
+      `,
+    );
+
+    on("btnRetryCheck", "click", async () => {
+      if (state.isBusy) return;
+
+      setBusy("正在重新查詢，請稍候...");
+
+      try {
+        const success = await checkTodayOrder();
+
+        if (success) {
+          showPage("check");
+        }
+      } finally {
+        clearBusy();
+      }
+    });
+
+    on("btnBackVerify", "click", () => {
+      showPage("verify");
+    });
+
+    return false;
   }
 }
 /* function getLimit() {
