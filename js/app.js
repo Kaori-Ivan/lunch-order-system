@@ -1139,7 +1139,35 @@ async function clearLocalData() {
   location.reload();
 }
 function bindEvents() {
-  on("btnScan", "click", () => scanQRCode());
+  const btnScan = $("btnScan");
+
+  if (btnScan) {
+    let touchHandled = false;
+
+    // 手機觸控
+    btnScan.addEventListener(
+      "touchend",
+      (event) => {
+        event.preventDefault();
+
+        if (touchHandled) return;
+
+        touchHandled = true;
+        scanQRCode();
+
+        setTimeout(() => {
+          touchHandled = false;
+        }, 500);
+      },
+      { passive: false },
+    );
+
+    // 電腦滑鼠，以及不支援 touchend 的裝置
+    btnScan.addEventListener("click", () => {
+      if (touchHandled) return;
+      scanQRCode();
+    });
+  }
   on("btnClear", "click", clearLocalData);
   on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
   on("noLunchCheckbox", "change", updateConditionState);
@@ -1152,7 +1180,7 @@ function bindEvents() {
   on("btnConditionNext", "click", goWeekOrder);
   on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
-  on("btnEdit", "click", () => guardOpen() && showPage("weekOrder"));  
+  on("btnEdit", "click", () => guardOpen() && showPage("weekOrder"));
   on("btnEditBottom", "click", () => guardOpen() && showPage("weekOrder"));
   on("btnSubmit", "click", submitOrder);
   on("btnHome", "click", goHome);
