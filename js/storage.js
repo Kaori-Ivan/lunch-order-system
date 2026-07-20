@@ -23,7 +23,6 @@ function saveUser(user) {
     nameMasked: user.nameMasked || "",
     nameEncoded: user.nameEncoded || "",
     dept: user.dept || "",
-    group: user.group || "",
     role: user.role || "",
   };
 
@@ -43,10 +42,9 @@ function clearSavedUser() {
   localStorage.removeItem(STORAGE_USER);
 }
 
-function saveQRCodeContext(dept, group) {
+function saveQRCodeContext(dept) {
   const qrContext = {
     dept: dept || "",
-    group: group || "",
   };
 
   localStorage.setItem(STORAGE_QR, JSON.stringify(qrContext));

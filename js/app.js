@@ -30,7 +30,6 @@ const MOCK_USERS = [
 const state = {
   step: "scan",
   dept: "",
-  group: "",
   user: null,
   existingOrder: null,
   pendingOrder: null,
@@ -82,27 +81,32 @@ function updateHeader() {
     );
 
 }
-function showPage(page){
-    console.log("切換頁面：", page);
+function showPage(page) {
+  state.step = page;
 
-    state.step = page;
+  [
+    "closed",
+    "scan",
+    "verify",
+    "check",
+    "condition",
+    "weekOrder",
+    "review",
+    "done",
+  ].forEach((name) => {
+    const el = $("page-" + name);
 
-    ["closed","scan","verify","check","condition","weekOrder","review","done"].forEach(n=>{        
-        const el = document.getElementById("page-" + n);
+    if (el) {
+      el.classList.toggle("hidden", name !== page);
+    }
+  });
 
-        console.log("page-"+n, el);
+  document.querySelectorAll(".step").forEach((step) => {
+    step.classList.toggle("active", step.dataset.step === page);
+  });
 
-        if(el){
-            el.classList.toggle("hidden", n!==page);
-        }
-    });
-
-    document.querySelectorAll(".step").forEach(s=>{
-        s.classList.toggle("active", s.dataset.step===page);
-    });
-
-    hideAlert();
-    updateProgress(page);
+  hideAlert();
+  updateProgress(page);
 }
 function updateProgress(current){
 
@@ -168,7 +172,6 @@ function profileHTML(u) {
     row("工號", u.empId),
     row("姓名", u.name),
     row("部門", u.dept),
-    row("組別", u.group),
     row("身分", u.role),
   ].join("");
 }
@@ -179,6 +182,7 @@ function renderSavedUser(u) {
   setText("showEmpName", u.name || "");
   setText("showRole", u.role || "");
 }
+const MOCK_API_DELAY = 50;
 function mockApi(p) {
   return new Promise((resolve) =>
     setTimeout(() => {
@@ -190,10 +194,10 @@ function mockApi(p) {
           resolve({ success: false, message: "資料錯誤：工號或姓名不相符。" });
           return;
         }
-        if (u.dept !== p.dept || u.group !== p.group) {
+        if (u.dept !== p.dept ) {
   resolve({
     success: false,
-    message: `此使用者隸屬於【${u.dept}／${u.group}】。`,
+    message: `此使用者隸屬於【${u.dept}】。`,
   });
   return;
 
@@ -237,24 +241,63 @@ function mockApi(p) {
         return;
       }
       resolve({ success: false, message: "未知的 action" });
-    }, 300),
+    }, 50),
   );
 }
 async function apiPost(payload) {
-  if (APP_CONFIG.USE_MOCK_API) return mockApi(payload);
+  const mode = APP_CONFIG.USE_MOCK_API ? "MOCK" : "正式 API";
+  const startTime = performance.now();
+
+  console.log(`[API 開始] action=${payload.action}, mode=${mode}`);
+
+  if (APP_CONFIG.USE_MOCK_API) {
+    const result = await mockApi(payload);
+
+    console.log(
+      `[API 完成] action=${payload.action}, mode=MOCK, 耗時=${Math.round(
+        performance.now() - startTime,
+      )}ms`,
+    );
+
+    return result;
+  }
+
   const controller = new AbortController();
+
   const timeout = setTimeout(
     () => controller.abort(),
     APP_CONFIG.API_TIMEOUT_MS || 30000,
   );
+
   try {
     const res = await fetch(APP_CONFIG.USER_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8",
+      },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    return await res.json();
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const result = await res.json();
+
+    console.log(
+      `[API 完成] action=${payload.action}, mode=正式 API, 耗時=${Math.round(
+        performance.now() - startTime,
+      )}ms`,
+    );
+
+    return result;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("API 請求逾時");
+    }
+
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -323,11 +366,10 @@ function getQRCodeParams() {
   const params = new URLSearchParams(window.location.search);
 
   return {
-    dept: String(params.get("dept") || "").trim(),
-    group: String(params.get("group") || "").trim()
+    dept: String(params.get("dept") || "").trim()
   };
 }
-function scanQRCode(qrDept = "", qrGroup = "") {
+function scanQRCode(qrDept = "") {
   state.isBusy = false;
 
  
@@ -337,7 +379,6 @@ function scanQRCode(qrDept = "", qrGroup = "") {
    // 防止滑鼠事件被誤當成部門
   if (qrDept instanceof Event) {
     qrDept = "";
-    qrGroup = "";
   }
 
   // 正式 QR Code 參數優先
@@ -346,24 +387,21 @@ function scanQRCode(qrDept = "", qrGroup = "") {
     qrDept || $("deptSelect")?.value || ""
   ).trim();
 
-  state.group = String(
+ /*  state.group = String(
     qrGroup || $("groupSelect")?.value || ""
-  ).trim();
+  ).trim(); */
 
-  if (!state.dept || !state.group) {
+  if (!state.dept ) {
     showAlert("未取得部門或組別，請重新掃描 QR Code。");
     showPage("scan");
     return;
   }
-  console.log("存QR", state.dept, state.group);
-  saveQRCodeContext(state.dept, state.group);
+  console.log("存QR", state.dept);
+  saveQRCodeContext(state.dept);
   // 寫入隱藏欄位
   $("deptReadonly").value = state.dept;
-  $("groupReadonly").value = state.group;
-
   // 顯示本次 QR Code 的部門與組別
   setText("deptReadonlyText", state.dept);
-  setText("groupReadonlyText", state.group);
 
   clearNotice("verifyNotice");
 
@@ -379,9 +417,9 @@ function scanQRCode(qrDept = "", qrGroup = "") {
       nameMasked: saved.nameMasked || "",
       nameEncoded: saved.nameEncoded || "",
 
-      // 部門與組別以本次 QR Code 為準
+      // 部門以本次 QR Code 為準
       dept: state.dept,
-      group: state.group,
+      
 
       role: saved.role || "",
     };
@@ -468,7 +506,6 @@ async function verifyEmployee() {
       empId,
       name: empName,
       dept: state.dept,
-      group: state.group,
     });
 
     if (!result.success) {
@@ -528,7 +565,7 @@ async function confirmProfile() {
   if (state.isBusy) return;
   if (!guardOpen()) return;
 
-  if (!state.dept || !state.group || !state.user) {
+  if (!state.dept || !state.user) {
     showAlert("資料不完整，請回到主畫面重新掃描 QR Code。");
 
     showPage("scan");
@@ -575,7 +612,6 @@ async function checkTodayOrder() {
       empId: state.user.empId,
       name: state.user.name,
       dept: state.dept,
-      group: state.group,
       weekKey: weekKey(),
     });
 
@@ -584,7 +620,7 @@ async function checkTodayOrder() {
      * 所以這裡同時完成：
      * 1. 核對工號與姓名
      * 2. 核對啟用狀態
-     * 3. 核對 QR Code 部門與組別
+     * 3. 核對 QR Code 部門
      * 4. 查詢本週訂單
      */
     if (!result.success) {
@@ -1131,7 +1167,6 @@ const weeklyMeals = {
   <div class="user-item">💼<span>工號</span><strong>${state.user.empId}</strong></div>
   <div class="user-item">👤<span>姓名</span><strong>${state.user.name}</strong></div>
   <div class="user-item">🏢<span>部門</span><strong>${state.user.dept}</strong></div>
-  <div class="user-item">👥<span>組別</span><strong>${state.user.group}</strong></div>
   `
 );
 
@@ -1191,23 +1226,49 @@ async function submitOrder() {
   if (!guardOpen()) return;
   if (!state.pendingOrder || state.isSubmitting) return;
 
+  const totalStart = performance.now();
+
   state.isSubmitting = true;
 
   setBusy("正在送出訂單，請稍候...");
   setButtonLoading("btnSubmit", "送出中...", true);
 
   try {
+    const apiStart = performance.now();
+
     const result = await apiPost({
       action: "saveOrder",
       empId: state.user.empId,
       name: state.user.name,
       dept: state.dept,
-      group: state.group,
       weekKey: weekKey(),
       defaultFactory: state.pendingOrder.defaultFactory,
       defaultFoodType: state.pendingOrder.defaultFoodType,
       weeklyMeals: state.pendingOrder.weeklyMeals,
     });
+
+    const apiElapsed = Math.round(performance.now() - apiStart);
+
+    console.log(`saveOrder API 等待時間：${apiElapsed}ms`);
+
+    // 顯示後端完整回傳內容
+    console.log("saveOrder 回傳結果：", result);
+    console.table(result.debug?.timings || {});
+
+    // 顯示後端程式實際執行時間
+    if (result && result.debug) {
+      console.log(
+        `saveOrder 後端實際處理時間：${result.debug.backendElapsedMs}ms`,
+      );
+
+      console.log(
+        `Web App／網路額外時間：約 ${
+          apiElapsed - Number(result.debug.backendElapsedMs || 0)
+        }ms`,
+      );
+    } else {
+      console.warn("回傳結果沒有 debug，請確認新版 saveOrder 已重新部署。");
+    }
 
     if (!result.success) {
       notice("orderNotice", "danger", result.message || "訂單送出失敗。");
@@ -1216,7 +1277,7 @@ async function submitOrder() {
       return;
     }
 
-    const doneTime = document.getElementById("doneTime");
+    const doneTime = $("doneTime");
 
     if (doneTime) {
       doneTime.textContent = new Date().toLocaleString("zh-TW", {
@@ -1229,15 +1290,22 @@ async function submitOrder() {
       });
     }
 
+    state.existingOrder = result.order;
+    state.pendingOrder = JSON.parse(JSON.stringify(result.order));
+
     showPage("done");
 
-    setTimeout(() => {
-      goHome();
-    }, 10000);
+    console.log(
+      `送出訂單總時間：${Math.round(performance.now() - totalStart)}ms`,
+    );
   } catch (error) {
     console.error("submitOrder error:", error);
 
-    notice("orderNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
+    notice(
+      "orderNotice",
+      "danger",
+      error.message || "無法連線至訂餐系統伺服器，請稍後再試。",
+    );
 
     showPage("review");
   } finally {
@@ -1245,6 +1313,16 @@ async function submitOrder() {
     setButtonLoading("btnSubmit", "確認送出", false);
     clearBusy();
   }
+}
+function editOrderFromDone() {
+  if (state.isBusy) return;
+
+  if (!state.existingOrder) {
+    showAlert("找不到訂單資料");
+    return;
+  }
+
+  startOrder(true);
 }
 function goHome() {
 
@@ -1314,6 +1392,7 @@ function bindEvents() {
   on("btnEditBottom", "click", () => guardOpen() && showPage("weekOrder"));
   on("btnSubmit", "click", submitOrder);
   on("btnHome", "click", goHome);
+  on("btnEditDone", "click", editOrderFromDone);
 }
 window.addEventListener("error", (e) => {
   showAlert("系統錯誤：" + e.message);
@@ -1331,16 +1410,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // 先讀取正式 QR Code 網址參數
   const qrParams = getQRCodeParams();
 
-  if (qrParams.dept && qrParams.group) {
-    scanQRCode(qrParams.dept, qrParams.group);
+  if (qrParams.dept) {
+    scanQRCode(qrParams.dept);
     return;
   }
 
-  // 網址沒有參數時，讀取上一次掃描的部門與組別
+  // 網址沒有參數時，讀取上一次掃描的部門
   const savedQR = getSavedQRCodeContext();
 
-  if (savedQR && savedQR.dept && savedQR.group) {
-    scanQRCode(savedQR.dept, savedQR.group);
+  if (savedQR && savedQR.dept ) {
+    scanQRCode(savedQR.dept);
     return;
   }
 
@@ -1381,12 +1460,9 @@ function resetOrderFlow() {
   state.pendingOrder = null;
   state.existingOrder = null;
   state.dept = "";
-  state.group = "";
   state.isSubmitting = false;
   state.isBusy = false;
-
   $("deptSelect").value = "";
-  $("groupSelect").value = "";
   $("empId").value = "";
   $("empName").value = "";
 
@@ -1408,11 +1484,8 @@ document
 }
 function renderQRCodeInfo() {
   setText("deptReadonlyText", state.dept || "未取得");
-  setText("groupReadonlyText", state.group || "未取得");
 
   const deptInput = $("deptReadonly");
-  const groupInput = $("groupReadonly");
 
   if (deptInput) deptInput.value = state.dept || "";
-  if (groupInput) groupInput.value = state.group || "";
 }

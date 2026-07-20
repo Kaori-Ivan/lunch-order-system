@@ -103,7 +103,7 @@
   <h2>部門 QRCode</h2><p class="desc">測試版以選單模擬 QR Code 掃描。</p>
   <div class="form-grid">
     <label><span>部門</span><select id="deptSelect"><option>燃料電池生產部</option><option>工程部</option><option>品保部</option></select></label>
-    <label><span>組別</span><select id="groupSelect"><option>A組</option><option>B組</option><option>C組</option></select></label>
+    <!--<label><span>組別</span><select id="groupSelect"><option>A組</option><option>B組</option><option>C組</option></select></label>-->
   </div>
   <div class="actions"><button id="btnScan" class="btn primary">模擬掃描 QRCode</button><button id="btnClear" class="btn ghost">清除本機測試資料</button></div>
 </section>
@@ -120,10 +120,10 @@
       <strong id="deptReadonlyText"></strong>
     </div>
 
-    <div class="verify-row">
+  <!--   <div class="verify-row">
       <span>👥 組別</span>
       <strong id="groupReadonlyText"></strong>
-    </div>
+    </div> -->
 
   </div>
 
@@ -326,8 +326,15 @@
       </div>
     </div>
 
-    <button id="btnHome" class="btn primary done-home-btn">⌂ 回首頁</button>
-  </div>
+<div class="done-actions">
+
+    <button
+        class="btn secondary"
+        id="btnEditDone">
+        修改訂單
+    </button>
+
+</div>  </div>
 </section>
 </section> <!-- content 結束 -->
 </section> <!-- layout 結束 -->
