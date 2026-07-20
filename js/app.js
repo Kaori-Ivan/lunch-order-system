@@ -753,8 +753,11 @@ function startOrder(isEdit) {
 
   const old = state.existingOrder;
 
-  if (old) {
-    state.pendingOrder = old;
+  if (isEdit && old) {
+    // 建立副本，避免尚未送出就修改到 existingOrder
+    state.pendingOrder = JSON.parse(JSON.stringify(old));
+
+    loadConditionFromOrder(state.pendingOrder);
   } else {
     state.pendingOrder = {
       date: todayKey(),
@@ -766,10 +769,13 @@ function startOrder(isEdit) {
       role: state.user.role,
       defaultFactory: "",
       defaultFoodType: "",
-      weeklyMeals: {}
+      noLunch: false,
+      weeklyMeals: {},
     };
+
+    resetConditionForm();
   }
-  resetConditionForm();
+
   showPage("condition");
 }
 function updateConditionState() {
@@ -858,6 +864,41 @@ function resetConditionForm() {
     nextButton.disabled = true;
   }
 }
+function loadConditionFromOrder(order) {
+  resetConditionForm();
+
+  if (!order) {
+    return;
+  }
+
+ const noLunch = order.noLunch === true;
+
+  const noLunchCheckbox = $("noLunchCheckbox");
+
+  if (noLunchCheckbox) {
+    noLunchCheckbox.checked = noLunch;
+  }
+
+  if (!noLunch) {
+    const factoryInput = Array.from(
+      document.querySelectorAll('input[name="factory"]'),
+    ).find((input) => input.value === order.defaultFactory);
+
+    const foodTypeInput = Array.from(
+      document.querySelectorAll('input[name="foodType"]'),
+    ).find((input) => input.value === order.defaultFoodType);
+
+    if (factoryInput) {
+      factoryInput.checked = true;
+    }
+
+    if (foodTypeInput) {
+      foodTypeInput.checked = true;
+    }
+  }
+
+  updateConditionState();
+}
 function goWeekOrder() {
   if (!state.pendingOrder) {
     return;
@@ -913,10 +954,27 @@ function renderWeekOrder() {
   const weeks = getThisWeekDates();
   const noLunch = state.noLunch === true;
 
+  const weeklyKeyMap = {
+    mon: "monday",
+    tue: "tuesday",
+    wed: "wednesday",
+    thu: "thursday",
+    fri: "friday",
+  };
+
   setHTML(
     "weekTable",
     weeks
       .map((item) => {
+        const weeklyKey = weeklyKeyMap[item.key];
+
+        const savedMeal =
+          state.pendingOrder?.weeklyMeals?.[weeklyKey]?.mealType || "";
+
+        const selectedMeal = savedMeal || (noLunch ? "上樓用餐" : "便當");
+
+        const checked = (value) => (selectedMeal === value ? "checked" : "");
+
         const mealOptions = noLunch
           ? `
             <label>
@@ -924,7 +982,7 @@ function renderWeekOrder() {
                 type="radio"
                 name="meal_${item.key}"
                 value="上樓用餐"
-                checked
+                ${checked("上樓用餐")}
               >
               上樓用餐
             </label>
@@ -934,6 +992,7 @@ function renderWeekOrder() {
                 type="radio"
                 name="meal_${item.key}"
                 value="不用餐"
+                ${checked("不用餐")}
               >
               不用餐
             </label>
@@ -944,7 +1003,7 @@ function renderWeekOrder() {
                 type="radio"
                 name="meal_${item.key}"
                 value="便當"
-                checked
+                ${checked("便當")}
               >
               便當
             </label>
@@ -954,6 +1013,7 @@ function renderWeekOrder() {
                 type="radio"
                 name="meal_${item.key}"
                 value="上樓用餐"
+                ${checked("上樓用餐")}
               >
               上樓用餐
             </label>
@@ -963,6 +1023,7 @@ function renderWeekOrder() {
                 type="radio"
                 name="meal_${item.key}"
                 value="不用餐"
+                ${checked("不用餐")}
               >
               不用餐
             </label>
@@ -1130,7 +1191,6 @@ async function submitOrder() {
   if (!guardOpen()) return;
   if (!state.pendingOrder || state.isSubmitting) return;
 
-  state.isBusy = true;
   state.isSubmitting = true;
 
   setBusy("正在送出訂單，請稍候...");
@@ -1151,41 +1211,39 @@ async function submitOrder() {
 
     if (!result.success) {
       notice("orderNotice", "danger", result.message || "訂單送出失敗。");
+
       showPage("weekOrder");
       return;
     }
 
-    const order = result.order || state.pendingOrder;
+    const doneTime = document.getElementById("doneTime");
 
-  
+    if (doneTime) {
+      doneTime.textContent = new Date().toLocaleString("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+    }
 
-clearBusy();
+    showPage("done");
 
-const doneTime = document.getElementById("doneTime");
-if (doneTime) {
-  doneTime.textContent = new Date().toLocaleString("zh-TW", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
-  });
-}
+    setTimeout(() => {
+      goHome();
+    }, 10000);
+  } catch (error) {
+    console.error("submitOrder error:", error);
 
-showPage("done");
-
-setTimeout(() => {
-  goHome();
-}, 10000);
-  } catch (e) {
-    console.error(e);
     notice("orderNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
+
     showPage("review");
   } finally {
     state.isSubmitting = false;
     setButtonLoading("btnSubmit", "確認送出", false);
-    //clearBusy();
+    clearBusy();
   }
 }
 function goHome() {
