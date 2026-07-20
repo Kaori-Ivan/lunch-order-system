@@ -3,6 +3,7 @@ window.APP_CONFIG = {
   DEADLINE_HOUR: 10,
   DEADLINE_MINUTE: 0,
   USE_MOCK_API: false, //測試前端用true後端用false
+  ENABLE_MOCK_SCAN_PAGE: false,
   API_TIMEOUT_MS: 30000,
   //使用者訂餐API
   USER_API_URL:

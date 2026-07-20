@@ -59,27 +59,22 @@ function isSystemClosed() {
   return n >= d;
 }
 function updateHeader() {
+  const isMobile = window.innerWidth <= 768;
 
-    const isMobile = window.innerWidth <= 768;
+  const options = isMobile
+    ? {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }
+    : {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        weekday: "short",
+      };
 
-    const options = isMobile
-        ? {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-        }
-        : {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            weekday: "short"
-        };
-
-    setText(
-        "todayText",
-        new Date().toLocaleDateString("zh-TW", options)
-    );
-
+  setText("todayText", new Date().toLocaleDateString("zh-TW", options));
 }
 function showPage(page) {
   state.step = page;
@@ -108,34 +103,26 @@ function showPage(page) {
   hideAlert();
   updateProgress(page);
 }
-function updateProgress(current){
-
-  const order = [
-  "verify",
-  "check",
-  "condition",
-  "weekOrder",
-  "review",
-  "done"
-];
+function updateProgress(current) {
+  const order = ["verify", "check", "condition", "weekOrder", "review", "done"];
 
   const currentIndex = order.indexOf(current);
 
-  document.querySelectorAll(".progress-step").forEach((step,index)=>{
+  document.querySelectorAll(".progress-step").forEach((step, index) => {
     step.classList.remove("done");
     step.classList.remove("active");
 
-    if(index < currentIndex){
+    if (index < currentIndex) {
       step.classList.add("done");
     }
 
-    if(index === currentIndex){
+    if (index === currentIndex) {
       step.classList.add("active");
     }
   });
 
-  if(current === "done"){
-    document.querySelectorAll(".progress-step").forEach(step=>{
+  if (current === "done") {
+    document.querySelectorAll(".progress-step").forEach((step) => {
       step.classList.remove("active");
       step.classList.add("done");
     });
@@ -178,7 +165,7 @@ function profileHTML(u) {
 function renderSavedUser(u) {
   if (!u) return;
 
-   setText("showEmpId", u.empId || "");
+  setText("showEmpId", u.empId || "");
   setText("showEmpName", u.name || "");
   setText("showRole", u.role || "");
 }
@@ -194,13 +181,12 @@ function mockApi(p) {
           resolve({ success: false, message: "資料錯誤：工號或姓名不相符。" });
           return;
         }
-        if (u.dept !== p.dept ) {
-  resolve({
-    success: false,
-    message: `此使用者隸屬於【${u.dept}】。`,
-  });
-  return;
-
+        if (u.dept !== p.dept) {
+          resolve({
+            success: false,
+            message: `此使用者隸屬於【${u.dept}】。`,
+          });
+          return;
         }
         resolve({ success: true, message: "驗證成功", user: u });
         return;
@@ -219,20 +205,20 @@ function mockApi(p) {
           (x) => x.empId === p.empId && x.name === p.name,
         );
         const order = {
-            date: todayKey(),
-            weekKey: weekKey(),
-            userId: u.userId,
-            empId: u.empId,
-            name: u.name,
-            dept: u.dept,
-            group: u.group,
-            role: u.role,
+          date: todayKey(),
+          weekKey: weekKey(),
+          userId: u.userId,
+          empId: u.empId,
+          name: u.name,
+          dept: u.dept,
+          group: u.group,
+          role: u.role,
 
-            defaultFactory: p.defaultFactory,
-            defaultFoodType: p.defaultFoodType,
-            weeklyMeals: p.weeklyMeals,
+          defaultFactory: p.defaultFactory,
+          defaultFoodType: p.defaultFoodType,
+          weeklyMeals: p.weeklyMeals,
 
-            updatedAt: new Date().toLocaleString("zh-TW")
+          updatedAt: new Date().toLocaleString("zh-TW"),
         };
         const orders = getOrders();
         orders[`${weekKey()}_${u.userId}`] = order;
@@ -366,32 +352,28 @@ function getQRCodeParams() {
   const params = new URLSearchParams(window.location.search);
 
   return {
-    dept: String(params.get("dept") || "").trim()
+    dept: String(params.get("dept") || "").trim(),
   };
 }
 function scanQRCode(qrDept = "") {
   state.isBusy = false;
 
- 
-
   if (!guardOpen()) return;
 
-   // 防止滑鼠事件被誤當成部門
+  // 防止滑鼠事件被誤當成部門
   if (qrDept instanceof Event) {
     qrDept = "";
   }
 
   // 正式 QR Code 參數優先
   // 測試時沒有參數，才讀取下拉選單
-  state.dept = String(
-    qrDept || $("deptSelect")?.value || ""
-  ).trim();
+  state.dept = String(qrDept || $("deptSelect")?.value || "").trim();
 
- /*  state.group = String(
+  /*  state.group = String(
     qrGroup || $("groupSelect")?.value || ""
   ).trim(); */
 
-  if (!state.dept ) {
+  if (!state.dept) {
     showAlert("未取得部門或組別，請重新掃描 QR Code。");
     showPage("scan");
     return;
@@ -419,7 +401,6 @@ function scanQRCode(qrDept = "") {
 
       // 部門以本次 QR Code 為準
       dept: state.dept,
-      
 
       role: saved.role || "",
     };
@@ -435,7 +416,7 @@ function scanQRCode(qrDept = "") {
 
     setText(
       "verifyDesc",
-      "已自動帶入此裝置儲存的使用者資料，請確認後開始點餐。"
+      "已自動帶入此裝置儲存的使用者資料，請確認後開始點餐。",
     );
 
     setHTML(
@@ -448,12 +429,11 @@ function scanQRCode(qrDept = "") {
       <button class="btn secondary" id="btnWrongSaved">
         重建使用者
       </button>
-      `
+      `,
     );
 
     on("btnStartSaved", "click", confirmProfile);
     on("btnWrongSaved", "click", resetVerify);
-
   } else {
     // 沒有已儲存使用者才顯示輸入欄位
     showVerifyForm();
@@ -471,10 +451,10 @@ function showVerifyForm() {
   );
   setHTML(
     "verifyActions",
-    `<button class="btn primary" id="btnVerify">查詢</button><button class="btn ghost" id="btnBackToScan">返回</button>`,
+    `<button class="btn primary" id="btnVerify">查詢</button>`,
   );
+
   on("btnVerify", "click", verifyEmployee);
-  on("btnBackToScan", "click", () => showPage("scan"));
 }
 function resetVerify() {
   clearSavedUser();
@@ -907,7 +887,7 @@ function loadConditionFromOrder(order) {
     return;
   }
 
- const noLunch = order.noLunch === true;
+  const noLunch = order.noLunch === true;
 
   const noLunchCheckbox = $("noLunchCheckbox");
 
@@ -1120,35 +1100,35 @@ async function buildReview() {
 
   const weeks = getThisWeekDates();
 
-const weeklyMeals = {
-  monday: {
-    date: weeks[0].reviewDate,
-    day: weeks[0].day,
-    mealType: getMealValue("meal_mon")
-  },
-  tuesday: {
-    date: weeks[1].reviewDate,
-    day: weeks[1].day,
-    mealType: getMealValue("meal_tue")
-  },
-  wednesday: {
-    date: weeks[2].reviewDate,
-    day: weeks[2].day,
-    mealType: getMealValue("meal_wed")
-  },
-  thursday: {
-    date: weeks[3].reviewDate,
-    day: weeks[3].day,
-    mealType: getMealValue("meal_thu")
-  },
-  friday: {
-    date: weeks[4].reviewDate,
-    day: weeks[4].day,
-    mealType: getMealValue("meal_fri")
-  }
-};
+  const weeklyMeals = {
+    monday: {
+      date: weeks[0].reviewDate,
+      day: weeks[0].day,
+      mealType: getMealValue("meal_mon"),
+    },
+    tuesday: {
+      date: weeks[1].reviewDate,
+      day: weeks[1].day,
+      mealType: getMealValue("meal_tue"),
+    },
+    wednesday: {
+      date: weeks[2].reviewDate,
+      day: weeks[2].day,
+      mealType: getMealValue("meal_wed"),
+    },
+    thursday: {
+      date: weeks[3].reviewDate,
+      day: weeks[3].day,
+      mealType: getMealValue("meal_thu"),
+    },
+    friday: {
+      date: weeks[4].reviewDate,
+      day: weeks[4].day,
+      mealType: getMealValue("meal_fri"),
+    },
+  };
 
-  Object.keys(weeklyMeals).forEach(key => {
+  Object.keys(weeklyMeals).forEach((key) => {
     if (weeklyMeals[key].mealType === "便當") {
       weeklyMeals[key].factory = factory;
       weeklyMeals[key].foodType = foodType;
@@ -1162,51 +1142,49 @@ const weeklyMeals = {
   state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
 
   setHTML(
-  "reviewUser",
-  `
+    "reviewUser",
+    `
   <div class="user-item">💼<span>工號</span><strong>${state.user.empId}</strong></div>
   <div class="user-item">👤<span>姓名</span><strong>${state.user.name}</strong></div>
   <div class="user-item">🏢<span>部門</span><strong>${state.user.dept}</strong></div>
-  `
-);
+  `,
+  );
 
   const weekMap = [
-  weeklyMeals.monday,
-  weeklyMeals.tuesday,
-  weeklyMeals.wednesday,
-  weeklyMeals.thursday,
-  weeklyMeals.friday
-];
+    weeklyMeals.monday,
+    weeklyMeals.tuesday,
+    weeklyMeals.wednesday,
+    weeklyMeals.thursday,
+    weeklyMeals.friday,
+  ];
 
-setHTML(
-  "reviewOrder",
-  weekMap.map((item, index) => {
+  setHTML(
+    "reviewOrder",
+    weekMap
+      .map((item, index) => {
+        let cls = "lunch";
+        let icon = "🍱";
+        let text = item.mealType;
 
-    let cls = "lunch";
-    let icon = "🍱";
-    let text = item.mealType;
+        if (item.mealType === "上樓用餐") {
+          cls = "upstairs";
+          icon = "👥";
+          text = "上樓用餐";
+        }
 
-    if (item.mealType === "上樓用餐") {
-      cls = "upstairs";
-      icon = "👥";
-      text = "上樓用餐";
-    }
+        if (item.mealType === "不用餐") {
+          cls = "none";
+          icon = "✖";
+          text = "不用餐";
+        }
 
-    if (item.mealType === "不用餐") {
-      cls = "none";
-      icon = "✖";
-      text = "不用餐";
-    }
+        if (item.mealType === "便當") {
+          text = `便當（${factory} ${foodType}）`;
+        }
 
-    if (item.mealType === "便當") {
-      text = `便當（${factory} ${foodType}）`;
-    }
+        const dateText = item.date.replace("/", "月") + "日";
 
-    const dateText = item.date.replace("/", "月") + "日";
-
-
-
-return `
+        return `
   <div class="review-week-row">
     <div class="review-day">${item.day}</div>
     <div class="review-date">${dateText}</div>
@@ -1216,8 +1194,9 @@ return `
     </div>
   </div>
 `;
-  }).join("")
-);
+      })
+      .join(""),
+  );
 
   showPage("review");
 }
@@ -1325,10 +1304,9 @@ function editOrderFromDone() {
   startOrder(true);
 }
 function goHome() {
-
   resetOrderFlow();
 
-  showPage("scan");
+   window.location.reload();
 }
 async function clearLocalData() {
   const ok = await showConfirmDialog({
@@ -1341,7 +1319,7 @@ async function clearLocalData() {
   if (!ok) return;
 
   clearSavedUser();
-  clearSavedQRCodeContext();     
+  clearSavedQRCodeContext();
   localStorage.removeItem(STORAGE_ORDERS);
 
   location.reload();
@@ -1418,13 +1396,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // 網址沒有參數時，讀取上一次掃描的部門
   const savedQR = getSavedQRCodeContext();
 
-  if (savedQR && savedQR.dept ) {
+  if (savedQR && savedQR.dept) {
     scanQRCode(savedQR.dept);
     return;
   }
 
   // 完全沒有掃描紀錄，才顯示模擬掃描頁
-  showPage("scan");
+  requireQRCodeScan();
 });
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
@@ -1455,7 +1433,6 @@ function finishLoading() {
   hideAlert();
 }
 function resetOrderFlow() {
-
   state.user = null;
   state.pendingOrder = null;
   state.existingOrder = null;
@@ -1469,18 +1446,11 @@ function resetOrderFlow() {
   clearNotice("verifyNotice");
   clearNotice("orderNotice");
 
-document
-.querySelectorAll('input[type="radio"]')
-.forEach(r=>{
-
-    if(r.defaultChecked){
-
-        r.checked=true;
-
+  document.querySelectorAll('input[type="radio"]').forEach((r) => {
+    if (r.defaultChecked) {
+      r.checked = true;
     }
-
-});
-
+  });
 }
 function renderQRCodeInfo() {
   setText("deptReadonlyText", state.dept || "未取得");
@@ -1488,4 +1458,16 @@ function renderQRCodeInfo() {
   const deptInput = $("deptReadonly");
 
   if (deptInput) deptInput.value = state.dept || "";
+}
+function requireQRCodeScan() {
+  if (APP_CONFIG.ENABLE_MOCK_SCAN_PAGE === true) {
+    showPage("scan");
+    return;
+  }
+
+  document.querySelectorAll('[id^="page-"]').forEach((page) => {
+    page.classList.add("hidden");
+  });
+
+  showAlert("請掃描部門 QR Code 進入系統。");
 }
