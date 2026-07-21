@@ -36,6 +36,9 @@ const state = {
   isSubmitting: false,
   isBusy: false,
   noLunch: false,
+
+  systemStatus: null,
+  weekHolidays: {},
 };
 const $ = (id) => document.getElementById(id);
 function on(id, event, handler) {
@@ -51,12 +54,19 @@ function setText(id, text) {
   if (el) el.textContent = text;
 }
 function isSystemClosed() {
-  if (APP_CONFIG.MODE === "TEST") return false;
-  if (APP_CONFIG.MODE === "CLOSE") return true;
-  const n = new Date(),
-    d = new Date();
-  d.setHours(APP_CONFIG.DEADLINE_HOUR, APP_CONFIG.DEADLINE_MINUTE, 0, 0);
-  return n >= d;
+  return state.systemStatus && state.systemStatus.open === false;
+}
+
+function guardOpen() {
+  if (!isSystemClosed()) {
+    return true;
+  }
+
+  setText("closedReason", state.systemStatus?.message || "目前未開放訂餐。");
+
+  showPage("closed");
+
+  return false;
 }
 function updateHeader() {
   const isMobile = window.innerWidth <= 768;
@@ -127,11 +137,6 @@ function updateProgress(current) {
       step.classList.add("done");
     });
   }
-}
-function guardOpen() {
-  if (!isSystemClosed()) return true;
-  showPage("closed");
-  return false;
 }
 function showAlert(message) {
   const b = $("alertBox");
@@ -287,6 +292,44 @@ async function apiPost(payload) {
   } finally {
     clearTimeout(timeout);
   }
+}
+async function loadSystemStatus() {
+  const result = await apiPost({
+    action: "getSystemStatus",
+  });
+
+  if (!result.success) {
+    throw new Error(result.message || "無法取得系統狀態");
+  }
+
+  state.systemStatus = result;
+
+  window.lunchTargetWeekKey = result.targetWeekKey;
+
+  if (!result.open) {
+    setText("closedReason", result.message || "目前未開放訂餐。");
+
+    showPage("closed");
+
+    return false;
+  }
+
+  return true;
+}
+
+async function loadWeekHolidays() {
+  const result = await apiPost({
+    action: "getWeekHolidayStatus",
+    weekKey: weekKey(),
+  });
+
+  if (!result.success) {
+    throw new Error(result.message || "無法取得假日資料");
+  }
+
+  state.weekHolidays = result.days || {};
+
+  return state.weekHolidays;
 }
 function setButtonLoading(id, text, on) {
   const btn = $(id);
@@ -578,8 +621,8 @@ async function checkTodayOrder() {
     `
     <div class="order-status-card loading">
       <div class="status-icon">⏳</div>
-      <h3>正在確認本週訂單</h3>
-      <p>系統正在重新核對身分並查詢本週訂單...</p>
+      <h3>正在確認下週訂單</h3>
+      <p>系統正在重新核對身分並查詢下週訂單...</p>
     </div>
     `,
   );
@@ -601,7 +644,7 @@ async function checkTodayOrder() {
      * 1. 核對工號與姓名
      * 2. 核對啟用狀態
      * 3. 核對 QR Code 部門
-     * 4. 查詢本週訂單
+     * 4. 查詢下週訂單
      */
     if (!result.success) {
       const errorMessage =
@@ -635,7 +678,7 @@ async function checkTodayOrder() {
 
           <h3>已有訂單</h3>
 
-          <p>您本週已建立訂單</p>
+          <p>您下週已建立訂單</p>
           <p>可點擊下方按鈕修改</p>
         </div>
         `,
@@ -670,7 +713,7 @@ async function checkTodayOrder() {
         `
         <div class="order-status-card no-order">
           <div class="status-icon">✅</div>
-          <h3>本週尚未建立訂單</h3>
+          <h3>下週尚未建立訂單</h3>
         </div>
         `,
       );
@@ -836,7 +879,7 @@ function updateConditionState() {
     notice(
       "conditionNotice",
       "info",
-      "已選擇本週不訂便當。下一頁僅提供「上樓用餐」及「不用餐」。",
+      "已選擇下週不訂便當。下一頁僅提供「上樓用餐」及「不用餐」。",
     );
 
     return;
@@ -915,16 +958,31 @@ function loadConditionFromOrder(order) {
 
   updateConditionState();
 }
-function goWeekOrder() {
+
+async function goWeekOrder() {
   if (!state.pendingOrder) {
     return;
+  }
+
+  try {
+    setBusy("正在讀取下週工作日資料...");
+
+    await loadWeekHolidays();
+  } catch (error) {
+    console.error("loadWeekHolidays error:", error);
+
+    notice("conditionNotice", "danger", "無法取得下週假日資料，請稍後再試。");
+
+    return;
+  } finally {
+    clearBusy();
   }
 
   const noLunch = $("noLunchCheckbox")?.checked === true;
 
   state.noLunch = noLunch;
 
-  // 情況一：本週不訂便當
+  // 下週不訂便當
   if (noLunch) {
     state.pendingOrder.defaultFactory = "";
     state.pendingOrder.defaultFoodType = "";
@@ -935,7 +993,6 @@ function goWeekOrder() {
     return;
   }
 
-  // 情況二：有訂便當，廠區與葷素都必填
   const factory = document.querySelector(
     'input[name="factory"]:checked',
   )?.value;
@@ -948,7 +1005,7 @@ function goWeekOrder() {
     notice(
       "conditionNotice",
       "danger",
-      "請完整選擇廠區及葷素，或勾選「本週不訂便當」。",
+      "請完整選擇廠區及葷素，或勾選「下週不訂便當」。",
     );
 
     updateConditionState();
@@ -956,18 +1013,20 @@ function goWeekOrder() {
   }
 
   state.pendingOrder.defaultFactory = factory;
+
   state.pendingOrder.defaultFoodType = foodType;
+
   state.pendingOrder.noLunch = false;
 
   renderWeekOrder();
   showPage("weekOrder");
 }
-
 function getMealValue(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
 }
 function renderWeekOrder() {
   const weeks = getThisWeekDates();
+
   const noLunch = state.noLunch === true;
 
   const weeklyKeyMap = {
@@ -981,15 +1040,50 @@ function renderWeekOrder() {
   setHTML(
     "weekTable",
     weeks
-      .map((item) => {
+      .map(function (item) {
         const weeklyKey = weeklyKeyMap[item.key];
+
+        const holiday = state.weekHolidays?.[weeklyKey];
+
+        /*
+         * 假日不顯示訂餐選項。
+         */
+        if (holiday?.isHoliday) {
+          return `
+            <div class="week-row holiday-row">
+              <div class="week-info">
+                <div class="week-day">
+                  ${item.day}
+                </div>
+
+                <div class="week-date">
+                  ${item.date}
+                </div>
+              </div>
+
+              <div class="holiday-box">
+                <strong>休假</strong>
+                <span>
+                  ${holiday.holidayName || "國定假日"}
+                </span>
+              </div>
+            </div>
+          `;
+        }
 
         const savedMeal =
           state.pendingOrder?.weeklyMeals?.[weeklyKey]?.mealType || "";
 
-        const selectedMeal = savedMeal || (noLunch ? "上樓用餐" : "便當");
+        const selectedMeal =
+          savedMeal && savedMeal !== "國定假日"
+            ? savedMeal
+            : noLunch
+              ? "上樓用餐"
+              : "便當";
 
-        const checked = (value) => (selectedMeal === value ? "checked" : "");
+        const checked = function (value) {
+          return selectedMeal === value ? "checked" : "";
+        };
 
         const mealOptions = noLunch
           ? `
@@ -1048,8 +1142,13 @@ function renderWeekOrder() {
         return `
           <div class="week-row">
             <div class="week-info">
-              <div class="week-day">${item.day}</div>
-              <div class="week-date">${item.date}</div>
+              <div class="week-day">
+                ${item.day}
+              </div>
+
+              <div class="week-date">
+                ${item.date}
+              </div>
             </div>
 
             <div class="meal-options ${noLunch ? "two-options" : ""}">
@@ -1100,33 +1199,95 @@ async function buildReview() {
 
   const weeks = getThisWeekDates();
 
-  const weeklyMeals = {
-    monday: {
-      date: weeks[0].reviewDate,
-      day: weeks[0].day,
-      mealType: getMealValue("meal_mon"),
-    },
-    tuesday: {
-      date: weeks[1].reviewDate,
-      day: weeks[1].day,
-      mealType: getMealValue("meal_tue"),
-    },
-    wednesday: {
-      date: weeks[2].reviewDate,
-      day: weeks[2].day,
-      mealType: getMealValue("meal_wed"),
-    },
-    thursday: {
-      date: weeks[3].reviewDate,
-      day: weeks[3].day,
-      mealType: getMealValue("meal_thu"),
-    },
-    friday: {
-      date: weeks[4].reviewDate,
-      day: weeks[4].day,
-      mealType: getMealValue("meal_fri"),
-    },
-  };
+  const daySettings = [
+  {
+    weeklyKey: "monday",
+    inputKey: "mon",
+    week: weeks[0]
+  },
+  {
+    weeklyKey: "tuesday",
+    inputKey: "tue",
+    week: weeks[1]
+  },
+  {
+    weeklyKey: "wednesday",
+    inputKey: "wed",
+    week: weeks[2]
+  },
+  {
+    weeklyKey: "thursday",
+    inputKey: "thu",
+    week: weeks[3]
+  },
+  {
+    weeklyKey: "friday",
+    inputKey: "fri",
+    week: weeks[4]
+  }
+];
+
+const weeklyMeals = {};
+
+daySettings.forEach(
+  function (dayInfo) {
+    const holiday =
+      state.weekHolidays?.[
+        dayInfo.weeklyKey
+      ];
+
+    if (holiday?.isHoliday) {
+      weeklyMeals[
+        dayInfo.weeklyKey
+      ] = {
+        date:
+          dayInfo.week.reviewDate,
+
+        day:
+          dayInfo.week.day,
+
+        mealType:
+          "國定假日",
+
+        holidayName:
+          holiday.holidayName ||
+          "國定假日",
+
+        factory: "",
+        foodType: ""
+      };
+
+      return;
+    }
+
+    const mealType =
+      getMealValue(
+        "meal_" +
+        dayInfo.inputKey
+      );
+
+    if (!mealType) {
+      throw new Error(
+        "請選擇" +
+        dayInfo.week.day +
+        "的用餐方式。"
+      );
+    }
+
+    weeklyMeals[
+      dayInfo.weeklyKey
+    ] = {
+      date:
+        dayInfo.week.reviewDate,
+
+      day:
+        dayInfo.week.day,
+
+      mealType:
+        mealType
+    };
+  }
+);
 
   Object.keys(weeklyMeals).forEach((key) => {
     if (weeklyMeals[key].mealType === "便當") {
@@ -1177,6 +1338,13 @@ async function buildReview() {
           icon = "✖";
           text = "不用餐";
         }
+        if (item.mealType === "國定假日") {
+  cls = "holiday";
+  icon = "📅";
+  text =
+    item.holidayName ||
+    "國定假日";
+}
 
         if (item.mealType === "便當") {
           text = `便當（${factory} ${foodType}）`;
@@ -1376,34 +1544,88 @@ window.addEventListener("error", (e) => {
   showAlert("系統錯誤：" + e.message);
   console.error(e.error || e.message);
 });
-document.addEventListener("DOMContentLoaded", () => {
+async function initializeApp() {
   bindEvents();
   updateHeader();
 
-  if (isSystemClosed()) {
+  try {
+    setBusy("正在確認系統開放狀態...");
+
+    /*
+     * 先向 Apps Script 後端取得：
+     * 1. 系統目前是否開放
+     * 2. 本次應填寫的目標週次
+     */
+    const isOpen = await loadSystemStatus();
+
+    if (!isOpen) {
+      return;
+    }
+
+    /*
+     * 優先讀取正式 QR Code 網址參數。
+     *
+     * 例如：
+     * ?dept=燃料電池生產部
+     */
+    const qrParams = getQRCodeParams();
+
+    if (qrParams.dept) {
+      scanQRCode(qrParams.dept);
+      return;
+    }
+
+    /*
+     * 網址沒有部門參數時，
+     * 再讀取之前儲存的 QR Code 部門。
+     */
+    const savedQR = getSavedQRCodeContext();
+
+    if (savedQR && savedQR.dept) {
+      scanQRCode(savedQR.dept);
+      return;
+    }
+
+    /*
+     * 完全沒有 QR Code 資料時，
+     * 依設定決定顯示測試掃描頁，
+     * 或提示使用者掃描 QR Code。
+     */
+    requireQRCodeScan();
+
+  } catch (error) {
+    console.error(
+      "initializeApp error:",
+      error
+    );
+
+    state.systemStatus = {
+      open: false,
+      message:
+        "目前無法確認系統狀態，請稍後重新整理頁面。"
+    };
+
+    setText(
+      "closedReason",
+      "目前無法確認系統狀態，請稍後重新整理頁面。"
+    );
+
     showPage("closed");
-    return;
+
+  } finally {
+    clearBusy();
   }
+}
 
-  // 先讀取正式 QR Code 網址參數
-  const qrParams = getQRCodeParams();
 
-  if (qrParams.dept) {
-    scanQRCode(qrParams.dept);
-    return;
-  }
-
-  // 網址沒有參數時，讀取上一次掃描的部門
-  const savedQR = getSavedQRCodeContext();
-
-  if (savedQR && savedQR.dept) {
-    scanQRCode(savedQR.dept);
-    return;
-  }
-
-  // 完全沒有掃描紀錄，才顯示模擬掃描頁
-  requireQRCodeScan();
-});
+/*
+ * HTML 與 JavaScript 載入完成後，
+ * 才正式初始化系統。
+ */
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeApp
+);
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
   if (!btn) return;

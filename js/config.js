@@ -1,7 +1,7 @@
 window.APP_CONFIG = {
-  MODE: "TEST",
-  DEADLINE_HOUR: 10,
-  DEADLINE_MINUTE: 0,
+  //MODE: "TEST",
+  //DEADLINE_HOUR: 10,
+  //DEADLINE_MINUTE: 0,
   USE_MOCK_API: false, //測試前端用true後端用false
   ENABLE_MOCK_SCAN_PAGE: false,
   API_TIMEOUT_MS: 30000,

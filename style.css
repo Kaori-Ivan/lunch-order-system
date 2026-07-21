@@ -2191,3 +2191,39 @@ input[readonly] {
   transform: scale(0.97);
   background: #1d4ed8;
 }
+/* 國定假日列 */
+.holiday-row {
+  opacity: 0.9;
+}
+
+.holiday-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 10px 16px;
+  border: 1px dashed #ef4444;
+  border-radius: 12px;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.holiday-box strong {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #fee2e2;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.holiday-box span {
+  font-weight: 800;
+}
+
+/* 確認頁假日 */
+.meal-pill.holiday {
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #be123c;
+}
