@@ -694,6 +694,59 @@ async function clearLocalUser() {
   // 工號輸入框自動取得焦點
   $("empId")?.focus();
 }
+async function changeUser() {
+  if (state.isBusy) {
+    return;
+  }
+
+  const ok = await showConfirmDialog({
+    title: t("changeUser"),
+    message: t("confirmChangeUser"),
+    confirmText: t("confirm"),
+    cancelText: t("cancel"),
+  });
+
+  if (!ok) {
+    return;
+  }
+
+  /*
+   * 清除使用者與目前訂單狀態，
+   * 但保留 state.dept 及 QR Code 資料。
+   */
+  clearSavedUser();
+  clearUserSession();
+
+  state.user = null;
+  state.existingOrder = null;
+  state.pendingOrder = null;
+  state.order = null;
+  state.viewingExistingOrder = false;
+  state.editingExistingOrder = false;
+  state.noLunch = false;
+
+  if ($("empId")) {
+    $("empId").value = "";
+  }
+
+  if ($("empName")) {
+    $("empName").value = "";
+  }
+
+  clearNotice("verifyNotice");
+  clearNotice("orderNotice");
+  clearNotice("conditionNotice");
+
+  /*
+   * 重新顯示目前掃描的部門。
+   */
+  renderQRCodeInfo();
+
+  showVerifyForm();
+  showPage("verify");
+
+  $("empId")?.focus();
+}
 function resetVerify() {
   clearSavedUser();
   state.user = null;
@@ -767,17 +820,17 @@ noticeKey("verifyNotice", "success", "verifySuccess");
   </button>
 
   <button
-    class="btn secondary"
-    id="btnWrongProfile"
-    data-i18n="rebuildUser"
-  >
-    重建使用者
-  </button>
+  class="btn secondary"
+  id="btnWrongProfile"
+  data-i18n="changeUser"
+>
+  更換使用者
+</button>
   `,
     );
 
     on("btnConfirmProfile", "click", confirmProfile);
-    on("btnWrongProfile", "click", resetVerify);
+on("btnWrongProfile", "click", changeUser);
   } catch (e) {
     console.error(e);
     notice("verifyNotice", "danger", t("connectionFailed"));
@@ -1664,6 +1717,10 @@ function renderReviewFromOrder(order, options = {}) {
 
   const editButton =
     $("btnEditBottom");
+    const changeButton = $("btnChangeUser");
+    if (changeUserButton) {
+      changeUserButton.classList.toggle("hidden", !isExistingOrder);
+    }
 
   if (submitButton) {
     submitButton.classList.toggle(
@@ -2078,6 +2135,7 @@ on(
   }
 );
   on("btnSubmit", "click", submitOrder);
+  on("btnChangeUser", "click", changeUser);
   on("btnHome", "click", goHome);
   on("btnEditDone", "click", editOrderFromDone);
 }

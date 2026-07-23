@@ -126,6 +126,8 @@ const I18N = {
     accountDisabled: "此帳號已停用，請聯絡管理員。",
     verifyFailed: "資料錯誤：工號或姓名不相符。",
     wrongDepartment: "您目前隸屬部門為【{dept}】，請掃描正確部門 QR Code。",
+    changeUser: "更換使用者",
+    confirmChangeUser: "確定要更換使用者嗎？目前部門將會保留。",
   },
 
   th: {
@@ -258,6 +260,8 @@ const I18N = {
 
     wrongDepartment:
       "คุณสังกัดแผนก【{dept}】 โปรดสแกน QR Code ของแผนกที่ถูกต้อง",
+    changeUser: "เปลี่ยนผู้ใช้งาน",
+    confirmChangeUser: "ต้องการเปลี่ยนผู้ใช้งานหรือไม่ ระบบจะยังคงใช้แผนกเดิม",
   },
 
   vi: {
@@ -391,6 +395,9 @@ const I18N = {
 
     wrongDepartment:
       "Bạn thuộc bộ phận【{dept}】. Vui lòng quét đúng mã QR của bộ phận.",
+    changeUser: "Đổi người dùng",
+    confirmChangeUser:
+      "Bạn có chắc muốn đổi người dùng không? Bộ phận hiện tại sẽ được giữ nguyên.",
   },
 };
 
