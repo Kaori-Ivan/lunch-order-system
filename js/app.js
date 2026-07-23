@@ -5,7 +5,7 @@ const MOCK_USERS = [
     name: "KOOK",
     dept: "燃電製一部",
     group: "A組",
-    role: "一般員工",
+    role: "員工",
     enabled: true,
   },
   {
@@ -14,7 +14,7 @@ const MOCK_USERS = [
     name: "林主管",
     dept: "燃電製二部",
     group: "A組",
-    role: "主管",
+    role: "經理",
     enabled: true,
   },
   {
@@ -23,7 +23,7 @@ const MOCK_USERS = [
     name: "陳助理",
     dept: "燃電製三部",
     group: "A組",
-    role: "助理",
+    role: "組長",
     enabled: true,
   },
 ];
@@ -241,6 +241,22 @@ function hideAlert() {
 function notice(id, type, msg) {
   setHTML(id, `<div class="notice ${type}">${msg}</div>`);
 }
+/**
+ * 顯示可隨語言切換的提示訊息。
+ */
+function noticeKey(id, type, key) {
+  setHTML(
+    id,
+    `
+      <div
+        class="notice ${type}"
+        data-i18n="${key}"
+      >
+        ${t(key)}
+      </div>
+    `
+  );
+}
 function clearNotice(id) {
   setHTML(id, "");
 }
@@ -252,15 +268,19 @@ function profileHTML(u) {
     row(t("employeeId"), u.empId),
     row(t("employeeName"), u.name),
     row(t("department"), translateDepartment(u.dept)),
-    row(t("role"), u.role),
+    row(t("role"), translateRole(u.role)),
   ].join("");
 }
 function renderSavedUser(u) {
-  if (!u) return;
+  if (!u) {
+    return;
+  }
 
   setText("showEmpId", u.empId || "");
+
   setText("showEmpName", u.name || "");
-  setText("showRole", u.role || "");
+
+  setText("showRole", translateRole(u.role));
 }
 const MOCK_API_DELAY = 50;
 function mockApi(p) {
@@ -485,8 +505,6 @@ function getQRCodeParams() {
   };
 }
 async function scanQRCode(qrDept = "") {
-  state.isBusy = false;
-
   if (!guardOpen()) return;
 
   // 防止滑鼠事件被誤當成部門
@@ -697,7 +715,7 @@ async function verifyEmployee() {
   }
   setBusy(t("validatingUser"));
   setButtonLoading("btnVerify", t("verifying"), true);
-  notice("verifyNotice", "info", t("verificationInProgress"));
+noticeKey("verifyNotice", "info", "verificationInProgress");
   try {
     const result = await apiPost({
       action: "verifyUser",
@@ -736,8 +754,7 @@ async function verifyEmployee() {
     $("savedUserBox").classList.remove("hidden");
 
     renderSavedUser(state.user);
-    notice("verifyNotice", "success", t("verifySuccess"));
-
+noticeKey("verifyNotice", "success", "verifySuccess");
     setHTML(
       "verifyActions",
       `
@@ -867,7 +884,6 @@ async function checkTodayOrder() {
       return false;
     }
 
-    state.existingOrder = result.hasOrder ? result.order : null;
 
         state.existingOrder =
       result.hasOrder
@@ -2077,11 +2093,7 @@ async function initializeApp() {
 
   try {
     setBusy(t("checkingSystem"));
-    /*
-     * 先向 Apps Script 後端取得：
-     * 1. 系統目前是否開放
-     * 2. 本次應填寫的目標週次
-     */
+
     const isOpen = await loadSystemStatus();
 
     if (!isOpen) {
@@ -2089,33 +2101,30 @@ async function initializeApp() {
     }
 
     /*
-     * 優先讀取正式 QR Code 網址參數。
-     *
-     * 例如：
-     * ?dept=燃料電池生產部
+     * 優先讀取網址中的 QR Code 部門。
      */
     const qrParams = getQRCodeParams();
 
     if (qrParams.dept) {
-      scanQRCode(qrParams.dept);
+      await scanQRCode(qrParams.dept);
+
       return;
     }
 
     /*
-     * 網址沒有部門參數時，
-     * 再讀取之前儲存的 QR Code 部門。
+     * 網址沒有部門時，
+     * 讀取已儲存的 QR Code 部門。
      */
     const savedQR = getSavedQRCodeContext();
 
     if (savedQR && savedQR.dept) {
-      scanQRCode(savedQR.dept);
+      await scanQRCode(savedQR.dept);
+
       return;
     }
 
     /*
-     * 完全沒有 QR Code 資料時，
-     * 依設定決定顯示測試掃描頁，
-     * 或提示使用者掃描 QR Code。
+     * 沒有任何 QR Code 部門資料。
      */
     requireQRCodeScan();
   } catch (error) {
@@ -2133,12 +2142,13 @@ async function initializeApp() {
     clearBusy();
   }
 }
-
 /*
- * HTML 與 JavaScript 載入完成後，
- * 才正式初始化系統。
+ * HTML 載入完成後啟動系統。
  */
-document.addEventListener("DOMContentLoaded", initializeApp);
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeApp
+);
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
   if (!btn) return;
@@ -2202,12 +2212,37 @@ function renderQRCodeInfo() {
   }
 }
 function refreshDynamicTranslations() {
+  /*
+   * 更新部門名稱。
+   */
   if (state.dept) {
     setText("deptReadonlyText", translateDepartment(state.dept));
   }
 
+  /*
+   * 更新身分名稱。
+   */
+  if (state.user) {
+    setText("showRole", translateRole(state.user.role));
+  }
+
+  /*
+   * 更新驗證成功訊息。
+   */
+  const verifyMessage = document.querySelector("#verifyNotice [data-i18n]");
+
+  if (verifyMessage) {
+    verifyMessage.textContent = t(verifyMessage.dataset.i18n);
+  }
+
+  /*
+   * Review 頁只重新顯示目前訂單，
+   * 不重新讀取 radio 選項。
+   */
   if (state.step === "review" && state.pendingOrder?.weeklyMeals) {
-    buildReview();
+    renderReviewFromOrder(state.pendingOrder, {
+      isExistingOrder: state.viewingExistingOrder,
+    });
   }
 }
 function requireQRCodeScan() {

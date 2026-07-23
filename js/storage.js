@@ -43,18 +43,45 @@ function clearSavedUser() {
 }
 
 function saveQRCodeContext(dept) {
+  const value = String(dept || "").trim();
+
+  if (!value) {
+    console.warn("QR 部門為空，未儲存");
+
+    return;
+  }
+
   const qrContext = {
-    dept: dept || "",
+    dept: value,
   };
 
   localStorage.setItem(STORAGE_QR, JSON.stringify(qrContext));
+
+  console.log("已儲存 QR Context：", qrContext);
 }
 
 function getSavedQRCodeContext() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_QR) || "null");
+    const raw = localStorage.getItem(STORAGE_QR);
+
+    console.log("QR Context 原始資料：", raw);
+
+    if (!raw) {
+      return null;
+    }
+
+    const value = JSON.parse(raw);
+
+    if (!value || !String(value.dept || "").trim()) {
+      return null;
+    }
+
+    return {
+      dept: String(value.dept).trim(),
+    };
   } catch (error) {
     console.error("讀取 QR Code 資料失敗：", error);
+
     return null;
   }
 }

@@ -8,6 +8,9 @@ const I18N = {
     employeeName: "姓名",
     department: "部門",
     role: "身分",
+    generalEmployee: "一般員工",
+    supervisor: "主管",
+    assistant: "助理",
     enterEmployeeId: "請輸入工號",
     enterEmployeeName: "請輸入姓名",
     departmentLoaded: "已帶入部門",
@@ -455,6 +458,7 @@ function setLanguage(language) {
     refreshDynamicTranslations();
   }
 }
+
 const DEPARTMENT_TRANSLATIONS = {
   燃料電池生產部: {
     "zh-TW": "燃料電池生產部",
@@ -479,7 +483,48 @@ const DEPARTMENT_TRANSLATIONS = {
     vi: "Bộ phận sản xuất pin nhiên liệu 3",
   },
 };
+const ROLE_TRANSLATIONS = {
+  副總: {
+    "zh-TW": "副總",
+    th: "รองผู้จัดการทั่วไป",
+    vi: "Phó tổng giám đốc",
+  },
 
+  經理: {
+    "zh-TW": "經理",
+    th: "ผู้จัดการ",
+    vi: "Quản lý",
+  },
+
+  課長: {
+    "zh-TW": "課長",
+    th: "หัวหน้าแผนก",
+    vi: "Trưởng bộ phận",
+  },
+
+  組長: {
+    "zh-TW": "組長",
+    th: "หัวหน้ากลุ่ม",
+    vi: "Trưởng nhóm",
+  },
+
+  員工: {
+    "zh-TW": "員工",
+    th: "พนักงาน",
+    vi: "Nhân viên",
+  },
+};
+function translateRole(role) {
+  const value = String(role || "").trim();
+
+  const item = ROLE_TRANSLATIONS[value];
+
+  if (!item) {
+    return value;
+  }
+
+  return item[currentLanguage] || item["zh-TW"] || value;
+}
 function translateDepartment(dept) {
   const item = DEPARTMENT_TRANSLATIONS[dept];
 
