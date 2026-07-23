@@ -33,12 +33,20 @@ const state = {
   user: null,
   existingOrder: null,
   pendingOrder: null,
+  viewingExistingOrder: false,
   isSubmitting: false,
   isBusy: false,
   noLunch: false,
 
   systemStatus: null,
   weekHolidays: {},
+  order: null,
+
+  // 是否正在修改既有訂單
+  editingExistingOrder: false,
+
+  defaultFactory: "",
+  defaultFoodType: "",
 };
 const $ = (id) => document.getElementById(id);
 function on(id, event, handler) {
@@ -446,7 +454,7 @@ function getQRCodeParams() {
     dept: String(params.get("dept") || "").trim(),
   };
 }
-function scanQRCode(qrDept = "") {
+async function scanQRCode(qrDept = "") {
   state.isBusy = false;
 
   if (!guardOpen()) return;
@@ -486,59 +494,83 @@ function scanQRCode(qrDept = "") {
   // 讀取本機已儲存使用者
   const saved = getSavedUser();
 
-  if (saved && saved.empId && saved.name) {
-    // 只載入使用者資料
+    if (
+    saved &&
+    saved.empId &&
+    saved.name
+  ) {
     state.user = {
-      userId: saved.userId || "",
-      empId: saved.empId,
-      name: saved.name,
-      nameMasked: saved.nameMasked || "",
-      nameEncoded: saved.nameEncoded || "",
+      userId:
+        saved.userId || "",
 
-      // 部門以本次 QR Code 為準
-      dept: state.dept,
+      empId:
+        saved.empId,
 
-      role: saved.role || "",
+      name:
+        saved.name,
+
+      nameMasked:
+        saved.nameMasked || "",
+
+      nameEncoded:
+        saved.nameEncoded || "",
+
+      // 必須使用本次掃描的 QR 部門
+      dept:
+        state.dept,
+
+      group:
+        saved.group || "",
+
+      role:
+        saved.role || "",
     };
 
-    // 隱藏首次輸入欄位
-    $("verifyForm").classList.add("hidden");
-
-    // 顯示已儲存使用者
-    $("savedUserBox").classList.remove("hidden");
-    setText("verifyTitle", t("confirmUserTitle"));
     renderSavedUser(state.user);
 
-    setText("verifyDesc", t("savedUserDescription"));
+    /*
+     * 有本機使用者資料時，
+     * 直接向後端重新驗證並查詢訂單。
+     */
+    setBusy(t("checkingOrder"));
 
-    setHTML(
-      "verifyActions",
-      `
-  <button
-    class="btn primary"
-    id="btnStartSaved"
-    data-i18n="startOrder"
-  >
-    開始點餐
-  </button>
+    try {
+      const success =
+        await checkTodayOrder();
 
-  <button
-    class="btn secondary"
-    id="btnWrongSaved"
-    data-i18n="rebuildUser"
-  >
-    重建使用者
-  </button>
-  `,
-    );
+      if (
+        success &&
+        state.step !== "review"
+      ) {
+        showPage("check");
+      }
+    } catch (error) {
+      console.error(
+        "自動恢復訂單失敗：",
+        error
+      );
 
-    on("btnStartSaved", "click", confirmProfile);
-    on("btnWrongSaved", "click", resetVerify);
-  } else {
-    // 沒有已儲存使用者才顯示輸入欄位
-    showVerifyForm();
+      showVerifyForm();
+
+      notice(
+        "verifyNotice",
+        "danger",
+        t("connectionFailed")
+      );
+
+      showPage("verify");
+    } finally {
+      clearBusy();
+    }
+
+    return;
   }
 
+  /*
+   * 沒有已儲存使用者，
+   * 才顯示首次輸入畫面。
+   */
+  showVerifyForm();
   showPage("verify");
 }
 function showVerifyForm() {
@@ -667,12 +699,21 @@ async function confirmProfile() {
 
   setBusy(t("recheckingUser"));
   try {
-    const success = await checkTodayOrder();
+        const success =
+      await checkTodayOrder();
 
-    if (success) {
+    /*
+     * 已有訂單時，
+     * checkTodayOrder 已經切到 Review，
+     * 不要再覆蓋成 check。
+     */
+    if (
+      success &&
+      state.step !== "review"
+    ) {
       showPage("check");
     }
-  } catch (error) {
+   } catch (error) {
     console.error("confirmProfile error:", error);
 
     showAlert("核對使用者資料失敗：" + (error.message || "未知錯誤"));
@@ -722,9 +763,9 @@ async function checkTodayOrder() {
      * 4. 查詢下週訂單
      */
     if (!result.success) {
-     const errorMessage = translateApiMessage(
-       result.message || "資料錯誤：工號或姓名不相符。",
-     );
+      const errorMessage = translateApiMessage(
+        result.message || "資料錯誤：工號或姓名不相符。",
+      );
 
       // 驗證失敗代表 localStorage 資料不可繼續使用
       clearSavedUser();
@@ -745,97 +786,97 @@ async function checkTodayOrder() {
 
     state.existingOrder = result.hasOrder ? result.order : null;
 
-    if (result.hasOrder) {
-      setHTML(
-        "checkBox",
-        `
-  <div class="order-status-card has-order">
-    <div class="status-icon">🍱</div>
+        state.existingOrder =
+      result.hasOrder
+        ? result.order
+        : null;
 
-    <h3 data-i18n="existingOrder">
-      已有訂單
-    </h3>
+    /*
+     * 已有訂單：
+     * 直接顯示 Review。
+     */
+    if (
+      result.hasOrder &&
+      result.order
+    ) {
+      state.pendingOrder =
+        JSON.parse(
+          JSON.stringify(result.order)
+        );
 
-    <p data-i18n="existingOrderDescription">
-      您下週已建立訂單
-    </p>
+      state.order =
+        result.order;
 
-    <p data-i18n="editOrderDescription">
-      可點擊下方按鈕修改
-    </p>
-  </div>
-  `,
+      renderReviewFromOrder(
+        state.pendingOrder,
+        {
+          isExistingOrder: true,
+        }
       );
 
-      setHTML(
-        "checkActions",
-        `
-  <button
-    class="btn primary full-mobile"
-    id="btnEditOrder"
-    data-i18n="editOrder"
-  >
-    修改訂單
-  </button>
-
-  <button
-    class="btn ghost full-mobile"
-    id="btnBackVerify"
-    data-i18n="back"
-  >
-    返回
-  </button>
-  `,
-      );
-
-      on("btnEditOrder", "click", () => {
-        if (state.isBusy) return;
-        startOrder(true);
-      });
-    } else {
-      setHTML(
-        "checkBox",
-        `
-  <div class="order-status-card no-order">
-    <div class="status-icon">✅</div>
-
-    <h3 data-i18n="noExistingOrder">
-      下週尚未建立訂單
-    </h3>
-  </div>
-  `,
-      );
-
-      setHTML(
-        "checkActions",
-        `
-        <button
-  class="btn primary full-mobile"
-  id="btnNewOrder"
-  data-i18n="createOrder"
->
-  建立
-</button>
-
-<button
-  class="btn ghost full-mobile"
-  id="btnBackVerify"
-  data-i18n="back"
->
-  返回
-</button>
-        `,
-      );
-
-      on("btnNewOrder", "click", () => {
-        if (state.isBusy) return;
-        startOrder(false);
-      });
+      return true;
     }
 
-    on("btnBackVerify", "click", () => {
-      showPage("verify");
-    });
+    /*
+     * 沒有訂單：
+     * 顯示建立訂單畫面。
+     */
+    state.pendingOrder = null;
+    state.viewingExistingOrder = false;
+
+    setHTML(
+      "checkBox",
+      `
+        <div class="order-status-card no-order">
+          <div class="status-icon">✅</div>
+
+          <h3 data-i18n="noExistingOrder">
+            下週尚未建立訂單
+          </h3>
+        </div>
+      `,
+    );
+
+    setHTML(
+      "checkActions",
+      `
+        <button
+          class="btn primary full-mobile"
+          id="btnNewOrder"
+          data-i18n="createOrder"
+        >
+          建立
+        </button>
+
+        <button
+          class="btn ghost full-mobile"
+          id="btnBackVerify"
+          data-i18n="back"
+        >
+          返回
+        </button>
+      `,
+    );
+
+    on(
+      "btnNewOrder",
+      "click",
+      function () {
+        if (state.isBusy) {
+          return;
+        }
+
+        startOrder(false);
+      }
+    );
+
+    on(
+      "btnBackVerify",
+      "click",
+      function () {
+        showPage("verify");
+      }
+    );
 
     return true;
   } catch (error) {
@@ -884,11 +925,15 @@ async function checkTodayOrder() {
       setBusy(t("retrying"));
 
       try {
-        const success = await checkTodayOrder();
+        const success =
+  await checkTodayOrder();
 
-        if (success) {
-          showPage("check");
-        }
+if (
+  success &&
+  state.step !== "review"
+) {
+  showPage("check");
+}
       } finally {
         clearBusy();
       }
@@ -1310,6 +1355,236 @@ function renderWeekOrder() {
 /* function statCard(type, icon, label, value, unit) {
   return `<div class="stat-card ${type}"><div class="stat-label">${icon} ${label}</div><div class="stat-number">${value}</div><div class="stat-unit">${unit}</div></div>`;
 } */
+/**
+ * 將指定訂單顯示在 Review 頁面。
+ *
+ * 這個函式不讀取 radio，
+ * 可以直接顯示後端 getOrder 回傳的訂單。
+ */
+function translateFactoryValue(value) {
+  const map = {
+    一廠: "factory1",
+    二廠: "factory2",
+    三廠: "factory3",
+  };
+
+  const key = map[String(value || "").trim()];
+
+  return key ? t(key) : String(value || "");
+}
+
+function translateFoodTypeValue(value) {
+  const map = {
+    葷食: "meat",
+    素食: "vegetarian",
+  };
+
+  const key = map[String(value || "").trim()];
+
+  return key ? t(key) : String(value || "");
+}
+function renderReviewFromOrder(order, options = {}) {
+  if (!order || !order.weeklyMeals) {
+    throw new Error("訂單資料不完整");
+  }
+
+  const isExistingOrder =
+    options.isExistingOrder === true;
+
+  state.viewingExistingOrder =
+    isExistingOrder;
+
+  const weeklyMeals =
+    order.weeklyMeals;
+
+  /*
+   * 顯示使用者資料
+   */
+  setHTML(
+    "reviewUser",
+    `
+      <div class="user-item">
+        💼
+        <span data-i18n="employeeId">
+          工號
+        </span>
+        <strong>
+          ${state.user?.empId || order.empId || ""}
+        </strong>
+      </div>
+
+      <div class="user-item">
+        👤
+        <span data-i18n="employeeName">
+          姓名
+        </span>
+        <strong>
+          ${state.user?.name || order.name || ""}
+        </strong>
+      </div>
+
+      <div class="user-item">
+        🏢
+        <span data-i18n="department">
+          部門
+        </span>
+        <strong>
+          ${translateDepartment(
+            state.user?.dept ||
+            order.dept ||
+            ""
+          )}
+        </strong>
+      </div>
+    `,
+  );
+
+  const daySettings = [
+    {
+      key: "monday",
+      translationKey: "monday",
+      fallbackDay: "星期一",
+    },
+    {
+      key: "tuesday",
+      translationKey: "tuesday",
+      fallbackDay: "星期二",
+    },
+    {
+      key: "wednesday",
+      translationKey: "wednesday",
+      fallbackDay: "星期三",
+    },
+    {
+      key: "thursday",
+      translationKey: "thursday",
+      fallbackDay: "星期四",
+    },
+    {
+      key: "friday",
+      translationKey: "friday",
+      fallbackDay: "星期五",
+    },
+  ];
+
+  setHTML(
+    "reviewOrder",
+    daySettings
+      .map(function (dayInfo) {
+        const item =
+          weeklyMeals[dayInfo.key];
+
+        if (!item) {
+          return "";
+        }
+
+        let cssClass = "lunch";
+        let icon = "🍱";
+        let mealText = "";
+
+        if (item.mealType === "便當") {
+          const factory =
+            item.factory ||
+            order.defaultFactory ||
+            "";
+
+          const foodType =
+            item.foodType ||
+            order.defaultFoodType ||
+            "";
+
+          mealText =
+            `${t("lunchBox")}（` +
+            `${translateFactoryValue(factory)} ` +
+            `${translateFoodTypeValue(foodType)}）`;
+        } else if (
+          item.mealType === "上樓用餐"
+        ) {
+          cssClass = "upstairs";
+          icon = "👥";
+          mealText = t("upstairs");
+        } else if (
+          item.mealType === "不用餐"
+        ) {
+          cssClass = "none";
+          icon = "✖";
+          mealText = t("noMeal");
+        } else if (
+          item.mealType === "國定假日"
+        ) {
+          cssClass = "holiday";
+          icon = "📅";
+          mealText =
+            item.holidayName ||
+            t("nationalHoliday");
+        } else {
+          cssClass = "none";
+          icon = "－";
+          mealText =
+            item.mealType || "－";
+        }
+
+        const dateText =
+          String(item.date || "")
+            .replace("/", "月") +
+          (
+            item.date
+              ? "日"
+              : ""
+          );
+
+        return `
+          <div class="review-week-row">
+            <div
+              class="review-day"
+              data-i18n="${dayInfo.translationKey}"
+            >
+              ${item.day || dayInfo.fallbackDay}
+            </div>
+
+            <div class="review-date">
+              ${dateText}
+            </div>
+
+            <div class="meal-pill ${cssClass}">
+              <span>${icon}</span>
+              <strong>${mealText}</strong>
+            </div>
+          </div>
+        `;
+      })
+      .join(""),
+  );
+
+  /*
+   * 已有訂單只允許查看或進入修改，
+   * 不直接再次送出。
+   */
+  const submitButton =
+    $("btnSubmit");
+
+  const editButton =
+    $("btnEditBottom");
+
+  if (submitButton) {
+    submitButton.classList.toggle(
+      "hidden",
+      isExistingOrder
+    );
+  }
+
+  if (editButton) {
+    if (isExistingOrder) {
+      editButton.textContent =
+        "✏️ " + t("editOrder");
+    } else {
+      editButton.textContent =
+        "✏️ " + t("backToEdit");
+    }
+  }
+
+  showPage("review");
+}
 async function buildReview() {
   if (!guardOpen()) return;
 
@@ -1395,8 +1670,25 @@ async function buildReview() {
 
   state.pendingOrder.weeklyMeals = weeklyMeals;
   state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
+    state.pendingOrder.weeklyMeals =
+    weeklyMeals;
 
-  setHTML(
+  state.pendingOrder.updatedAt =
+    new Date().toLocaleString("zh-TW");
+
+  /*
+   * 新建或修改中的訂單，
+   * Review 頁仍顯示確認送出按鈕。
+   */
+  renderReviewFromOrder(
+    state.pendingOrder,
+    {
+      isExistingOrder: false,
+    }
+  );
+}
+
+  /* setHTML(
     "reviewUser",
     `
   <div class="user-item">💼<span data-i18n="employeeId">工號</span><strong>${state.user.empId}</strong></div>
@@ -1474,7 +1766,7 @@ async function buildReview() {
       .join(""),
   );
 
-  showPage("review");
+  showPage("review"); */
 }
 function translateFactory(value) {
   const map = {
@@ -1656,7 +1948,36 @@ function bindEvents() {
   on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
   on("btnEdit", "click", () => guardOpen() && showPage("weekOrder"));
-  on("btnEditBottom", "click", () => guardOpen() && showPage("weekOrder"));
+on(
+  "btnEditBottom",
+  "click",
+  function () {
+    if (!guardOpen()) {
+      return;
+    }
+
+    /*
+     * 查看後端已有訂單：
+     * 從訂單重新載入編輯流程。
+     */
+    if (
+      state.viewingExistingOrder &&
+      state.existingOrder
+    ) {
+      state.viewingExistingOrder = false;
+
+      startOrder(true);
+
+      return;
+    }
+
+    /*
+     * 正常建立訂單的 Review：
+     * 返回一週訂餐頁。
+     */
+    showPage("weekOrder");
+  }
+);
   on("btnSubmit", "click", submitOrder);
   on("btnHome", "click", goHome);
   on("btnEditDone", "click", editOrderFromDone);
@@ -1767,6 +2088,8 @@ function resetOrderFlow() {
   state.user = null;
   state.pendingOrder = null;
   state.existingOrder = null;
+   state.order = null;
+   state.viewingExistingOrder = false;
   state.dept = "";
   state.isSubmitting = false;
   state.isBusy = false;
@@ -1815,4 +2138,44 @@ function requireQRCodeScan() {
   });
 
   showAlert(t("scanQRCode"));
+}
+const USER_SESSION_KEY = "LUNCH_ORDER_USER_SESSION";
+function saveUserSession(user) {
+  if (!user) {
+    return;
+  }
+
+  const sessionData = {
+    empId: String(user.empId || "").trim(),
+    name: String(user.name || "").trim(),
+    dept: String(user.dept || "").trim(),
+  };
+
+  sessionStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionData));
+}
+function getUserSession() {
+  const raw = sessionStorage.getItem(USER_SESSION_KEY);
+
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const user = JSON.parse(raw);
+
+    if (!user.empId || !user.name || !user.dept) {
+      clearUserSession();
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error("讀取使用者 Session 失敗：", error);
+
+    clearUserSession();
+    return null;
+  }
+}
+function clearUserSession() {
+  sessionStorage.removeItem(USER_SESSION_KEY);
 }
