@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>午餐訂餐系統｜測試版</title>
+
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,11 +23,37 @@
 <div id="confirmDialog" class="dialog-overlay hidden">
   <div class="dialog-box">
     <div class="dialog-icon">⚠️</div>
-    <h3 id="dialogTitle">確認</h3>
-    <p id="dialogMessage">請確認是否繼續。</p>
+
+    <h3
+      id="dialogTitle"
+      data-i18n="confirm"
+    >
+      確認
+    </h3>
+
+    <p
+      id="dialogMessage"
+      data-i18n="confirmContinue"
+    >
+      請確認是否繼續。
+    </p>
+
     <div class="dialog-actions">
-      <button id="dialogCancel" class="btn ghost">返回修改</button>
-      <button id="dialogConfirm" class="btn primary">確認送出</button>
+      <button
+        id="dialogCancel"
+        class="btn ghost"
+        data-i18n="backToEdit"
+      >
+        返回修改
+      </button>
+
+      <button
+        id="dialogConfirm"
+        class="btn primary"
+        data-i18n="submit"
+      >
+        確認送出
+      </button>
     </div>
   </div>
 </div>
@@ -35,11 +62,42 @@
 
   <div class="header-left">
     <div class="logo">🍱</div>
+
     <div class="header-title">
-      <h1>午餐訂餐系統</h1>
+      <h1 data-i18n="systemTitle">
+        午餐訂餐系統
+      </h1>
+
       <span>Lunch Ordering System</span>
     </div>
   </div>
+
+  <div class="language-switcher">
+    <button
+      type="button"
+      class="language-btn"
+      data-language="zh-TW"
+    >
+      中文
+    </button>
+
+    <button
+      type="button"
+      class="language-btn"
+      data-language="th"
+    >
+      ไทย
+    </button>
+
+    <button
+      type="button"
+      class="language-btn"
+      data-language="vi"
+    >
+      Tiếng Việt
+    </button>
+  </div>
+
 </header>
 
   
@@ -102,23 +160,33 @@
 <section id="page-scan" class="page">
   <h2>部門 QRCode</h2><p class="desc">測試版以選單模擬 QR Code 掃描。</p>
   <div class="form-grid">
-    <label><span>部門</span><select id="deptSelect"><option>燃料電池生產部</option><option>工程部</option><option>品保部</option></select></label>
+    <label><span>部門</span><select id="deptSelect">
+  <option value="燃電製一部">燃電製一部</option>
+  <option value="燃電製二部">燃電製二部</option>
+  <option value="燃電製三部">燃電製三部</option>
+</select></label>
     <!--<label><span>組別</span><select id="groupSelect"><option>A組</option><option>B組</option><option>C組</option></select></label>-->
   </div>
   <div class="actions"><button id="btnScan" class="btn primary">模擬掃描 QRCode</button><button id="btnClear" class="btn ghost">清除本機測試資料</button></div>
 </section>
 <section id="page-verify" class="page verify-page hidden">
 
-  <div class="verify-badge">
-    已帶入部門與組別
-  </div>
+ <div class="verify-badge" data-i18n="departmentLoaded">
+  已帶入部門
+</div>
 
   <div class="verify-info-card">
 
     <div class="verify-row">
-      <span>🏢 部門</span>
-      <strong id="deptReadonlyText"></strong>
-    </div>
+  <span>
+    🏢
+    <span data-i18n="department">
+      部門
+    </span>
+  </span>
+
+  <strong id="deptReadonlyText"></strong>
+</div>
 
   <!--   <div class="verify-row">
       <span>👥 組別</span>
@@ -127,45 +195,68 @@
 
   </div>
 
-  <h3 id="verifyTitle" class="verify-title">
-  請輸入您的資料（首次使用）
+  <h3
+    id="verifyTitle"
+    class="verify-title"
+    data-i18n="firstUseTitle">
+
+    請輸入您的資料（首次使用）
+
 </h3>
 
   <div id="verifyForm" class="verify-form">
 
-    <label>
-      <span>💼 工號</span>
-      <input id="empId" placeholder="請輸入工號">
-    </label>
+  <label>
+    <span>
+      💼 <span data-i18n="employeeId">工號</span>
+    </span>
 
-    <label>
-      <span>👤 姓名</span>
-      <input id="empName" placeholder="請輸入姓名">
-    </label>
+    <input
+      id="empId"
+      placeholder="請輸入工號"
+      data-i18n-placeholder="enterEmployeeId">
+  </label>
 
-    <input id="deptReadonly" type="hidden">
-    <input id="groupReadonly" type="hidden">
+  <label>
+    <span>
+      👤 <span data-i18n="employeeName">姓名</span>
+    </span>
 
-  </div>
+    <input
+      id="empName"
+      placeholder="請輸入姓名"
+      data-i18n-placeholder="enterEmployeeName">
+  </label>
+<input id="deptReadonly" type="hidden">
+</div>
 
   <div id="savedUserBox" class="saved-user-box hidden">
 
-    <div class="verify-row">
-      <span>💼 工號</span>
-      <strong id="showEmpId"></strong>
-    </div>
+  <div class="verify-row">
+    <span>
+      💼 <span data-i18n="employeeId">工號</span>
+    </span>
 
-    <div class="verify-row">
-      <span>👤 姓名</span>
-      <strong id="showEmpName"></strong>
-    </div>
-
-    <div class="verify-row">
-      <span>👤 身分</span>
-      <strong id="showRole"></strong>
-    </div>
-
+    <strong id="showEmpId"></strong>
   </div>
+
+  <div class="verify-row">
+    <span>
+      👤 <span data-i18n="employeeName">姓名</span>
+    </span>
+
+    <strong id="showEmpName"></strong>
+  </div>
+
+  <div class="verify-row">
+    <span>
+      👤 <span data-i18n="role">身分</span>
+    </span>
+
+    <strong id="showRole"></strong>
+  </div>
+
+</div>
 
   <div id="verifyNotice"></div>
 
@@ -174,7 +265,10 @@
 </section>
 <section id="page-check" class="page hidden"><div id="checkBox"></div><div id="checkActions" class="actions"></div></section>
 <section id="page-condition" class="page hidden">
-  <h2>選擇用餐條件</h2>
+
+  <h2 data-i18n="selectMealCondition">
+    選擇用餐條件
+  </h2>
 
   <!-- 不訂便當選項 -->
   <label class="no-lunch-option" for="noLunchCheckbox">
@@ -183,92 +277,142 @@
     <span class="no-lunch-check"></span>
 
     <span class="no-lunch-content">
-      <strong>下週不訂便當</strong>
-      <small>勾選後不需選擇廠區及葷素</small>
+      <strong data-i18n="noLunchNextWeek">
+        下週不訂便當
+      </strong>
+
+      <small data-i18n="noLunchDescription">
+        勾選後不需選擇廠區及葷素
+      </small>
     </span>
   </label>
 
   <!-- 廠區與葷素設定區 -->
   <div id="lunchConditionBox" class="condition-box">
 
-    <h3>廠區選擇</h3>
+    <h3 data-i18n="factorySelection">
+      廠區選擇
+    </h3>
 
     <div class="option-grid factory-grid">
+
       <label class="option-card">
         <input type="radio" name="factory" value="一廠">
         <span>🏭</span>
-        <strong>一廠</strong>
+        <strong data-i18n="factory1">一廠</strong>
       </label>
 
       <label class="option-card">
         <input type="radio" name="factory" value="二廠">
         <span>🏢</span>
-        <strong>二廠</strong>
+        <strong data-i18n="factory2">二廠</strong>
       </label>
 
       <label class="option-card">
         <input type="radio" name="factory" value="三廠">
         <span>🏢</span>
-        <strong>三廠</strong>
+        <strong data-i18n="factory3">三廠</strong>
       </label>
+
     </div>
 
-    <h3>餐點選擇</h3>
+    <h3 data-i18n="foodSelection">
+      餐點選擇
+    </h3>
 
     <div class="option-grid food-grid">
+
       <label class="option-card">
         <input type="radio" name="foodType" value="葷食">
         <span>🍱</span>
-        <strong>葷食</strong>
+        <strong data-i18n="meat">葷食</strong>
       </label>
 
       <label class="option-card">
         <input type="radio" name="foodType" value="素食">
         <span>🌱</span>
-        <strong>素食</strong>
+        <strong data-i18n="vegetarian">素食</strong>
       </label>
+
     </div>
   </div>
 
-  <!-- 條件頁專用提示 -->
   <div id="conditionNotice"></div>
 
   <div class="actions">
-    <button id="btnBackToCheck" class="btn ghost">
+
+    <button
+      id="btnBackToCheck"
+      class="btn ghost"
+      data-i18n="back"
+    >
       返回
     </button>
 
-    <button id="btnConditionNext" class="btn primary" disabled>
+    <button
+      id="btnConditionNext"
+      class="btn primary"
+      data-i18n="next"
+      disabled
+    >
       下一步
     </button>
+
   </div>
 </section>
 
 <section id="page-weekOrder" class="page hidden">
-  <h2>選擇一週用餐方式</h2>
-  <p class="desc">請依實際需求選擇每日用餐方式</p>
+  <h2 data-i18n="selectWeeklyMeals">
+    選擇一週用餐方式
+  </h2>
+
+  <p class="desc" data-i18n="weeklyMealDescription">
+    請依實際需求選擇每日用餐方式
+  </p>
 
   <div id="weekTable" class="week-table"></div>
   <div id="orderNotice"></div>
 
   <div class="actions">
-    <button id="btnBackToCondition" class="btn ghost">上一步</button>
-    <button id="btnReview" class="btn primary">下一步</button>
+    <button
+      id="btnBackToCondition"
+      class="btn ghost"
+      data-i18n="previous"
+    >
+      上一步
+    </button>
+
+    <button
+      id="btnReview"
+      class="btn primary"
+      data-i18n="next"
+    >
+      下一步
+    </button>
   </div>
 </section>
 <section id="page-review" class="page review-mobile hidden">
 
   <div class="review-top">
-    <Span></Span>
-    <h2>確認訂單</h2>
-    <span class="safe-text">🛡 資料安全保護中</span>
+    <span></span>
+
+    <h2 data-i18n="reviewOrder">
+      確認訂單
+    </h2>
+
+    <span class="safe-text">
+      🛡 <span data-i18n="dataProtection">資料安全保護中</span>
+    </span>
   </div>
 
   <div class="review-card">
     <div class="review-card-title">
       <div class="review-icon user">👤</div>
+
       <div>
-        <h3>使用者資訊</h3>
+        <h3 data-i18n="userInformation">
+          使用者資訊
+        </h3>
       </div>
     </div>
 
@@ -278,9 +422,15 @@
   <div class="review-card meal-card">
     <div class="review-card-title">
       <div class="review-icon meal">🍴</div>
+
       <div>
-        <h3>一週用餐方式</h3>
-        <p>請為每一天選擇用餐方式</p>
+        <h3 data-i18n="weeklyMealMethod">
+          一週用餐方式
+        </h3>
+
+        <p data-i18n="chooseDailyMeal">
+          請為每一天選擇用餐方式
+        </p>
       </div>
     </div>
 
@@ -288,12 +438,26 @@
   </div>
 
   <div class="review-warning">
-    ⚠️ 送出後，若需修改請於截止時間前完成
+    ⚠️
+    <span data-i18n="editBeforeDeadline">
+      送出後，若需修改請於截止時間前完成
+    </span>
   </div>
 
   <div class="review-bottom-actions">
-    <button id="btnEditBottom" class="btn ghost">✏️ 返回修改</button>
-    <button id="btnSubmit" class="btn primary">✈️ 確認送出</button>
+    <button
+      id="btnEditBottom"
+      class="btn ghost"
+    >
+      ✏️ <span data-i18n="backToEdit">返回修改</span>
+    </button>
+
+    <button
+      id="btnSubmit"
+      class="btn primary"
+    >
+      ✈️ <span data-i18n="submit">確認送出</span>
+    </button>
   </div>
 
 </section>
@@ -303,7 +467,9 @@
     <div class="done-brand">
       <div class="done-logo">🍴</div>
       <div>
-        <h3>午餐訂餐系統</h3>
+        <h3 data-i18n="systemTitle">
+  午餐訂餐系統
+</h3>
         <p>Lunch Order System</p>
       </div>
     </div>
@@ -315,21 +481,32 @@
 
     <div class="done-check">✓</div>
 
-    <h2>訂單已送出</h2>
-    <p class="done-subtitle">感謝您的訂餐！</p>
+    <h2 data-i18n="orderSubmitted">
+  訂單已送出
+</h2>
+    <p class="done-subtitle" data-i18n="thankYouOrder">
+  感謝您的訂餐！
+</p>
 
     <div class="done-time-card">
       <div class="time-icon">🕒</div>
       <div>
-        <strong>送出時間</strong>
+        <strong data-i18n="submitTime">
+  送出時間
+</strong>
         <span id="doneTime">--</span>
       </div>
     </div>
 
 <div class="done-actions">
 
-    <button id="btnEditDone" class="done-edit-btn">
-  修改訂單
+    <button
+    id="btnEditDone"
+    class="done-edit-btn"
+    data-i18n="editOrder">
+
+    修改訂單
+
 </button>
 
 </div>  </div>
@@ -341,6 +518,7 @@
 <script src="js/config.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

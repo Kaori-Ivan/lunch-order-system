@@ -3,7 +3,7 @@ const MOCK_USERS = [
     userId: "U0001",
     empId: "C5454",
     name: "KOOK",
-    dept: "燃料電池生產部",
+    dept: "燃電製一部",
     group: "A組",
     role: "一般員工",
     enabled: true,
@@ -12,7 +12,7 @@ const MOCK_USERS = [
     userId: "U0002",
     empId: "B001",
     name: "林主管",
-    dept: "工程部",
+    dept: "燃電製二部",
     group: "A組",
     role: "主管",
     enabled: true,
@@ -21,7 +21,7 @@ const MOCK_USERS = [
     userId: "U0003",
     empId: "C001",
     name: "陳助理",
-    dept: "品保部",
+    dept: "燃電製三部",
     group: "A組",
     role: "助理",
     enabled: true,
@@ -47,7 +47,16 @@ function on(id, event, handler) {
 }
 function setHTML(id, html) {
   const el = $(id);
-  if (el) el.innerHTML = html;
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML = html;
+
+  if (typeof applyLanguage === "function") {
+    applyLanguage(el);
+  }
 }
 function setText(id, text) {
   const el = $(id);
@@ -84,7 +93,10 @@ function updateHeader() {
         weekday: "short",
       };
 
-  setText("todayText", new Date().toLocaleDateString("zh-TW", options));
+  setText(
+    "todayText",
+    new Date().toLocaleDateString(getCurrentLocale(), options),
+  );
 }
 function showPage(page) {
   state.step = page;
@@ -161,10 +173,10 @@ function row(label, value) {
 }
 function profileHTML(u) {
   return [
-    row("工號", u.empId),
-    row("姓名", u.name),
-    row("部門", u.dept),
-    row("身分", u.role),
+    row(t("employeeId"), u.empId),
+    row(t("employeeName"), u.name),
+    row(t("department"), translateDepartment(u.dept)),
+    row(t("role"), u.role),
   ].join("");
 }
 function renderSavedUser(u) {
@@ -333,15 +345,13 @@ async function loadWeekHolidays() {
 }
 function setButtonLoading(id, text, on) {
   const btn = $(id);
-  if (!btn) return;
-  if (on) {
-    btn.dataset.originalText = btn.textContent;
-    btn.textContent = text;
-    btn.disabled = true;
-  } else {
-    btn.textContent = btn.dataset.originalText || btn.textContent;
-    btn.disabled = false;
+
+  if (!btn) {
+    return;
   }
+
+  btn.textContent = text;
+  btn.disabled = on;
 }
 function setBusy(message) {
   state.isBusy = true;
@@ -424,9 +434,14 @@ function scanQRCode(qrDept = "") {
   console.log("存QR", state.dept);
   saveQRCodeContext(state.dept);
   // 寫入隱藏欄位
-  $("deptReadonly").value = state.dept;
+  // 寫入隱藏欄位
+  const deptReadonly = $("deptReadonly");
+
+  if (deptReadonly) {
+    deptReadonly.value = state.dept;
+  }
   // 顯示本次 QR Code 的部門與組別
-  setText("deptReadonlyText", state.dept);
+  setText("deptReadonlyText", translateDepartment(state.dept));
 
   clearNotice("verifyNotice");
 
@@ -453,26 +468,30 @@ function scanQRCode(qrDept = "") {
 
     // 顯示已儲存使用者
     $("savedUserBox").classList.remove("hidden");
-    setText("verifyTitle", "請確認您的使用者資料");
-
+    setText("verifyTitle", t("confirmUserTitle"));
     renderSavedUser(state.user);
 
-    setText(
-      "verifyDesc",
-      "已自動帶入此裝置儲存的使用者資料，請確認後開始點餐。",
-    );
+    setText("verifyDesc", t("savedUserDescription"));
 
     setHTML(
       "verifyActions",
       `
-      <button class="btn primary" id="btnStartSaved">
-        開始點餐
-      </button>
+  <button
+    class="btn primary"
+    id="btnStartSaved"
+    data-i18n="startOrder"
+  >
+    開始點餐
+  </button>
 
-      <button class="btn secondary" id="btnWrongSaved">
-        重建使用者
-      </button>
-      `,
+  <button
+    class="btn secondary"
+    id="btnWrongSaved"
+    data-i18n="rebuildUser"
+  >
+    重建使用者
+  </button>
+  `,
     );
 
     on("btnStartSaved", "click", confirmProfile);
@@ -487,14 +506,19 @@ function scanQRCode(qrDept = "") {
 function showVerifyForm() {
   $("verifyForm").classList.remove("hidden");
   $("savedUserBox").classList.add("hidden");
-  setText("verifyTitle", "請輸入您的資料（首次使用）");
-  setText(
-    "verifyDesc",
-    "請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。",
-  );
+  setText("verifyTitle", t("firstUseTitle"));
+  setText("verifyDesc", t("firstUseDescription"));
   setHTML(
     "verifyActions",
-    `<button class="btn primary" id="btnVerify">查詢</button>`,
+    `
+  <button
+    class="btn primary"
+    id="btnVerify"
+    data-i18n="query"
+  >
+    查詢
+  </button>
+  `,
   );
 
   on("btnVerify", "click", verifyEmployee);
@@ -515,14 +539,12 @@ async function verifyEmployee() {
   const empName = $("empName").value.trim();
 
   if (!empId || !empName) {
-    notice("verifyNotice", "danger", "請輸入工號與姓名。");
+    notice("verifyNotice", "danger", t("enterEmployeeInfo"));
     return;
   }
-  setBusy("正在驗證身分，請稍候...");
-
-  setButtonLoading("btnVerify", "驗證中...", true);
-  notice("verifyNotice", "info", "資料驗證中，請稍候...");
-
+  setBusy(t("validatingUser"));
+  setButtonLoading("btnVerify", t("verifying"), true);
+  notice("verifyNotice", "info", t("verificationInProgress"));
   try {
     const result = await apiPost({
       action: "verifyUser",
@@ -560,27 +582,36 @@ async function verifyEmployee() {
     $("savedUserBox").classList.remove("hidden");
 
     renderSavedUser(state.user);
-    notice(
-      "verifyNotice",
-      "success",
-      "驗證成功，已自動帶入身分：" + state.user.role + "。",
-    );
+    notice("verifyNotice", "success", t("verifySuccess"));
 
     setHTML(
       "verifyActions",
       `
-      <button class="btn primary" id="btnConfirmProfile">開始點餐</button>
-      <button class="btn secondary" id="btnWrongProfile">重建使用者</button>
-    `,
+  <button
+    class="btn primary"
+    id="btnConfirmProfile"
+    data-i18n="startOrder"
+  >
+    開始點餐
+  </button>
+
+  <button
+    class="btn secondary"
+    id="btnWrongProfile"
+    data-i18n="rebuildUser"
+  >
+    重建使用者
+  </button>
+  `,
     );
 
     on("btnConfirmProfile", "click", confirmProfile);
     on("btnWrongProfile", "click", resetVerify);
   } catch (e) {
     console.error(e);
-    notice("verifyNotice", "danger", "無法連線至訂餐系統伺服器，請稍後再試。");
+    notice("verifyNotice", "danger", t("connectionFailed"));
   } finally {
-    setButtonLoading("btnVerify", "查詢", false);
+    setButtonLoading("btnVerify", t("query"), false);
     clearBusy();
   }
 }
@@ -595,8 +626,7 @@ async function confirmProfile() {
     return;
   }
 
-  setBusy("正在重新核對使用者身分，請稍候...");
-
+  setBusy(t("recheckingUser"));
   try {
     const success = await checkTodayOrder();
 
@@ -619,12 +649,18 @@ async function checkTodayOrder() {
   setHTML(
     "checkBox",
     `
-    <div class="order-status-card loading">
-      <div class="status-icon">⏳</div>
-      <h3>正在確認下週訂單</h3>
-      <p>系統正在重新核對身分並查詢下週訂單...</p>
-    </div>
-    `,
+  <div class="order-status-card loading">
+    <div class="status-icon">⏳</div>
+
+    <h3 data-i18n="checkingOrder">
+      正在確認下週訂單
+    </h3>
+
+    <p data-i18n="checkingOrderDescription">
+      系統正在重新核對身分並查詢下週訂單...
+    </p>
+  </div>
+  `,
   );
 
   setHTML("checkActions", "");
@@ -673,34 +709,43 @@ async function checkTodayOrder() {
       setHTML(
         "checkBox",
         `
-        <div class="order-status-card has-order">
-          <div class="status-icon">🍱</div>
+  <div class="order-status-card has-order">
+    <div class="status-icon">🍱</div>
 
-          <h3>已有訂單</h3>
+    <h3 data-i18n="existingOrder">
+      已有訂單
+    </h3>
 
-          <p>您下週已建立訂單</p>
-          <p>可點擊下方按鈕修改</p>
-        </div>
-        `,
+    <p data-i18n="existingOrderDescription">
+      您下週已建立訂單
+    </p>
+
+    <p data-i18n="editOrderDescription">
+      可點擊下方按鈕修改
+    </p>
+  </div>
+  `,
       );
 
       setHTML(
         "checkActions",
         `
-        <button
-          class="btn primary full-mobile"
-          id="btnEditOrder"
-        >
-          修改訂單
-        </button>
+  <button
+    class="btn primary full-mobile"
+    id="btnEditOrder"
+    data-i18n="editOrder"
+  >
+    修改訂單
+  </button>
 
-        <button
-          class="btn ghost full-mobile"
-          id="btnBackVerify"
-        >
-          返回
-        </button>
-        `,
+  <button
+    class="btn ghost full-mobile"
+    id="btnBackVerify"
+    data-i18n="back"
+  >
+    返回
+  </button>
+  `,
       );
 
       on("btnEditOrder", "click", () => {
@@ -711,29 +756,34 @@ async function checkTodayOrder() {
       setHTML(
         "checkBox",
         `
-        <div class="order-status-card no-order">
-          <div class="status-icon">✅</div>
-          <h3>下週尚未建立訂單</h3>
-        </div>
-        `,
+  <div class="order-status-card no-order">
+    <div class="status-icon">✅</div>
+
+    <h3 data-i18n="noExistingOrder">
+      下週尚未建立訂單
+    </h3>
+  </div>
+  `,
       );
 
       setHTML(
         "checkActions",
         `
         <button
-          class="btn primary full-mobile"
-          id="btnNewOrder"
-        >
-          建立
-        </button>
+  class="btn primary full-mobile"
+  id="btnNewOrder"
+  data-i18n="createOrder"
+>
+  建立
+</button>
 
-        <button
-          class="btn ghost full-mobile"
-          id="btnBackVerify"
-        >
-          返回
-        </button>
+<button
+  class="btn ghost full-mobile"
+  id="btnBackVerify"
+  data-i18n="back"
+>
+  返回
+</button>
         `,
       );
 
@@ -756,8 +806,13 @@ async function checkTodayOrder() {
       `
       <div class="order-status-card error">
         <div class="status-icon">⚠️</div>
-        <h3>查詢失敗</h3>
-        <p>無法連線至訂餐系統，請稍後再試。</p>
+        <h3 data-i18n="queryFailed">
+  查詢失敗
+</h3>
+
+<p data-i18n="connectionFailed">
+  無法連線至訂餐系統，請稍後再試。
+</p>
       </div>
       `,
     );
@@ -766,25 +821,27 @@ async function checkTodayOrder() {
       "checkActions",
       `
       <button
-        class="btn primary full-mobile"
-        id="btnRetryCheck"
-      >
-        重新查詢
-      </button>
+  class="btn primary full-mobile"
+  id="btnRetryCheck"
+  data-i18n="retry"
+>
+  重新查詢
+</button>
 
-      <button
-        class="btn ghost full-mobile"
-        id="btnBackVerify"
-      >
-        返回
-      </button>
+<button
+  class="btn ghost full-mobile"
+  id="btnBackVerify"
+  data-i18n="back"
+>
+  返回
+</button>
       `,
     );
 
     on("btnRetryCheck", "click", async () => {
       if (state.isBusy) return;
 
-      setBusy("正在重新查詢，請稍候...");
+      setBusy(t("retrying"));
 
       try {
         const success = await checkTodayOrder();
@@ -876,11 +933,7 @@ function updateConditionState() {
 
     nextButton.disabled = false;
 
-    notice(
-      "conditionNotice",
-      "info",
-      "已選擇下週不訂便當。下一頁僅提供「上樓用餐」及「不用餐」。",
-    );
+    notice("conditionNotice", "info", t("noLunchSelected"));
 
     return;
   }
@@ -965,14 +1018,12 @@ async function goWeekOrder() {
   }
 
   try {
-    setBusy("正在讀取下週工作日資料...");
-
+    setBusy(t("loadingWorkDays"));
     await loadWeekHolidays();
   } catch (error) {
     console.error("loadWeekHolidays error:", error);
 
-    notice("conditionNotice", "danger", "無法取得下週假日資料，請稍後再試。");
-
+    notice("conditionNotice", "danger", t("holidayLoadFailed"));
     return;
   } finally {
     clearBusy();
@@ -1002,11 +1053,7 @@ async function goWeekOrder() {
   )?.value;
 
   if (!factory || !foodType) {
-    notice(
-      "conditionNotice",
-      "danger",
-      "請完整選擇廠區及葷素，或勾選「下週不訂便當」。",
-    );
+    notice("conditionNotice", "danger", t("conditionRequired"));
 
     updateConditionState();
     return;
@@ -1036,6 +1083,13 @@ function renderWeekOrder() {
     thu: "thursday",
     fri: "friday",
   };
+  const dayTranslationMap = {
+    星期一: "monday",
+    星期二: "tuesday",
+    星期三: "wednesday",
+    星期四: "thursday",
+    星期五: "friday",
+  };
 
   setHTML(
     "weekTable",
@@ -1044,6 +1098,7 @@ function renderWeekOrder() {
         const weeklyKey = weeklyKeyMap[item.key];
 
         const holiday = state.weekHolidays?.[weeklyKey];
+        const dayKey = dayTranslationMap[item.day];
 
         /*
          * 假日不顯示訂餐選項。
@@ -1052,9 +1107,12 @@ function renderWeekOrder() {
           return `
             <div class="week-row holiday-row">
               <div class="week-info">
-                <div class="week-day">
-                  ${item.day}
-                </div>
+                <div
+  class="week-day"
+  data-i18n="${dayKey}"
+>
+  ${item.day}
+</div>
 
                 <div class="week-date">
                   ${item.date}
@@ -1062,10 +1120,13 @@ function renderWeekOrder() {
               </div>
 
               <div class="holiday-box">
-                <strong>休假</strong>
-                <span>
-                  ${holiday.holidayName || "國定假日"}
-                </span>
+                <strong data-i18n="holiday">
+  休假
+</strong>
+
+<span>
+  ${holiday.holidayName || t("nationalHoliday")}
+</span>
               </div>
             </div>
           `;
@@ -1087,64 +1148,82 @@ function renderWeekOrder() {
 
         const mealOptions = noLunch
           ? `
-            <label>
-              <input
-                type="radio"
-                name="meal_${item.key}"
-                value="上樓用餐"
-                ${checked("上樓用餐")}
-              >
-              上樓用餐
-            </label>
+    <label>
+      <input
+        type="radio"
+        name="meal_${item.key}"
+        value="上樓用餐"
+        ${checked("上樓用餐")}
+      >
 
-            <label>
-              <input
-                type="radio"
-                name="meal_${item.key}"
-                value="不用餐"
-                ${checked("不用餐")}
-              >
-              不用餐
-            </label>
-          `
+      <span data-i18n="upstairs">
+        上樓用餐
+      </span>
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="meal_${item.key}"
+        value="不用餐"
+        ${checked("不用餐")}
+      >
+
+      <span data-i18n="noMeal">
+        不用餐
+      </span>
+    </label>
+  `
           : `
-            <label>
-              <input
-                type="radio"
-                name="meal_${item.key}"
-                value="便當"
-                ${checked("便當")}
-              >
-              便當
-            </label>
+    <label>
+      <input
+        type="radio"
+        name="meal_${item.key}"
+        value="便當"
+        ${checked("便當")}
+      >
 
-            <label>
-              <input
-                type="radio"
-                name="meal_${item.key}"
-                value="上樓用餐"
-                ${checked("上樓用餐")}
-              >
-              上樓用餐
-            </label>
+      <span data-i18n="lunchBox">
+        便當
+      </span>
+    </label>
 
-            <label>
-              <input
-                type="radio"
-                name="meal_${item.key}"
-                value="不用餐"
-                ${checked("不用餐")}
-              >
-              不用餐
-            </label>
-          `;
+    <label>
+      <input
+        type="radio"
+        name="meal_${item.key}"
+        value="上樓用餐"
+        ${checked("上樓用餐")}
+      >
+
+      <span data-i18n="upstairs">
+        上樓用餐
+      </span>
+    </label>
+
+    <label>
+      <input
+        type="radio"
+        name="meal_${item.key}"
+        value="不用餐"
+        ${checked("不用餐")}
+      >
+
+      <span data-i18n="noMeal">
+        不用餐
+      </span>
+    </label>
+  `;
 
         return `
           <div class="week-row">
             <div class="week-info">
-              <div class="week-day">
-                ${item.day}
-              </div>
+              <div
+  class="week-day"
+  data-i18n="${dayKey}"
+>
+  ${item.day}
+</div>
 
               <div class="week-date">
                 ${item.date}
@@ -1200,94 +1279,69 @@ async function buildReview() {
   const weeks = getThisWeekDates();
 
   const daySettings = [
-  {
-    weeklyKey: "monday",
-    inputKey: "mon",
-    week: weeks[0]
-  },
-  {
-    weeklyKey: "tuesday",
-    inputKey: "tue",
-    week: weeks[1]
-  },
-  {
-    weeklyKey: "wednesday",
-    inputKey: "wed",
-    week: weeks[2]
-  },
-  {
-    weeklyKey: "thursday",
-    inputKey: "thu",
-    week: weeks[3]
-  },
-  {
-    weeklyKey: "friday",
-    inputKey: "fri",
-    week: weeks[4]
-  }
-];
+    {
+      weeklyKey: "monday",
+      inputKey: "mon",
+      week: weeks[0],
+    },
+    {
+      weeklyKey: "tuesday",
+      inputKey: "tue",
+      week: weeks[1],
+    },
+    {
+      weeklyKey: "wednesday",
+      inputKey: "wed",
+      week: weeks[2],
+    },
+    {
+      weeklyKey: "thursday",
+      inputKey: "thu",
+      week: weeks[3],
+    },
+    {
+      weeklyKey: "friday",
+      inputKey: "fri",
+      week: weeks[4],
+    },
+  ];
 
-const weeklyMeals = {};
+  const weeklyMeals = {};
 
-daySettings.forEach(
-  function (dayInfo) {
-    const holiday =
-      state.weekHolidays?.[
-        dayInfo.weeklyKey
-      ];
+  daySettings.forEach(function (dayInfo) {
+    const holiday = state.weekHolidays?.[dayInfo.weeklyKey];
 
     if (holiday?.isHoliday) {
-      weeklyMeals[
-        dayInfo.weeklyKey
-      ] = {
-        date:
-          dayInfo.week.reviewDate,
+      weeklyMeals[dayInfo.weeklyKey] = {
+        date: dayInfo.week.reviewDate,
 
-        day:
-          dayInfo.week.day,
+        day: dayInfo.week.day,
 
-        mealType:
-          "國定假日",
+        mealType: "國定假日",
 
-        holidayName:
-          holiday.holidayName ||
-          "國定假日",
+        holidayName: holiday.holidayName || "國定假日",
 
         factory: "",
-        foodType: ""
+        foodType: "",
       };
 
       return;
     }
 
-    const mealType =
-      getMealValue(
-        "meal_" +
-        dayInfo.inputKey
-      );
+    const mealType = getMealValue("meal_" + dayInfo.inputKey);
 
     if (!mealType) {
-      throw new Error(
-        "請選擇" +
-        dayInfo.week.day +
-        "的用餐方式。"
-      );
+      throw new Error("請選擇" + dayInfo.week.day + "的用餐方式。");
     }
 
-    weeklyMeals[
-      dayInfo.weeklyKey
-    ] = {
-      date:
-        dayInfo.week.reviewDate,
+    weeklyMeals[dayInfo.weeklyKey] = {
+      date: dayInfo.week.reviewDate,
 
-      day:
-        dayInfo.week.day,
+      day: dayInfo.week.day,
 
-      mealType:
-        mealType
+      mealType: mealType,
     };
-  }
-);
+  });
 
   Object.keys(weeklyMeals).forEach((key) => {
     if (weeklyMeals[key].mealType === "便當") {
@@ -1305,10 +1359,13 @@ daySettings.forEach(
   setHTML(
     "reviewUser",
     `
-  <div class="user-item">💼<span>工號</span><strong>${state.user.empId}</strong></div>
-  <div class="user-item">👤<span>姓名</span><strong>${state.user.name}</strong></div>
-  <div class="user-item">🏢<span>部門</span><strong>${state.user.dept}</strong></div>
-  `,
+  <div class="user-item">💼<span data-i18n="employeeId">工號</span><strong>${state.user.empId}</strong></div>
+  <div class="user-item">👤<span data-i18n="employeeName">姓名</span><strong>${state.user.name}</strong></div>
+<div class="user-item">
+🏢
+<span data-i18n="department">部門</span>
+<strong>${translateDepartment(state.user.dept)}</strong>
+</div>  `,
   );
 
   const weekMap = [
@@ -1318,11 +1375,19 @@ daySettings.forEach(
     weeklyMeals.thursday,
     weeklyMeals.friday,
   ];
+  const reviewDayKeys = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+  ];
 
   setHTML(
     "reviewOrder",
     weekMap
       .map((item, index) => {
+        const dayKey = reviewDayKeys[index];
         let cls = "lunch";
         let icon = "🍱";
         let text = item.mealType;
@@ -1330,31 +1395,34 @@ daySettings.forEach(
         if (item.mealType === "上樓用餐") {
           cls = "upstairs";
           icon = "👥";
-          text = "上樓用餐";
+          text = t("upstairs");
         }
 
         if (item.mealType === "不用餐") {
           cls = "none";
           icon = "✖";
-          text = "不用餐";
+          text = t("noMeal");
         }
         if (item.mealType === "國定假日") {
-  cls = "holiday";
-  icon = "📅";
-  text =
-    item.holidayName ||
-    "國定假日";
-}
+          cls = "holiday";
+          icon = "📅";
+          text = item.holidayName || t("nationalHoliday");
+        }
 
         if (item.mealType === "便當") {
-          text = `便當（${factory} ${foodType}）`;
+          text = `${t("lunchBox")}（${translateFactory(factory)} ${translateFoodType(foodType)}）`;
         }
 
         const dateText = item.date.replace("/", "月") + "日";
 
         return `
   <div class="review-week-row">
-    <div class="review-day">${item.day}</div>
+    <div
+  class="review-day"
+  data-i18n="${dayKey}"
+>
+  ${item.day}
+</div>
     <div class="review-date">${dateText}</div>
     <div class="meal-pill ${cls}">
       <span>${icon}</span>
@@ -1368,6 +1436,24 @@ daySettings.forEach(
 
   showPage("review");
 }
+function translateFactory(value) {
+  const map = {
+    一廠: "factory1",
+    二廠: "factory2",
+    三廠: "factory3",
+  };
+
+  return map[value] ? t(map[value]) : value;
+}
+
+function translateFoodType(value) {
+  const map = {
+    葷食: "meat",
+    素食: "vegetarian",
+  };
+
+  return map[value] ? t(map[value]) : value;
+}
 async function submitOrder() {
   if (state.isBusy) return;
   if (!guardOpen()) return;
@@ -1377,9 +1463,8 @@ async function submitOrder() {
 
   state.isSubmitting = true;
 
-  setBusy("正在送出訂單，請稍候...");
-  setButtonLoading("btnSubmit", "送出中...", true);
-
+  setBusy(t("sendingOrder"));
+  setButtonLoading("btnSubmit", t("submitting"), true);
   try {
     const apiStart = performance.now();
 
@@ -1418,7 +1503,7 @@ async function submitOrder() {
     }
 
     if (!result.success) {
-      notice("orderNotice", "danger", result.message || "訂單送出失敗。");
+      notice("orderNotice", "danger", result.message || t("submitFailed"));
 
       showPage("weekOrder");
       return;
@@ -1427,7 +1512,7 @@ async function submitOrder() {
     const doneTime = $("doneTime");
 
     if (doneTime) {
-      doneTime.textContent = new Date().toLocaleString("zh-TW", {
+      doneTime.textContent = new Date().toLocaleString(getCurrentLocale(), {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -1448,16 +1533,12 @@ async function submitOrder() {
   } catch (error) {
     console.error("submitOrder error:", error);
 
-    notice(
-      "orderNotice",
-      "danger",
-      error.message || "無法連線至訂餐系統伺服器，請稍後再試。",
-    );
+    notice("orderNotice", "danger", error.message || t("connectionFailed"));
 
     showPage("review");
   } finally {
     state.isSubmitting = false;
-    setButtonLoading("btnSubmit", "確認送出", false);
+    setButtonLoading("btnSubmit", t("submit"), false);
     clearBusy();
   }
 }
@@ -1474,14 +1555,14 @@ function editOrderFromDone() {
 function goHome() {
   resetOrderFlow();
 
-   window.location.reload();
+  window.location.reload();
 }
 async function clearLocalData() {
   const ok = await showConfirmDialog({
-    title: "清除本機資料",
-    message: "確定要清除此裝置記憶的使用者資料嗎？",
-    confirmText: "確認清除",
-    cancelText: "取消",
+    title: t("clearLocalData"),
+    message: t("confirmClearLocalData"),
+    confirmText: t("confirmClear"),
+    cancelText: t("cancel"),
   });
 
   if (!ok) return;
@@ -1545,12 +1626,13 @@ window.addEventListener("error", (e) => {
   console.error(e.error || e.message);
 });
 async function initializeApp() {
+  initLanguage();
+
   bindEvents();
   updateHeader();
 
   try {
-    setBusy("正在確認系統開放狀態...");
-
+    setBusy(t("checkingSystem"));
     /*
      * 先向 Apps Script 後端取得：
      * 1. 系統目前是否開放
@@ -1592,40 +1674,27 @@ async function initializeApp() {
      * 或提示使用者掃描 QR Code。
      */
     requireQRCodeScan();
-
   } catch (error) {
-    console.error(
-      "initializeApp error:",
-      error
-    );
+    console.error("initializeApp error:", error);
 
     state.systemStatus = {
       open: false,
-      message:
-        "目前無法確認系統狀態，請稍後重新整理頁面。"
+      message: "目前無法確認系統狀態，請稍後重新整理頁面。",
     };
 
-    setText(
-      "closedReason",
-      "目前無法確認系統狀態，請稍後重新整理頁面。"
-    );
+    setText("closedReason", "目前無法確認系統狀態，請稍後重新整理頁面。");
 
     showPage("closed");
-
   } finally {
     clearBusy();
   }
 }
 
-
 /*
  * HTML 與 JavaScript 載入完成後，
  * 才正式初始化系統。
  */
-document.addEventListener(
-  "DOMContentLoaded",
-  initializeApp
-);
+document.addEventListener("DOMContentLoaded", initializeApp);
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
   if (!btn) return;
@@ -1675,11 +1744,25 @@ function resetOrderFlow() {
   });
 }
 function renderQRCodeInfo() {
-  setText("deptReadonlyText", state.dept || "未取得");
+  setText(
+    "deptReadonlyText",
+    state.dept ? translateDepartment(state.dept) : "未取得",
+  );
 
   const deptInput = $("deptReadonly");
 
-  if (deptInput) deptInput.value = state.dept || "";
+  if (deptInput) {
+    deptInput.value = state.dept || "";
+  }
+}
+function refreshDynamicTranslations() {
+  if (state.dept) {
+    setText("deptReadonlyText", translateDepartment(state.dept));
+  }
+
+  if (state.step === "review" && state.pendingOrder?.weeklyMeals) {
+    buildReview();
+  }
 }
 function requireQRCodeScan() {
   if (APP_CONFIG.ENABLE_MOCK_SCAN_PAGE === true) {
@@ -1691,5 +1774,5 @@ function requireQRCodeScan() {
     page.classList.add("hidden");
   });
 
-  showAlert("請掃描部門 QR Code 進入系統。");
+  showAlert(t("scanQRCode"));
 }
