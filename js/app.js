@@ -1767,7 +1767,7 @@ async function buildReview() {
   );
 
   showPage("review"); */
-}
+
 function translateFactory(value) {
   const map = {
     一廠: "factory1",
