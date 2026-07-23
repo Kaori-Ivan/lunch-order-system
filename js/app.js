@@ -1712,12 +1712,9 @@ function renderReviewFromOrder(order, options = {}) {
    * 已有訂單只允許查看或進入修改，
    * 不直接再次送出。
    */
-  const submitButton =
-    $("btnSubmit");
-
-  const editButton =
-    $("btnEditBottom");
-    const changeButton = $("btnChangeUser");
+  const submitButton = $("btnSubmit");
+  const editButton = $("btnEditBottom");
+  const changeUserButton = $("btnChangeUser");
     if (changeUserButton) {
       changeUserButton.classList.toggle("hidden", !isExistingOrder);
     }
