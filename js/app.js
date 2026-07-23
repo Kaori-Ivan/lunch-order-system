@@ -196,17 +196,47 @@ function translateApiMessage(message) {
   // 尚未建立翻譯對照的訊息，暫時原樣顯示
   return text;
 }
+/**
+ * 顯示一般文字訊息。
+ * 適合 API 回傳內容或程式臨時組合的文字。
+ */
 function showAlert(message) {
-  const b = $("alertBox");
-  if (!b) return;
-  b.textContent = message;
-  b.classList.remove("hidden");
+  const box = $("alertBox");
+
+  if (!box) {
+    return;
+  }
+
+  box.removeAttribute("data-i18n");
+  box.textContent = String(message || "");
+  box.classList.remove("hidden");
+}
+
+/**
+ * 顯示可隨語言切換的訊息。
+ * 傳入的是 i18n key，不是翻譯後的文字。
+ */
+function showAlertKey(key) {
+  const box = $("alertBox");
+
+  if (!box) {
+    return;
+  }
+
+  box.dataset.i18n = key;
+  box.textContent = t(key);
+  box.classList.remove("hidden");
 }
 function hideAlert() {
-  const b = $("alertBox");
-  if (!b) return;
-  b.textContent = "";
-  b.classList.add("hidden");
+  const box = $("alertBox");
+
+  if (!box) {
+    return;
+  }
+
+  box.textContent = "";
+  box.removeAttribute("data-i18n");
+  box.classList.add("hidden");
 }
 function notice(id, type, msg) {
   setHTML(id, `<div class="notice ${type}">${msg}</div>`);
@@ -576,22 +606,75 @@ async function scanQRCode(qrDept = "") {
 function showVerifyForm() {
   $("verifyForm").classList.remove("hidden");
   $("savedUserBox").classList.add("hidden");
+
   setText("verifyTitle", t("firstUseTitle"));
   setText("verifyDesc", t("firstUseDescription"));
+
   setHTML(
     "verifyActions",
     `
-  <button
-    class="btn primary"
-    id="btnVerify"
-    data-i18n="query"
-  >
-    查詢
-  </button>
-  `,
+      <button
+        class="btn primary"
+        id="btnVerify"
+        data-i18n="query"
+      >
+        查詢
+      </button>
+
+      <button
+        class="btn ghost"
+        id="btnClearLocalUser"
+        data-i18n="clearLocalData"
+      >
+        清除使用者資料
+      </button>
+    `,
   );
 
   on("btnVerify", "click", verifyEmployee);
+  on("btnClearLocalUser", "click", clearLocalUser);
+}
+async function clearLocalUser() {
+  const ok = await showConfirmDialog({
+    title: t("clearLocalData"),
+    message: t("confirmClearLocalData"),
+    confirmText: t("confirmClear"),
+    cancelText: t("cancel"),
+  });
+
+  if (!ok) {
+    return;
+  }
+
+  // 只清除已記住的使用者
+  clearSavedUser();
+  clearUserSession();
+
+  // 清除目前前端狀態
+  state.user = null;
+  state.existingOrder = null;
+  state.pendingOrder = null;
+  state.order = null;
+  state.viewingExistingOrder = false;
+  state.editingExistingOrder = false;
+
+  // 清空輸入框
+  if ($("empId")) {
+    $("empId").value = "";
+  }
+
+  if ($("empName")) {
+    $("empName").value = "";
+  }
+
+  // 清除提示訊息
+  clearNotice("verifyNotice");
+
+  // 回到首次輸入畫面
+  showVerifyForm();
+
+  // 工號輸入框自動取得焦點
+  $("empId")?.focus();
 }
 function resetVerify() {
   clearSavedUser();
@@ -2137,7 +2220,7 @@ function requireQRCodeScan() {
     page.classList.add("hidden");
   });
 
-  showAlert(t("scanQRCode"));
+  showAlertKey("scanQRCode");
 }
 const USER_SESSION_KEY = "LUNCH_ORDER_USER_SESSION";
 function saveUserSession(user) {
