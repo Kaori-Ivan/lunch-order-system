@@ -150,6 +150,44 @@ function updateProgress(current) {
     });
   }
 }
+function translateApiMessage(message) {
+  const text = String(message || "").trim();
+
+  if (!text) {
+    return t("connectionFailed");
+  }
+
+  if (text === "此帳號已停用，請聯絡管理員。") {
+    return t("accountDisabled");
+  }
+
+  if (text === "資料錯誤：工號或姓名不相符。") {
+    return t("verifyFailed");
+  }
+
+  const departmentMatch = text.match(
+    /您目前隸屬部門為【(.+?)】，請掃描正確部門 QR Code。/,
+  );
+
+  if (departmentMatch) {
+    return t("wrongDepartment").replace(
+      "{dept}",
+      translateDepartment(departmentMatch[1]),
+    );
+  }
+
+  const oldDepartmentMatch = text.match(/此使用者隸屬於【(.+?)】。/);
+
+  if (oldDepartmentMatch) {
+    return t("wrongDepartment").replace(
+      "{dept}",
+      translateDepartment(oldDepartmentMatch[1]),
+    );
+  }
+
+  // 尚未建立翻譯對照的訊息，暫時原樣顯示
+  return text;
+}
 function showAlert(message) {
   const b = $("alertBox");
   if (!b) return;
@@ -557,8 +595,9 @@ async function verifyEmployee() {
       notice(
         "verifyNotice",
         "danger",
-        result.message || "資料錯誤：工號或姓名不相符。",
+        translateApiMessage(result.message || "資料錯誤：工號或姓名不相符。"),
       );
+
       clearSavedUser();
       return;
     }
@@ -683,8 +722,9 @@ async function checkTodayOrder() {
      * 4. 查詢下週訂單
      */
     if (!result.success) {
-      const errorMessage =
-        result.message || "使用者身分核對失敗，請重新輸入工號與姓名。";
+     const errorMessage = translateApiMessage(
+       result.message || "資料錯誤：工號或姓名不相符。",
+     );
 
       // 驗證失敗代表 localStorage 資料不可繼續使用
       clearSavedUser();

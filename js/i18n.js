@@ -120,6 +120,9 @@ const I18N = {
     clearLocalData: "清除本機資料",
     confirmClearLocalData: "確定要清除此裝置記憶的使用者資料嗎？",
     confirmClear: "確認清除",
+    accountDisabled: "此帳號已停用，請聯絡管理員。",
+    verifyFailed: "資料錯誤：工號或姓名不相符。",
+    wrongDepartment: "您目前隸屬部門為【{dept}】，請掃描正確部門 QR Code。",
   },
 
   th: {
@@ -246,6 +249,12 @@ const I18N = {
     confirmClearLocalData:
       "ต้องการล้างข้อมูลผู้ใช้งานที่บันทึกไว้ในอุปกรณ์นี้หรือไม่",
     confirmClear: "ยืนยันการล้างข้อมูล",
+    accountDisabled: "บัญชีนี้ถูกระงับการใช้งาน โปรดติดต่อผู้ดูแลระบบ",
+
+    verifyFailed: "ข้อมูลไม่ถูกต้อง: รหัสพนักงานหรือชื่อไม่ตรงกัน",
+
+    wrongDepartment:
+      "คุณสังกัดแผนก【{dept}】 โปรดสแกน QR Code ของแผนกที่ถูกต้อง",
   },
 
   vi: {
@@ -372,6 +381,13 @@ const I18N = {
     confirmClearLocalData:
       "Bạn có chắc muốn xóa thông tin người dùng đã lưu trên thiết bị này không?",
     confirmClear: "Xác nhận xóa",
+    accountDisabled:
+      "Tài khoản này đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.",
+
+    verifyFailed: "Thông tin không đúng: Mã nhân viên hoặc họ tên không khớp.",
+
+    wrongDepartment:
+      "Bạn thuộc bộ phận【{dept}】. Vui lòng quét đúng mã QR của bộ phận.",
   },
 };
 
