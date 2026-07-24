@@ -127,7 +127,7 @@ const I18N = {
     verifyFailed: "資料錯誤：工號或姓名不相符。",
     wrongDepartment: "您目前隸屬部門為【{dept}】，請掃描正確部門 QR Code。",
     changeUser: "更換使用者",
-    confirmChangeUser: "確定要更換使用者嗎？目前部門將會保留。",
+    confirmChangeUser: "確定要更換使用者嗎？",
   },
 
   th: {

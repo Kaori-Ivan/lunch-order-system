@@ -1,32 +1,3 @@
-const MOCK_USERS = [
-  {
-    userId: "U0001",
-    empId: "C5454",
-    name: "KOOK",
-    dept: "燃電製一部",
-    group: "A組",
-    role: "員工",
-    enabled: true,
-  },
-  {
-    userId: "U0002",
-    empId: "B001",
-    name: "林主管",
-    dept: "燃電製二部",
-    group: "A組",
-    role: "經理",
-    enabled: true,
-  },
-  {
-    userId: "U0003",
-    empId: "C001",
-    name: "陳助理",
-    dept: "燃電製三部",
-    group: "A組",
-    role: "組長",
-    enabled: true,
-  },
-];
 const state = {
   step: "scan",
   dept: "",
@@ -57,14 +28,25 @@ function setHTML(id, html) {
   const el = $(id);
 
   if (!el) {
-    return;
+    console.error(`找不到 HTML 元素：#${id}`);
+    return false;
   }
 
   el.innerHTML = html;
 
+  /*
+   * 翻譯失敗時，只記錄錯誤，
+   * 不要讓後續按鈕事件綁定中斷。
+   */
   if (typeof applyLanguage === "function") {
-    applyLanguage(el);
+    try {
+      applyLanguage(el);
+    } catch (error) {
+      console.error(`套用語言失敗：#${id}`, error);
+    }
   }
+
+  return true;
 }
 function setText(id, text) {
   const el = $(id);
@@ -282,8 +264,8 @@ function renderSavedUser(u) {
 
   setText("showRole", translateRole(u.role));
 }
-const MOCK_API_DELAY = 50;
-function mockApi(p) {
+//const MOCK_API_DELAY = 50;
+/* function mockApi(p) {
   return new Promise((resolve) =>
     setTimeout(() => {
       if (p.action === "verifyUser") {
@@ -342,14 +324,14 @@ function mockApi(p) {
       resolve({ success: false, message: "未知的 action" });
     }, 50),
   );
-}
+} */
 async function apiPost(payload) {
   const mode = APP_CONFIG.USE_MOCK_API ? "MOCK" : "正式 API";
   const startTime = performance.now();
 
   console.log(`[API 開始] action=${payload.action}, mode=${mode}`);
 
-  if (APP_CONFIG.USE_MOCK_API) {
+ /*  if (APP_CONFIG.USE_MOCK_API) {
     const result = await mockApi(payload);
 
     console.log(
@@ -359,7 +341,7 @@ async function apiPost(payload) {
     );
 
     return result;
-  }
+  } */
 
   const controller = new AbortController();
 
@@ -622,16 +604,38 @@ async function scanQRCode(qrDept = "") {
   showPage("verify");
 }
 function showVerifyForm() {
-  $("verifyForm").classList.remove("hidden");
-  $("savedUserBox").classList.add("hidden");
+  const verifyForm = $("verifyForm");
+  const savedUserBox = $("savedUserBox");
+  const verifyActions = $("verifyActions");
+
+  /*
+   * 必要元素不存在時顯示明確錯誤，
+   * 避免程式直接中斷後留下空白畫面。
+   */
+  if (!verifyForm || !verifyActions) {
+    console.error("驗證頁缺少必要元素", {
+      verifyForm,
+      verifyActions,
+    });
+
+    showAlert("驗證畫面載入失敗，請重新整理頁面。");
+    return;
+  }
+
+  verifyForm.classList.remove("hidden");
+
+  if (savedUserBox) {
+    savedUserBox.classList.add("hidden");
+  }
 
   setText("verifyTitle", t("firstUseTitle"));
   setText("verifyDesc", t("firstUseDescription"));
 
-  setHTML(
+  const created = setHTML(
     "verifyActions",
     `
       <button
+        type="button"
         class="btn primary"
         id="btnVerify"
         data-i18n="query"
@@ -640,6 +644,7 @@ function showVerifyForm() {
       </button>
 
       <button
+        type="button"
         class="btn ghost"
         id="btnClearLocalUser"
         data-i18n="clearLocalData"
@@ -649,8 +654,28 @@ function showVerifyForm() {
     `,
   );
 
-  on("btnVerify", "click", verifyEmployee);
-  on("btnClearLocalUser", "click", clearLocalUser);
+  if (!created) {
+    showAlert("操作按鈕載入失敗，請重新整理頁面。");
+    return;
+  }
+
+  const verifyButton = $("btnVerify");
+  const clearButton = $("btnClearLocalUser");
+
+  if (!verifyButton || !clearButton) {
+    console.error("驗證按鈕建立失敗", {
+      verifyButton,
+      clearButton,
+    });
+
+    showAlert("操作按鈕載入失敗，請重新整理頁面。");
+    return;
+  }
+
+  verifyButton.addEventListener("click", verifyEmployee);
+  clearButton.addEventListener("click", clearLocalUser);
+
+  console.log("驗證輸入畫面與按鈕建立完成");
 }
 async function clearLocalUser() {
   const ok = await showConfirmDialog({
@@ -811,21 +836,23 @@ noticeKey("verifyNotice", "success", "verifySuccess");
     setHTML(
       "verifyActions",
       `
-  <button
-    class="btn primary"
-    id="btnConfirmProfile"
-    data-i18n="startOrder"
-  >
-    開始點餐
-  </button>
+    <button
+      type="button"
+      class="btn primary"
+      id="btnConfirmProfile"
+      data-i18n="startOrder"
+    >
+      開始點餐
+    </button>
 
-  <button
-  class="btn secondary"
-  id="btnWrongProfile"
-  data-i18n="changeUser"
->
-  更換使用者
-</button>
+    <button
+      type="button"
+      class="btn secondary"
+      id="btnWrongProfile"
+      data-i18n="changeUser"
+    >
+      更換使用者
+    </button>
   `,
     );
 
@@ -951,6 +978,7 @@ async function checkTodayOrder() {
       result.hasOrder &&
       result.order
     ) {
+      state.editingExistingOrder = false;
       state.pendingOrder =
         JSON.parse(
           JSON.stringify(result.order)
@@ -1106,8 +1134,16 @@ function startOrder(isEdit) {
 
   const old = state.existingOrder;
 
-  if (isEdit && old) {
-    // 建立副本，避免尚未送出就修改到 existingOrder
+  /*
+   * 記錄目前是否正在修改後端已有訂單。
+   */
+  state.editingExistingOrder = Boolean(isEdit && old);
+
+  if (state.editingExistingOrder) {
+    /*
+     * 使用副本進行修改。
+     * 返回預覽頁時不會改動原始 existingOrder。
+     */
     state.pendingOrder = JSON.parse(JSON.stringify(old));
 
     loadConditionFromOrder(state.pendingOrder);
@@ -2010,6 +2046,9 @@ async function submitOrder() {
     state.existingOrder = result.order;
     state.pendingOrder = JSON.parse(JSON.stringify(result.order));
 
+    state.editingExistingOrder = false;
+    state.viewingExistingOrder = false;
+
     showPage("done");
 
     console.log(
@@ -2089,8 +2128,37 @@ function bindEvents() {
     });
   }
   on("btnClear", "click", clearLocalData);
-  on("btnBackToCheck", "click", () => guardOpen() && showPage("check"));
-  on("noLunchCheckbox", "change", updateConditionState);
+on("btnBackToCheck", "click", function () {
+  if (!guardOpen()) {
+    return;
+  }
+
+  /*
+   * 從既有訂單的修改流程返回：
+   * 回到原本的訂單預覽頁，
+   * 不要回到沒有內容的 check 頁。
+   */
+  if (state.editingExistingOrder && state.existingOrder) {
+    /*
+     * 放棄尚未送出的修改，
+     * 恢復原本後端訂單內容。
+     */
+    state.pendingOrder = JSON.parse(JSON.stringify(state.existingOrder));
+
+    state.editingExistingOrder = false;
+
+    renderReviewFromOrder(state.existingOrder, {
+      isExistingOrder: true,
+    });
+
+    return;
+  }
+
+  /*
+   * 建立新訂單時，維持原本返回查詢結果頁的行為。
+   */
+  showPage("check");
+});  on("noLunchCheckbox", "change", updateConditionState);
 
   document
     .querySelectorAll('input[name="factory"], input[name="foodType"]')
