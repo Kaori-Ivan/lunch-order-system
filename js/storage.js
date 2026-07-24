@@ -45,9 +45,17 @@ function clearSavedUser() {
 function saveQRCodeContext(dept) {
   const value = String(dept || "").trim();
 
+  const validDepartments = ["燃電製一部", "燃電製二部", "燃電製三部"];
+
   if (!value) {
     console.warn("QR 部門為空，未儲存");
+    localStorage.removeItem(STORAGE_QR);
+    return;
+  }
 
+  if (!validDepartments.includes(value)) {
+    console.warn("無效的 QR 部門：", value);
+    localStorage.removeItem(STORAGE_QR);
     return;
   }
 
@@ -71,17 +79,22 @@ function getSavedQRCodeContext() {
     }
 
     const value = JSON.parse(raw);
+    const dept = String(value?.dept || "").trim();
 
-    if (!value || !String(value.dept || "").trim()) {
+    const validDepartments = ["燃電製一部", "燃電製二部", "燃電製三部"];
+
+    if (!validDepartments.includes(dept)) {
+      console.warn("已清除無效的 QR 部門：", dept);
+      localStorage.removeItem(STORAGE_QR);
       return null;
     }
 
     return {
-      dept: String(value.dept).trim(),
+      dept: dept,
     };
   } catch (error) {
     console.error("讀取 QR Code 資料失敗：", error);
-
+    localStorage.removeItem(STORAGE_QR);
     return null;
   }
 }

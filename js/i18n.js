@@ -467,11 +467,11 @@ function setLanguage(language) {
 }
 
 const DEPARTMENT_TRANSLATIONS = {
-  燃料電池生產部: {
+  /* 燃料電池生產部: {
     "zh-TW": "燃料電池生產部",
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง",
     vi: "Bộ phận sản xuất pin nhiên liệu",
-  },
+  }, */
   燃電製一部: {
     "zh-TW": "燃電製一部",
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง 1",
