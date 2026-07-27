@@ -109,7 +109,7 @@ const I18N = {
     processing: "處理中，請稍候...",
     checkingSystem: "正在確認系統開放狀態...",
     validatingUser: "正在驗證身分，請稍候...",
-    recheckingUser: "正在重新核對使用者身分，請稍候...",
+    recheckingUser: "正在查詢下週訂單，請稍候...",
     loadingWorkDays: "正在讀取下週工作日資料...",
     sendingOrder: "正在送出訂單，請稍候...",
 
