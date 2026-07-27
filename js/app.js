@@ -236,7 +236,7 @@ function noticeKey(id, type, key) {
       >
         ${t(key)}
       </div>
-    `
+    `,
   );
 }
 function clearNotice(id) {
@@ -331,7 +331,7 @@ async function apiPost(payload) {
 
   console.log(`[API 開始] action=${payload.action}, mode=${mode}`);
 
- /*  if (APP_CONFIG.USE_MOCK_API) {
+  /*  if (APP_CONFIG.USE_MOCK_API) {
     const result = await mockApi(payload);
 
     console.log(
@@ -524,36 +524,24 @@ async function scanQRCode(qrDept = "") {
   // 讀取本機已儲存使用者
   const saved = getSavedUser();
 
-    if (
-    saved &&
-    saved.empId &&
-    saved.name
-  ) {
+  if (saved && saved.empId && saved.name) {
     state.user = {
-      userId:
-        saved.userId || "",
+      userId: saved.userId || "",
 
-      empId:
-        saved.empId,
+      empId: saved.empId,
 
-      name:
-        saved.name,
+      name: saved.name,
 
-      nameMasked:
-        saved.nameMasked || "",
+      nameMasked: saved.nameMasked || "",
 
-      nameEncoded:
-        saved.nameEncoded || "",
+      nameEncoded: saved.nameEncoded || "",
 
       // 必須使用本次掃描的 QR 部門
-      dept:
-        state.dept,
+      dept: state.dept,
 
-      group:
-        saved.group || "",
+      group: saved.group || "",
 
-      role:
-        saved.role || "",
+      role: saved.role || "",
     };
 
     renderSavedUser(state.user);
@@ -565,28 +553,17 @@ async function scanQRCode(qrDept = "") {
     setBusy(t("checkingOrder"));
 
     try {
-      const success =
-        await checkTodayOrder();
+      const success = await checkTodayOrder();
 
-      if (
-        success &&
-        state.step !== "review"
-      ) {
+      if (success && state.step !== "review") {
         showPage("check");
       }
     } catch (error) {
-      console.error(
-        "自動恢復訂單失敗：",
-        error
-      );
+      console.error("自動恢復訂單失敗：", error);
 
       showVerifyForm();
 
-      notice(
-        "verifyNotice",
-        "danger",
-        t("connectionFailed")
-      );
+      notice("verifyNotice", "danger", t("connectionFailed"));
 
       showPage("verify");
     } finally {
@@ -793,7 +770,7 @@ async function verifyEmployee() {
   }
   setBusy(t("validatingUser"));
   setButtonLoading("btnVerify", t("verifying"), true);
-noticeKey("verifyNotice", "info", "verificationInProgress");
+  noticeKey("verifyNotice", "info", "verificationInProgress");
   try {
     const result = await apiPost({
       action: "verifyUser",
@@ -832,7 +809,7 @@ noticeKey("verifyNotice", "info", "verificationInProgress");
     $("savedUserBox").classList.remove("hidden");
 
     renderSavedUser(state.user);
-noticeKey("verifyNotice", "success", "verifySuccess");
+    noticeKey("verifyNotice", "success", "verifySuccess");
     setHTML(
       "verifyActions",
       `
@@ -857,7 +834,7 @@ noticeKey("verifyNotice", "success", "verifySuccess");
     );
 
     on("btnConfirmProfile", "click", confirmProfile);
-on("btnWrongProfile", "click", changeUser);
+    on("btnWrongProfile", "click", changeUser);
   } catch (e) {
     console.error(e);
     notice("verifyNotice", "danger", t("connectionFailed"));
@@ -879,21 +856,17 @@ async function confirmProfile() {
 
   setBusy(t("recheckingUser"));
   try {
-        const success =
-      await checkTodayOrder();
+    const success = await checkTodayOrder();
 
     /*
      * 已有訂單時，
      * checkTodayOrder 已經切到 Review，
      * 不要再覆蓋成 check。
      */
-    if (
-      success &&
-      state.step !== "review"
-    ) {
+    if (success && state.step !== "review") {
       showPage("check");
     }
-   } catch (error) {
+  } catch (error) {
     console.error("confirmProfile error:", error);
 
     showAlert("核對使用者資料失敗：" + (error.message || "未知錯誤"));
@@ -964,35 +937,21 @@ async function checkTodayOrder() {
       return false;
     }
 
-
-        state.existingOrder =
-      result.hasOrder
-        ? result.order
-        : null;
+    state.existingOrder = result.hasOrder ? result.order : null;
 
     /*
      * 已有訂單：
      * 直接顯示 Review。
      */
-    if (
-      result.hasOrder &&
-      result.order
-    ) {
+    if (result.hasOrder && result.order) {
       state.editingExistingOrder = false;
-      state.pendingOrder =
-        JSON.parse(
-          JSON.stringify(result.order)
-        );
+      state.pendingOrder = JSON.parse(JSON.stringify(result.order));
 
-      state.order =
-        result.order;
+      state.order = result.order;
 
-      renderReviewFromOrder(
-        state.pendingOrder,
-        {
-          isExistingOrder: true,
-        }
-      );
+      renderReviewFromOrder(state.pendingOrder, {
+        isExistingOrder: true,
+      });
 
       return true;
     }
@@ -1038,25 +997,17 @@ async function checkTodayOrder() {
       `,
     );
 
-    on(
-      "btnNewOrder",
-      "click",
-      function () {
-        if (state.isBusy) {
-          return;
-        }
-
-        startOrder(false);
+    on("btnNewOrder", "click", function () {
+      if (state.isBusy) {
+        return;
       }
-    );
 
-    on(
-      "btnBackVerify",
-      "click",
-      function () {
-        showPage("verify");
-      }
-    );
+      startOrder(false);
+    });
+
+    on("btnBackVerify", "click", function () {
+      showSavedUserProfile();
+    });
 
     return true;
   } catch (error) {
@@ -1105,23 +1056,17 @@ async function checkTodayOrder() {
       setBusy(t("retrying"));
 
       try {
-        const success =
-  await checkTodayOrder();
+        const success = await checkTodayOrder();
 
-if (
-  success &&
-  state.step !== "review"
-) {
-  showPage("check");
-}
+        if (success && state.step !== "review") {
+          showPage("check");
+        }
       } finally {
         clearBusy();
       }
     });
 
-    on("btnBackVerify", "click", () => {
-      showPage("verify");
-    });
+    on("btnBackVerify", "click", showSavedUserProfile);
 
     return false;
   }
@@ -1576,14 +1521,11 @@ function renderReviewFromOrder(order, options = {}) {
     throw new Error("訂單資料不完整");
   }
 
-  const isExistingOrder =
-    options.isExistingOrder === true;
+  const isExistingOrder = options.isExistingOrder === true;
 
-  state.viewingExistingOrder =
-    isExistingOrder;
+  state.viewingExistingOrder = isExistingOrder;
 
-  const weeklyMeals =
-    order.weeklyMeals;
+  const weeklyMeals = order.weeklyMeals;
 
   /*
    * 顯示使用者資料
@@ -1617,11 +1559,7 @@ function renderReviewFromOrder(order, options = {}) {
           部門
         </span>
         <strong>
-          ${translateDepartment(
-            state.user?.dept ||
-            order.dept ||
-            ""
-          )}
+          ${translateDepartment(state.user?.dept || order.dept || "")}
         </strong>
       </div>
     `,
@@ -1659,8 +1597,7 @@ function renderReviewFromOrder(order, options = {}) {
     "reviewOrder",
     daySettings
       .map(function (dayInfo) {
-        const item =
-          weeklyMeals[dayInfo.key];
+        const item = weeklyMeals[dayInfo.key];
 
         if (!item) {
           return "";
@@ -1671,55 +1608,34 @@ function renderReviewFromOrder(order, options = {}) {
         let mealText = "";
 
         if (item.mealType === "便當") {
-          const factory =
-            item.factory ||
-            order.defaultFactory ||
-            "";
+          const factory = item.factory || order.defaultFactory || "";
 
-          const foodType =
-            item.foodType ||
-            order.defaultFoodType ||
-            "";
+          const foodType = item.foodType || order.defaultFoodType || "";
 
           mealText =
             `${t("lunchBox")}（` +
             `${translateFactoryValue(factory)} ` +
             `${translateFoodTypeValue(foodType)}）`;
-        } else if (
-          item.mealType === "上樓用餐"
-        ) {
+        } else if (item.mealType === "上樓用餐") {
           cssClass = "upstairs";
           icon = "👥";
           mealText = t("upstairs");
-        } else if (
-          item.mealType === "不用餐"
-        ) {
+        } else if (item.mealType === "不用餐") {
           cssClass = "none";
           icon = "✖";
           mealText = t("noMeal");
-        } else if (
-          item.mealType === "國定假日"
-        ) {
+        } else if (item.mealType === "國定假日") {
           cssClass = "holiday";
           icon = "📅";
-          mealText =
-            item.holidayName ||
-            t("nationalHoliday");
+          mealText = item.holidayName || t("nationalHoliday");
         } else {
           cssClass = "none";
           icon = "－";
-          mealText =
-            item.mealType || "－";
+          mealText = item.mealType || "－";
         }
 
         const dateText =
-          String(item.date || "")
-            .replace("/", "月") +
-          (
-            item.date
-              ? "日"
-              : ""
-          );
+          String(item.date || "").replace("/", "月") + (item.date ? "日" : "");
 
         return `
           <div class="review-week-row">
@@ -1751,24 +1667,19 @@ function renderReviewFromOrder(order, options = {}) {
   const submitButton = $("btnSubmit");
   const editButton = $("btnEditBottom");
   const changeUserButton = $("btnChangeUser");
-    if (changeUserButton) {
-      changeUserButton.classList.toggle("hidden", !isExistingOrder);
-    }
+  if (changeUserButton) {
+    changeUserButton.classList.toggle("hidden", !isExistingOrder);
+  }
 
   if (submitButton) {
-    submitButton.classList.toggle(
-      "hidden",
-      isExistingOrder
-    );
+    submitButton.classList.toggle("hidden", isExistingOrder);
   }
 
   if (editButton) {
     if (isExistingOrder) {
-      editButton.textContent =
-        "✏️ " + t("editOrder");
+      editButton.textContent = "✏️ " + t("editOrder");
     } else {
-      editButton.textContent =
-        "✏️ " + t("backToEdit");
+      editButton.textContent = "✏️ " + t("backToEdit");
     }
   }
 
@@ -1859,25 +1770,20 @@ async function buildReview() {
 
   state.pendingOrder.weeklyMeals = weeklyMeals;
   state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
-    state.pendingOrder.weeklyMeals =
-    weeklyMeals;
+  state.pendingOrder.weeklyMeals = weeklyMeals;
 
-  state.pendingOrder.updatedAt =
-    new Date().toLocaleString("zh-TW");
+  state.pendingOrder.updatedAt = new Date().toLocaleString("zh-TW");
 
   /*
    * 新建或修改中的訂單，
    * Review 頁仍顯示確認送出按鈕。
    */
-  renderReviewFromOrder(
-    state.pendingOrder,
-    {
-      isExistingOrder: false,
-    }
-  );
+  renderReviewFromOrder(state.pendingOrder, {
+    isExistingOrder: false,
+  });
 }
 
-  /* setHTML(
+/* setHTML(
     "reviewUser",
     `
   <div class="user-item">💼<span data-i18n="employeeId">工號</span><strong>${state.user.empId}</strong></div>
@@ -2128,37 +2034,38 @@ function bindEvents() {
     });
   }
   on("btnClear", "click", clearLocalData);
-on("btnBackToCheck", "click", function () {
-  if (!guardOpen()) {
-    return;
-  }
+  on("btnBackToCheck", "click", function () {
+    if (!guardOpen()) {
+      return;
+    }
 
-  /*
-   * 從既有訂單的修改流程返回：
-   * 回到原本的訂單預覽頁，
-   * 不要回到沒有內容的 check 頁。
-   */
-  if (state.editingExistingOrder && state.existingOrder) {
     /*
-     * 放棄尚未送出的修改，
-     * 恢復原本後端訂單內容。
+     * 從既有訂單的修改流程返回：
+     * 回到原本的訂單預覽頁，
+     * 不要回到沒有內容的 check 頁。
      */
-    state.pendingOrder = JSON.parse(JSON.stringify(state.existingOrder));
+    if (state.editingExistingOrder && state.existingOrder) {
+      /*
+       * 放棄尚未送出的修改，
+       * 恢復原本後端訂單內容。
+       */
+      state.pendingOrder = JSON.parse(JSON.stringify(state.existingOrder));
 
-    state.editingExistingOrder = false;
+      state.editingExistingOrder = false;
 
-    renderReviewFromOrder(state.existingOrder, {
-      isExistingOrder: true,
-    });
+      renderReviewFromOrder(state.existingOrder, {
+        isExistingOrder: true,
+      });
 
-    return;
-  }
+      return;
+    }
 
-  /*
-   * 建立新訂單時，維持原本返回查詢結果頁的行為。
-   */
-  showPage("check");
-});  on("noLunchCheckbox", "change", updateConditionState);
+    /*
+     * 建立新訂單時，維持原本返回查詢結果頁的行為。
+     */
+    showPage("check");
+  });
+  on("noLunchCheckbox", "change", updateConditionState);
 
   document
     .querySelectorAll('input[name="factory"], input[name="foodType"]')
@@ -2169,10 +2076,7 @@ on("btnBackToCheck", "click", function () {
   on("btnBackToCondition", "click", () => guardOpen() && showPage("condition"));
   on("btnReview", "click", buildReview);
   on("btnEdit", "click", () => guardOpen() && showPage("weekOrder"));
-on(
-  "btnEditBottom",
-  "click",
-  function () {
+  on("btnEditBottom", "click", function () {
     if (!guardOpen()) {
       return;
     }
@@ -2181,10 +2085,7 @@ on(
      * 查看後端已有訂單：
      * 從訂單重新載入編輯流程。
      */
-    if (
-      state.viewingExistingOrder &&
-      state.existingOrder
-    ) {
+    if (state.viewingExistingOrder && state.existingOrder) {
       state.viewingExistingOrder = false;
 
       startOrder(true);
@@ -2197,8 +2098,7 @@ on(
      * 返回一週訂餐頁。
      */
     showPage("weekOrder");
-  }
-);
+  });
   on("btnSubmit", "click", submitOrder);
   on("btnChangeUser", "click", changeUser);
   on("btnHome", "click", goHome);
@@ -2268,10 +2168,7 @@ async function initializeApp() {
 /*
  * HTML 載入完成後啟動系統。
  */
-document.addEventListener(
-  "DOMContentLoaded",
-  initializeApp
-);
+document.addEventListener("DOMContentLoaded", initializeApp);
 function lockButton(buttonId, text) {
   const btn = $(buttonId);
   if (!btn) return;
@@ -2304,8 +2201,8 @@ function resetOrderFlow() {
   state.user = null;
   state.pendingOrder = null;
   state.existingOrder = null;
-   state.order = null;
-   state.viewingExistingOrder = false;
+  state.order = null;
+  state.viewingExistingOrder = false;
   state.dept = "";
   state.isSubmitting = false;
   state.isBusy = false;
@@ -2419,4 +2316,46 @@ function getUserSession() {
 }
 function clearUserSession() {
   sessionStorage.removeItem(USER_SESSION_KEY);
+}
+function showSavedUserProfile() {
+  if (!state.user) {
+    showVerifyForm();
+    showPage("verify");
+    return;
+  }
+
+  $("verifyForm")?.classList.add("hidden");
+  $("savedUserBox")?.classList.remove("hidden");
+
+  setText("verifyTitle", t("confirmUserTitle"));
+  clearNotice("verifyNotice");
+  renderSavedUser(state.user);
+
+  setHTML(
+    "verifyActions",
+    `
+      <button
+        type="button"
+        class="btn primary"
+        id="btnConfirmProfile"
+        data-i18n="startOrder"
+      >
+        開始點餐
+      </button>
+
+      <button
+        type="button"
+        class="btn secondary"
+        id="btnWrongProfile"
+        data-i18n="changeUser"
+      >
+        更換使用者
+      </button>
+    `,
+  );
+
+  on("btnConfirmProfile", "click", confirmProfile);
+  on("btnWrongProfile", "click", changeUser);
+
+  showPage("verify");
 }
