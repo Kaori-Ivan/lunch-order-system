@@ -53,6 +53,7 @@ const I18N = {
     noLunchNextWeek: "下週不訂便當",
     selectMealCondition: "選擇用餐條件",
     noLunchDescription: "勾選後不需選擇廠區及葷素",
+    noLunchSelected: "已選擇下週不訂便當，不需選擇廠區及葷素。",
     factorySelection: "廠區選擇",
     foodSelection: "餐點選擇",
 
@@ -183,6 +184,8 @@ const I18N = {
     foodType: "ประเภทอาหาร",
     selectMealCondition: "เลือกเงื่อนไขการรับประทานอาหาร",
     noLunchDescription: "เมื่อเลือกแล้ว ไม่จำเป็นต้องเลือกโรงงานและประเภทอาหาร",
+    noLunchSelected:
+      "คุณได้เลือกไม่สั่งข้าวกล่องในสัปดาห์หน้าแล้ว ไม่จำเป็นต้องเลือกโรงงานและประเภทอาหาร",
     factorySelection: "เลือกโรงงาน",
     foodSelection: "เลือกประเภทอาหาร",
 
@@ -317,6 +320,8 @@ const I18N = {
     foodType: "Loại suất ăn",
     selectMealCondition: "Chọn điều kiện dùng bữa",
     noLunchDescription: "Sau khi chọn, không cần chọn nhà máy và loại suất ăn",
+    noLunchSelected:
+      "Bạn đã chọn không đặt cơm hộp cho tuần tới, không cần chọn nhà máy hoặc loại suất ăn.",
     factorySelection: "Chọn nhà máy",
     foodSelection: "Chọn loại suất ăn",
 
