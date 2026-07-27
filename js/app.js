@@ -890,7 +890,7 @@ async function checkTodayOrder() {
     </h3>
 
     <p data-i18n="checkingOrderDescription">
-      系統正在重新核對身分並查詢下週訂單...
+      系統正在查詢您的下週訂單...
     </p>
   </div>
   `,

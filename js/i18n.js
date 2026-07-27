@@ -34,7 +34,7 @@ const I18N = {
     rebuildUser: "重建使用者",
 
     checkingOrder: "正在確認下週訂單",
-    checkingOrderDescription: "系統正在重新核對身分並查詢下週訂單...",
+    checkingOrderDescription: "系統正在查詢您的下週訂單...",
 
     existingOrder: "已有訂單",
     existingOrderDescription: "您下週已建立訂單",
@@ -161,9 +161,7 @@ const I18N = {
     rebuildUser: "เปลี่ยนผู้ใช้งาน",
 
     checkingOrder: "กำลังตรวจสอบรายการสั่งอาหารสัปดาห์หน้า",
-    checkingOrderDescription:
-      "ระบบกำลังตรวจสอบตัวตนและค้นหารายการสั่งอาหารสัปดาห์หน้า...",
-
+checkingOrderDescription: "ระบบกำลังค้นหาคำสั่งอาหารของคุณสำหรับสัปดาห์หน้า...",
     existingOrder: "มีรายการสั่งอาหารแล้ว",
     existingOrderDescription: "คุณได้สร้างรายการสั่งอาหารสำหรับสัปดาห์หน้าแล้ว",
     editOrderDescription: "สามารถกดปุ่มด้านล่างเพื่อแก้ไขได้",
@@ -297,8 +295,7 @@ const I18N = {
     rebuildUser: "Đổi người dùng",
 
     checkingOrder: "Đang kiểm tra đơn hàng tuần sau",
-    checkingOrderDescription:
-      "Hệ thống đang xác minh lại thông tin và tìm đơn hàng tuần sau...",
+    checkingOrderDescription: "Hệ thống đang tra cứu đơn đặt món của bạn cho tuần tới...",
 
     existingOrder: "Đã có đơn hàng",
     existingOrderDescription: "Bạn đã tạo đơn hàng cho tuần sau",
