@@ -50,10 +50,10 @@ const I18N = {
     queryFailed: "查詢失敗",
     connectionFailed: "無法連線至訂餐系統，請稍後再試。",
 
-    noLunchNextWeek: "下週不訂便當",
+    noLunchNextWeek: "下週上樓用餐",
     selectMealCondition: "選擇用餐條件",
     noLunchDescription: "勾選後不需選擇廠區及葷素",
-    noLunchSelected: "已選擇下週不訂便當，不需選擇廠區及葷素。",
+    noLunchSelected: "已選擇下週上樓用餐。",
     factorySelection: "廠區選擇",
     foodSelection: "餐點選擇",
 
@@ -115,7 +115,7 @@ const I18N = {
 
     retrying: "正在重新查詢，請稍候...",
     holidayLoadFailed: "無法取得下週工作日資料，請稍後再試。",
-    conditionRequired: "請完整選擇廠區及葷素，或勾選「下週不訂便當」。",
+    conditionRequired: "請完整選擇廠區及葷素，或勾選「下週上樓用餐」。",
     submitFailed: "訂單送出失敗。",
     scanQRCode: "請掃描部門 QR Code 進入系統。",
 
@@ -178,13 +178,12 @@ const I18N = {
     connectionFailed:
       "ไม่สามารถเชื่อมต่อระบบสั่งอาหารได้ โปรดลองอีกครั้งภายหลัง",
 
-    noLunchNextWeek: "ไม่สั่งข้าวกล่องในสัปดาห์หน้า",
+    noLunchNextWeek: "สัปดาห์หน้ารับประทานอาหารชั้นบน",
     factory: "โรงงาน",
     foodType: "ประเภทอาหาร",
     selectMealCondition: "เลือกเงื่อนไขการรับประทานอาหาร",
     noLunchDescription: "เมื่อเลือกแล้ว ไม่จำเป็นต้องเลือกโรงงานและประเภทอาหาร",
-    noLunchSelected:
-      "คุณได้เลือกไม่สั่งข้าวกล่องในสัปดาห์หน้าแล้ว ไม่จำเป็นต้องเลือกโรงงานและประเภทอาหาร",
+    noLunchSelected: "คุณได้เลือกให้รับประทานอาหารชั้นบนตลอดสัปดาห์หน้าแล้ว",
     factorySelection: "เลือกโรงงาน",
     foodSelection: "เลือกประเภทอาหาร",
 
@@ -246,7 +245,7 @@ const I18N = {
     holidayLoadFailed:
       "ไม่สามารถโหลดข้อมูลวันทำงานของสัปดาห์หน้าได้ โปรดลองอีกครั้ง",
     conditionRequired:
-      "โปรดเลือกโรงงานและประเภทอาหารให้ครบ หรือเลือกไม่สั่งข้าวกล่องในสัปดาห์หน้า",
+      'กรุณาเลือกโรงงานและประเภทอาหารให้ครบ หรือเลือก "รับประทานอาหารชั้นบนในสัปดาห์หน้า"',
     submitFailed: "ส่งรายการสั่งอาหารไม่สำเร็จ",
     scanQRCode: "กรุณาสแกน QR Code ของแผนกเพื่อเข้าสู่ระบบ",
 
@@ -314,13 +313,12 @@ const I18N = {
     connectionFailed:
       "Không thể kết nối với hệ thống đặt cơm. Vui lòng thử lại sau.",
 
-    noLunchNextWeek: "Không đặt cơm hộp tuần sau",
+    noLunchNextWeek: "Tuần sau ăn tại nhà ăn",
     factory: "Nhà máy",
     foodType: "Loại suất ăn",
     selectMealCondition: "Chọn điều kiện dùng bữa",
     noLunchDescription: "Sau khi chọn, không cần chọn nhà máy và loại suất ăn",
-    noLunchSelected:
-      "Bạn đã chọn không đặt cơm hộp cho tuần tới, không cần chọn nhà máy hoặc loại suất ăn.",
+    noLunchSelected: "Bạn đã chọn ăn tại nhà ăn trong tuần sau.",
     factorySelection: "Chọn nhà máy",
     foodSelection: "Chọn loại suất ăn",
 
@@ -382,7 +380,7 @@ const I18N = {
     holidayLoadFailed:
       "Không thể tải dữ liệu ngày làm việc của tuần sau. Vui lòng thử lại sau.",
     conditionRequired:
-      "Vui lòng chọn đầy đủ nhà máy và loại suất ăn hoặc chọn không đặt cơm hộp tuần sau.",
+      'Vui lòng chọn đầy đủ nhà máy và loại suất ăn hoặc chọn "Tuần sau ăn tại nhà ăn".',
     submitFailed: "Gửi đơn đặt món thất bại.",
     scanQRCode: "Vui lòng quét mã QR của bộ phận để vào hệ thống.",
 
