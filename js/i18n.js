@@ -161,7 +161,8 @@ const I18N = {
     rebuildUser: "เปลี่ยนผู้ใช้งาน",
 
     checkingOrder: "กำลังตรวจสอบรายการสั่งอาหารสัปดาห์หน้า",
-checkingOrderDescription: "ระบบกำลังค้นหาคำสั่งอาหารของคุณสำหรับสัปดาห์หน้า...",
+    checkingOrderDescription:
+      "ระบบกำลังค้นหาคำสั่งอาหารของคุณสำหรับสัปดาห์หน้า...",
     existingOrder: "มีรายการสั่งอาหารแล้ว",
     existingOrderDescription: "คุณได้สร้างรายการสั่งอาหารสำหรับสัปดาห์หน้าแล้ว",
     editOrderDescription: "สามารถกดปุ่มด้านล่างเพื่อแก้ไขได้",
@@ -295,7 +296,8 @@ checkingOrderDescription: "ระบบกำลังค้นหาคำส�
     rebuildUser: "Đổi người dùng",
 
     checkingOrder: "Đang kiểm tra đơn hàng tuần sau",
-    checkingOrderDescription: "Hệ thống đang tra cứu đơn đặt món của bạn cho tuần tới...",
+    checkingOrderDescription:
+      "Hệ thống đang tra cứu đơn đặt món của bạn cho tuần tới...",
 
     existingOrder: "Đã có đơn hàng",
     existingOrderDescription: "Bạn đã tạo đơn hàng cho tuần sau",

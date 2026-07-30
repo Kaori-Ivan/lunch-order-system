@@ -1379,7 +1379,7 @@ function renderWeekOrder() {
       </span>
     </label>
 
-    <label>
+    <label  style="display:none;">
       <input
         type="radio"
         name="meal_${item.key}"
@@ -1406,7 +1406,7 @@ function renderWeekOrder() {
       </span>
     </label>
 
-    <label>
+    <label  style="display:none;">
       <input
         type="radio"
         name="meal_${item.key}"
@@ -1419,7 +1419,7 @@ function renderWeekOrder() {
       </span>
     </label>
 
-    <label>
+    <label  style="display:none;">
       <input
         type="radio"
         name="meal_${item.key}"
