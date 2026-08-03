@@ -1625,6 +1625,8 @@ function renderReviewFromOrder(order, options = {}) {
           icon = "✖";
           mealText = t("noMeal");
         } else if (item.mealType === "國定假日") {
+          console.log(item);
+          console.log(item.holidayName);
           cssClass = "holiday";
           icon = "📅";
           mealText = translateHoliday(item.holidayName || t("nationalHoliday"));
