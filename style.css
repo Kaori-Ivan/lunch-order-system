@@ -2450,48 +2450,22 @@ input[readonly] {
     font-size: 16px;
   }
 }
-/* ===== System Version ===== */
-
 .system-version {
 
-  margin-left: auto;
+    margin-left: auto;
 
-  margin-right: 24px;
+    margin-right: 16px;
 
-  align-self: flex-end;
+    margin-top: 6px;
 
-  display: flex;
+    font-size: 12px;
 
-  flex-direction: column;
+    font-weight: 600;
 
-  align-items: flex-end;
+    color: #9ca3af;
 
-  margin-bottom: 10px;
+    letter-spacing: .5px;
 
-  user-select: none;
-
-}
-
-.version-label {
-
-  font-size: 11px;
-
-  color: #9ca3af;
-
-  letter-spacing: 1px;
-
-  text-transform: uppercase;
-
-}
-
-.version-number {
-
-  font-size: 15px;
-
-  font-weight: 700;
-
-  color: #64748b;
-
-  letter-spacing: .5px;
+    white-space: nowrap;
 
 }
