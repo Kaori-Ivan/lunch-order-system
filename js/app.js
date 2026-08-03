@@ -945,9 +945,23 @@ async function checkTodayOrder() {
      */
     if (result.hasOrder && result.order) {
       state.editingExistingOrder = false;
+
       state.pendingOrder = JSON.parse(JSON.stringify(result.order));
 
       state.order = result.order;
+
+      /*
+       * 重新整理並載入既有訂單時，
+       * 另外取得該週真正的假日名稱。
+       *
+       * 取得失敗仍照常顯示訂單，
+       * 不影響原有查詢流程。
+       */
+      try {
+        await loadWeekHolidays();
+      } catch (holidayError) {
+        console.error("既有訂單假日名稱讀取失敗：", holidayError);
+      }
 
       renderReviewFromOrder(state.pendingOrder, {
         isExistingOrder: true,
@@ -1625,11 +1639,15 @@ function renderReviewFromOrder(order, options = {}) {
           icon = "✖";
           mealText = t("noMeal");
         } else if (item.mealType === "國定假日") {
-          console.log(item);
-console.log(item.holidayName);
+          const holidayInfo = state.weekHolidays?.[dayInfo.key];
+
+          const holidayName =
+            holidayInfo?.holidayName || item.holidayName || "國定假日";
+
           cssClass = "holiday";
           icon = "📅";
-          mealText = translateHoliday(item.holidayName || t("nationalHoliday"));
+
+          mealText = translateHoliday(holidayName);
         } else {
           cssClass = "none";
           icon = "－";
