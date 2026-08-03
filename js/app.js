@@ -1626,7 +1626,7 @@ function renderReviewFromOrder(order, options = {}) {
           mealText = t("noMeal");
         } else if (item.mealType === "國定假日") {
           console.log(item);
-          console.log(item.holidayName);
+console.log(item.holidayName);
           cssClass = "holiday";
           icon = "📅";
           mealText = translateHoliday(item.holidayName || t("nationalHoliday"));
@@ -2142,17 +2142,37 @@ async function initializeApp() {
      */
     const savedQR = getSavedQRCodeContext();
 
-    if (savedQR && savedQR.dept) {
-      await scanQRCode(savedQR.dept);
+if (savedQR && savedQR.dept) {
+  await scanQRCode(savedQR.dept);
 
-      return;
-    }
+  return;
+}
 
-    /*
-     * 沒有任何 QR Code 部門資料。
-     */
-    requireQRCodeScan();
-  } catch (error) {
+/*
+ * QR Code 部門資料不存在時，
+ * 再從已儲存的使用者資料取得部門。
+ *
+ * 使用者曾成功登入過，
+ * 重新整理後仍可自動查詢既有訂單。
+ */
+const savedUser = getSavedUser();
+
+const savedUserDept = String(
+  savedUser?.dept || ""
+).trim();
+
+if (savedUserDept) {
+  await scanQRCode(savedUserDept);
+
+  return;
+}
+
+/*
+ * 網址、QR Code 與使用者資料
+ * 都沒有部門時，才要求重新掃描。
+ */
+requireQRCodeScan();
+} catch (error) {
     console.error("initializeApp error:", error);
 
     state.systemStatus = {
