@@ -523,6 +523,73 @@ const ROLE_TRANSLATIONS = {
     vi: "Nhân viên",
   },
 };
+const HOLIDAY_TRANSLATIONS = {
+  元旦: {
+    "zh-TW": "元旦",
+    th: "วันขึ้นปีใหม่",
+    vi: "Tết Dương lịch",
+  },
+
+  和平紀念日: {
+    "zh-TW": "和平紀念日",
+    th: "วันรำลึกสันติภาพ 28 กุมภาพันธ์",
+    vi: "Ngày Tưởng niệm Hòa bình",
+  },
+
+  清明連假: {
+    "zh-TW": "清明連假",
+    th: "วันหยุดเทศกาลเช็งเม้ง",
+    vi: "Kỳ nghỉ Tết Thanh Minh",
+  },
+
+  勞動節: {
+    "zh-TW": "勞動節",
+    th: "วันแรงงาน",
+    vi: "Ngày Quốc tế Lao động",
+  },
+
+  端午節: {
+    "zh-TW": "端午節",
+    th: "เทศกาลไหว้บ๊ะจ่าง",
+    vi: "Tết Đoan Ngọ",
+  },
+
+  中秋節: {
+    "zh-TW": "中秋節",
+    th: "เทศกาลไหว้พระจันทร์",
+    vi: "Tết Trung Thu",
+  },
+
+  教師節: {
+    "zh-TW": "教師節",
+    th: "วันครู",
+    vi: "Ngày Nhà giáo",
+  },
+
+  國慶連假: {
+    "zh-TW": "國慶連假",
+    th: "วันหยุดวันชาติ",
+    vi: "Kỳ nghỉ Quốc khánh",
+  },
+
+  光復節連假: {
+    "zh-TW": "光復節連假",
+    th: "วันหยุดวันฟื้นฟูไต้หวัน",
+    vi: "Kỳ nghỉ Ngày Phục hưng Đài Loan",
+  },
+
+  行憲紀念日: {
+    "zh-TW": "行憲紀念日",
+    th: "วันรัฐธรรมนูญ",
+    vi: "Ngày Hiến pháp",
+  },
+
+  補假: {
+    "zh-TW": "補假",
+    th: "วันหยุดชดเชย",
+    vi: "Ngày nghỉ bù",
+  },
+};
 function translateRole(role) {
   const value = String(role || "").trim();
 
@@ -543,6 +610,17 @@ function translateDepartment(dept) {
 
   return item[currentLanguage] || item["zh-TW"];
 }
+function translateHoliday(name) {
+  const value = String(name || "").trim();
+
+  const translations = HOLIDAY_TRANSLATIONS[value];
+
+  if (!translations) {
+    return value;
+  }
+
+  return translations[currentLanguage] || translations["zh-TW"] || value;
+}
 function initLanguage() {
   if (!I18N[currentLanguage]) {
     currentLanguage = "zh-TW";
@@ -555,4 +633,17 @@ function initLanguage() {
   });
 
   applyLanguage();
+}
+function translateHoliday(name) {
+  if (!name) {
+    return "";
+  }
+
+  const lang = getCurrentLanguage();
+
+  if (lang === "zh-TW") {
+    return name;
+  }
+
+  return HOLIDAY_TRANSLATIONS[name]?.[lang] || name;
 }

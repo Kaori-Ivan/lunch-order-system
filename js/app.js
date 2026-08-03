@@ -1343,7 +1343,7 @@ function renderWeekOrder() {
 </strong>
 
 <span>
-  ${holiday.holidayName || t("nationalHoliday")}
+  ${translateHoliday(holiday.holidayName || t("nationalHoliday"))}
 </span>
               </div>
             </div>
@@ -1627,7 +1627,7 @@ function renderReviewFromOrder(order, options = {}) {
         } else if (item.mealType === "國定假日") {
           cssClass = "holiday";
           icon = "📅";
-          mealText = item.holidayName || t("nationalHoliday");
+          mealText = translateHoliday(item.holidayName || t("nationalHoliday"));
         } else {
           cssClass = "none";
           icon = "－";
