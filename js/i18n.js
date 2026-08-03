@@ -56,6 +56,7 @@ const I18N = {
     noLunchSelected: "已選擇下週上樓用餐。",
     factorySelection: "廠區選擇",
     foodSelection: "餐點選擇",
+    completeAllWorkdays: "請選擇用餐方式。",
 
     factory: "廠區",
     foodType: "葷素",
@@ -186,6 +187,7 @@ const I18N = {
     noLunchSelected: "คุณได้เลือกให้รับประทานอาหารชั้นบนตลอดสัปดาห์หน้าแล้ว",
     factorySelection: "เลือกโรงงาน",
     foodSelection: "เลือกประเภทอาหาร",
+    completeAllWorkdays: "กรุณาเลือกวิธีรับประทานอาหาร",
 
     factory1: "โรงงาน 1",
     factory2: "โรงงาน 2",
@@ -321,6 +323,7 @@ const I18N = {
     noLunchSelected: "Bạn đã chọn ăn tại nhà ăn trong tuần sau.",
     factorySelection: "Chọn nhà máy",
     foodSelection: "Chọn loại suất ăn",
+    completeAllWorkdays: "Vui lòng chọn hình thức dùng bữa.",
 
     factory1: "Nhà máy 1",
     factory2: "Nhà máy 2",

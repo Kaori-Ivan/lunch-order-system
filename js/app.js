@@ -1303,6 +1303,80 @@ async function goWeekOrder() {
 function getMealValue(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value || "";
 }
+/**
+ * 檢查所有非休假日是否都已選擇目前的整週用餐方式。
+ *
+ * 便當模式：每個工作日都必須重新選到「便當」
+ * 上樓模式：每個工作日都必須重新選到「上樓用餐」
+ */
+function areAllWorkdayMealsSelected() {
+  const weeks = getThisWeekDates();
+
+  const weeklyKeyMap = {
+    mon: "monday",
+    tue: "tuesday",
+    wed: "wednesday",
+    thu: "thursday",
+    fri: "friday"
+  };
+
+  const expectedMealType =
+    state.noLunch === true
+      ? "上樓用餐"
+      : "便當";
+
+  return weeks.every(function (item) {
+    const weeklyKey =
+      weeklyKeyMap[item.key];
+
+    const holiday =
+      state.weekHolidays?.[weeklyKey];
+
+    /*
+     * 休假日不需要選擇。
+     */
+    if (holiday?.isHoliday) {
+      return true;
+    }
+
+    const selectedMealType =
+      getMealValue(
+        "meal_" + item.key
+      );
+
+    /*
+     * 必須選到目前整週模式，
+     * 隱藏的舊訂單值不算完成。
+     */
+    return (
+      selectedMealType ===
+      expectedMealType
+    );
+  });
+}
+
+
+/**
+ * 控制一週訂餐頁的下一步按鈕。
+ */
+function updateWeekOrderNextState() {
+  const nextButton =
+    $("btnReview");
+
+  if (!nextButton) {
+    return;
+  }
+
+  const completed =
+    areAllWorkdayMealsSelected();
+
+  nextButton.disabled =
+    !completed;
+
+  if (completed) {
+    clearNotice("orderNotice");
+  }
+}
 function renderWeekOrder() {
   const weeks = getThisWeekDates();
 
@@ -1470,6 +1544,19 @@ function renderWeekOrder() {
       })
       .join(""),
   );
+  /*
+   * 每次重新產生一週選項後，
+   * 重新檢查是否全部完成。
+   *
+   * 使用 onchange 避免重複綁定事件。
+   */
+  const weekTable = $("weekTable");
+
+  if (weekTable) {
+    weekTable.onchange = updateWeekOrderNextState;
+  }
+
+  updateWeekOrderNextState();
 }
 /* function num(id) {
   return Math.max(0, Number($(id).value || 0));
@@ -1707,6 +1794,13 @@ function renderReviewFromOrder(order, options = {}) {
 }
 async function buildReview() {
   if (!guardOpen()) return;
+  if (!areAllWorkdayMealsSelected()) {
+    notice("orderNotice", "danger", t("completeAllWorkdays"));
+
+    updateWeekOrderNextState();
+
+    return;
+  }
 
   const factory = state.pendingOrder.defaultFactory;
   const foodType = state.pendingOrder.defaultFoodType;
