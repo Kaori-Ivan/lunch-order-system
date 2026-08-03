@@ -611,9 +611,10 @@ function translateDepartment(dept) {
   return item[currentLanguage] || item["zh-TW"];
 }
 function translateHoliday(name) {
+  const value = String(name || "").trim();
    console.log("Holiday =", name);
    console.log(HOLIDAY_TRANSLATIONS[value]);
-  const value = String(name || "").trim();
+  
 
   const translations = HOLIDAY_TRANSLATIONS[value];
 
