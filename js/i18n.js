@@ -634,16 +634,3 @@ function initLanguage() {
 
   applyLanguage();
 }
-function translateHoliday(name) {
-  if (!name) {
-    return "";
-  }
-
-  const lang = getCurrentLanguage();
-
-  if (lang === "zh-TW") {
-    return name;
-  }
-
-  return HOLIDAY_TRANSLATIONS[name]?.[lang] || name;
-}
