@@ -944,71 +944,17 @@ async function checkTodayOrder() {
      * 直接顯示 Review。
      */
     if (result.hasOrder && result.order) {
-  state.editingExistingOrder = false;
+      state.editingExistingOrder = false;
+      state.pendingOrder = JSON.parse(JSON.stringify(result.order));
 
-  state.pendingOrder =
-    JSON.parse(
-      JSON.stringify(result.order)
-    );
+      state.order = result.order;
 
-  state.order = result.order;
+      renderReviewFromOrder(state.pendingOrder, {
+        isExistingOrder: true,
+      });
 
-  /*
-   * 重新整理後也重新取得該週假日名稱，
-   * 避免既有訂單只顯示「國定假日」。
-   */
-  try {
-    await loadWeekHolidays();
-
-    const weeklyMeals =
-      state.pendingOrder.weeklyMeals || {};
-
-    const dayKeys = [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday"
-    ];
-
-    dayKeys.forEach(function (dayKey) {
-      const meal =
-        weeklyMeals[dayKey];
-
-      const holiday =
-        state.weekHolidays?.[dayKey];
-
-      if (
-        meal &&
-        meal.mealType === "國定假日" &&
-        holiday?.isHoliday
-      ) {
-        meal.holidayName =
-          holiday.holidayName ||
-          meal.holidayName ||
-          "國定假日";
-      }
-    });
-  } catch (holidayError) {
-    /*
-     * 假日資料讀取失敗時，
-     * 仍維持原本既有訂單顯示功能。
-     */
-    console.error(
-      "既有訂單假日名稱載入失敗：",
-      holidayError
-    );
-  }
-
-  renderReviewFromOrder(
-    state.pendingOrder,
-    {
-      isExistingOrder: true
+      return true;
     }
-  );
-
-  return true;
-}
 
     /*
      * 沒有訂單：
