@@ -2433,8 +2433,18 @@ input[readonly] {
   }
 
   .language-panel-title {
-    justify-content: center;
-  }
+    justify-content: space-between;
+    width: 100%;
+}
+  .language-title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.system-version {
+    font-size: 11px;
+}
 
   .language-switcher {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2450,22 +2460,25 @@ input[readonly] {
     font-size: 16px;
   }
 }
+.language-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.language-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .system-version {
-
-    margin-left: auto;
-
-    margin-right: 16px;
-
-    margin-top: 6px;
-
-    font-size: 12px;
-
-    font-weight: 600;
-
-    color: #9ca3af;
-
-    letter-spacing: .5px;
-
-    white-space: nowrap;
-
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b93a3;
+  white-space: nowrap;
+  user-select: none;
 }
