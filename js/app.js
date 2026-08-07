@@ -603,6 +603,11 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
   showPage("verify");
 }
 function showVerifyForm() {
+  const qrInfoBox = $("qrInfoBox");
+
+  if (qrInfoBox) {
+    qrInfoBox.classList.remove("hidden");
+  }
   const verifyForm = $("verifyForm");
   const savedUserBox = $("savedUserBox");
   const verifyActions = $("verifyActions");
@@ -765,6 +770,11 @@ async function changeUser() {
    * 重新顯示目前掃描的部門。
    */
   renderQRCodeInfo();
+  const qrInfoBox = $("qrInfoBox");
+
+  if (qrInfoBox) {
+    qrInfoBox.classList.remove("hidden");
+  }
 
   showVerifyForm();
   showPage("verify");
@@ -833,6 +843,11 @@ async function verifyEmployee() {
     $("qrInfoBox").classList.add("hidden");
 
     renderSavedUser(state.user);
+    const qrInfoBox = $("qrInfoBox");
+
+    if (qrInfoBox) {
+      qrInfoBox.classList.add("hidden");
+    }
     noticeKey("verifyNotice", "success", "verifySuccess");
     setHTML(
       "verifyActions",
@@ -923,6 +938,20 @@ async function checkTodayOrder() {
   setHTML("checkActions", "");
 
   try {
+    
+  /*
+   * 同時預先讀取假日資料。
+   * 不阻塞 getOrder，也避免錯誤中斷訂單查詢。
+   */
+  const holidayPromise =
+    loadWeekHolidays().catch(function (error) {
+      console.error(
+        "預先讀取假日資料失敗：",
+        error,
+      );
+
+      return null;
+    });
     const result = await apiPost({
       action: "getOrder",
       empId: state.user.empId,
@@ -982,11 +1011,11 @@ async function checkTodayOrder() {
        * 取得失敗仍照常顯示訂單，
        * 不影響原有查詢流程。
        */
-      try {
-        await loadWeekHolidays();
-      } catch (holidayError) {
-        console.error("既有訂單假日名稱讀取失敗：", holidayError);
-      }
+      /*
+       * 假日資料已與 getOrder 同時開始，
+       * 這裡只等待尚未完成的部分。
+       */
+      await holidayPromise;
 
       renderReviewFromOrder(state.pendingOrder, {
         isExistingOrder: true,
