@@ -830,6 +830,7 @@ async function verifyEmployee() {
 
     $("verifyForm").classList.add("hidden");
     $("savedUserBox").classList.remove("hidden");
+    $("qrInfoBox").classList.add("hidden");
 
     renderSavedUser(state.user);
     noticeKey("verifyNotice", "success", "verifySuccess");
@@ -1672,6 +1673,15 @@ function renderReviewFromOrder(order, options = {}) {
           ${translateDepartment(state.user?.dept || order.dept || "")}
         </strong>
       </div>
+      <div class="user-item">
+  👥
+  <span data-i18n="group">
+    組別
+  </span>
+  <strong>
+    ${state.user?.group || order.group || ""}
+  </strong>
+</div>
     `,
   );
 
