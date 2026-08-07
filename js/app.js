@@ -505,16 +505,7 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
   state.dept = String(qrDept || $("deptSelect")?.value || "").trim();
 
   state.group = String(qrGroup || $("groupSelect")?.value || "").trim();
-  alert(
-    "qrDept = " +
-      qrDept +
-      "\nqrGroup = " +
-      qrGroup +
-      "\nstate.dept = " +
-      state.dept +
-      "\nstate.group = " +
-      state.group,
-  );
+  
 
   if (!state.dept || !state.group) {
     showAlert("未取得部門或組別，請重新掃描 QR Code。");
@@ -522,7 +513,6 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
     return;
   }
   console.log("存QR", state.dept);
-  saveQRCodeContext(state.dept);
   console.log("儲存 QR Context：", {
     dept: state.dept,
     group: state.group,
@@ -549,6 +539,8 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
   }
   // 顯示本次 QR Code 的部門與組別
   setText("deptReadonlyText", translateDepartment(state.dept));
+  setText("groupReadonlyText", state.group);
+
 
   clearNotice("verifyNotice");
 
@@ -2374,12 +2366,19 @@ function renderQRCodeInfo() {
     "deptReadonlyText",
     state.dept ? translateDepartment(state.dept) : "未取得",
   );
-  setText("groupReadonlyText", state.group);
+
+  setText("groupReadonlyText", state.group || "未取得");
 
   const deptInput = $("deptReadonly");
 
+  const groupInput = $("groupReadonly");
+
   if (deptInput) {
     deptInput.value = state.dept || "";
+  }
+
+  if (groupInput) {
+    groupInput.value = state.group || "";
   }
 }
 function refreshDynamicTranslations() {
