@@ -62,7 +62,7 @@ function guardOpen() {
     return true;
   }
 
-  setText("closedReason", state.systemStatus?.message || "目前未開放訂餐。");
+  setText("closedReason", translateSystemStatusMessage(state.systemStatus));
 
   showPage("closed");
 
@@ -140,6 +140,23 @@ function updateProgress(current) {
       step.classList.add("done");
     });
   }
+}
+function translateSystemStatusMessage(status) {
+  const code = String(status?.code || "").trim();
+
+  const messageKeyMap = {
+    WEEKEND_CLOSED: "weekendClosed",
+
+    DEADLINE_CLOSED: "deadlineClosed",
+  };
+
+  const translationKey = messageKeyMap[code];
+
+  if (translationKey) {
+    return t(translationKey);
+  }
+
+  return t("systemClosedDefault");
 }
 function translateApiMessage(message) {
   const text = String(message || "").trim();
@@ -401,7 +418,7 @@ async function loadSystemStatus() {
   window.lunchTargetWeekKey = result.targetWeekKey;
 
   if (!result.open) {
-    setText("closedReason", result.message || "目前未開放訂餐。");
+    setText("closedReason", translateSystemStatusMessage(result));
 
     showPage("closed");
 
@@ -2335,10 +2352,10 @@ async function initializeApp() {
 
     state.systemStatus = {
       open: false,
-      message: "目前無法確認系統狀態，請稍後重新整理頁面。",
+      code: "STATUS_UNAVAILABLE",
     };
 
-    setText("closedReason", "目前無法確認系統狀態，請稍後重新整理頁面。");
+    setText("closedReason", t("systemStatusUnavailable"));
 
     showPage("closed");
   } finally {
@@ -2405,7 +2422,10 @@ function renderQRCodeInfo() {
     "groupReadonlyText",
     state.group ? translateGroup(state.group) : "未取得",
   );
-  setText("groupReadonlyText", state.group || "未取得");
+  setText(
+    "groupReadonlyText",
+    state.group ? translateGroup(state.group) : "未取得",
+  );
 
   const deptInput = $("deptReadonly");
 
@@ -2456,6 +2476,14 @@ function refreshDynamicTranslations() {
     renderReviewFromOrder(state.pendingOrder, {
       isExistingOrder: state.viewingExistingOrder,
     });
+  }
+  if (state.systemStatus && state.systemStatus.open === false) {
+    const closedMessage =
+      state.systemStatus.code === "STATUS_UNAVAILABLE"
+        ? t("systemStatusUnavailable")
+        : translateSystemStatusMessage(state.systemStatus);
+
+    setText("closedReason", closedMessage);
   }
 }
 function requireQRCodeScan() {

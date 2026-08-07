@@ -132,6 +132,15 @@ const I18N = {
     wrongGroup: "您目前隸屬組別為【{group}】，請掃描正確組別 QR Code。",
     changeUser: "更換使用者",
     confirmChangeUser: "確定要更換使用者嗎？",
+    systemClosedTitle: "目前未開放訂餐",
+
+    weekendClosed: "本週訂餐已截止，系統將於下週一重新開放。",
+
+    deadlineClosed: "本週訂餐已於星期四 17:00 截止，系統將於下週一重新開放。",
+
+    systemStatusUnavailable: "目前無法確認系統狀態，請稍後重新整理頁面。",
+
+    systemClosedDefault: "目前未開放訂餐。",
   },
 
   th: {
@@ -272,6 +281,18 @@ const I18N = {
 
     changeUser: "เปลี่ยนผู้ใช้งาน",
     confirmChangeUser: "ต้องการเปลี่ยนผู้ใช้งานหรือไม่ ระบบจะยังคงใช้แผนกเดิม",
+    systemClosedTitle: "ขณะนี้ระบบยังไม่เปิดให้สั่งอาหาร",
+
+    weekendClosed:
+      "การสั่งอาหารประจำสัปดาห์นี้ปิดแล้ว ระบบจะเปิดอีกครั้งในวันจันทร์หน้า",
+
+    deadlineClosed:
+      "การสั่งอาหารประจำสัปดาห์นี้ปิดรับแล้วเมื่อวันพฤหัสบดี เวลา 17:00 น. ระบบจะเปิดอีกครั้งในวันจันทร์หน้า",
+
+    systemStatusUnavailable:
+      "ขณะนี้ไม่สามารถตรวจสอบสถานะระบบได้ โปรดรีเฟรชหน้าเว็บอีกครั้งในภายหลัง",
+
+    systemClosedDefault: "ขณะนี้ระบบยังไม่เปิดให้สั่งอาหาร",
   },
 
   vi: {
@@ -412,6 +433,18 @@ const I18N = {
     changeUser: "Đổi người dùng",
     confirmChangeUser:
       "Bạn có chắc muốn đổi người dùng không? Bộ phận hiện tại sẽ được giữ nguyên.",
+    systemClosedTitle: "Hệ thống hiện chưa mở đặt cơm",
+
+    weekendClosed:
+      "Đơn đặt cơm tuần này đã kết thúc. Hệ thống sẽ mở lại vào thứ Hai tuần sau.",
+
+    deadlineClosed:
+      "Đơn đặt cơm tuần này đã kết thúc vào lúc 17:00 thứ Năm. Hệ thống sẽ mở lại vào thứ Hai tuần sau.",
+
+    systemStatusUnavailable:
+      "Hiện không thể kiểm tra trạng thái hệ thống. Vui lòng tải lại trang sau.",
+
+    systemClosedDefault: "Hệ thống hiện chưa mở đặt cơm.",
   },
 };
 
