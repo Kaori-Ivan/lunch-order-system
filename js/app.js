@@ -251,7 +251,7 @@ function profileHTML(u) {
     row(t("employeeId"), u.empId),
     row(t("employeeName"), u.name),
     row(t("department"), translateDepartment(u.dept)),
-    row(t("group"), u.group || ""),
+    row(t("group"), translateGroup(u.group)),
     row(t("role"), translateRole(u.role)),
   ].join("");
 }
@@ -264,7 +264,7 @@ function renderSavedUser(u) {
 
   setText("showEmpName", u.name || "");
 
-  setText("showGroup", u.group || "");
+ setText("showGroup", translateGroup(u.group));
 
   setText("showRole", translateRole(u.role));
 }
@@ -539,7 +539,7 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
   }
   // 顯示本次 QR Code 的部門與組別
   setText("deptReadonlyText", translateDepartment(state.dept));
-  setText("groupReadonlyText", state.group);
+  setText("groupReadonlyText", translateGroup(state.group));
 
 
   clearNotice("verifyNotice");
@@ -1708,8 +1708,8 @@ function renderReviewFromOrder(order, options = {}) {
     組別
   </span>
   <strong>
-    ${state.user?.group || order.group || ""}
-  </strong>
+  ${translateGroup(state.user?.group || order.group || "")}
+</strong>
 </div>
     `,
   );
@@ -2402,10 +2402,9 @@ function resetOrderFlow() {
 }
 function renderQRCodeInfo() {
   setText(
-    "deptReadonlyText",
-    state.dept ? translateDepartment(state.dept) : "未取得",
+    "groupReadonlyText",
+    state.group ? translateGroup(state.group) : "未取得",
   );
-
   setText("groupReadonlyText", state.group || "未取得");
 
   const deptInput = $("deptReadonly");
@@ -2427,11 +2426,16 @@ function refreshDynamicTranslations() {
   if (state.dept) {
     setText("deptReadonlyText", translateDepartment(state.dept));
   }
+  if (state.group) {
+    setText("groupReadonlyText", translateGroup(state.group));
+  }
 
   /*
    * 更新身分名稱。
    */
   if (state.user) {
+    setText("showGroup", translateGroup(state.user.group));
+
     setText("showRole", translateRole(state.user.role));
   }
 

@@ -486,6 +486,11 @@ const DEPARTMENT_TRANSLATIONS = {
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง",
     vi: "Bộ phận sản xuất pin nhiên liệu",
   }, */
+  燃料電池事業處: {
+    "zh-TW": "燃料電池事業處",
+    th: "ฝ่ายธุรกิจเซลล์เชื้อเพลิง",
+    vi: "Khối kinh doanh pin nhiên liệu",
+  },
   燃電製一部: {
     "zh-TW": "燃電製一部",
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง 1",
@@ -502,6 +507,55 @@ const DEPARTMENT_TRANSLATIONS = {
     "zh-TW": "燃電製三部",
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง 3",
     vi: "Bộ phận sản xuất pin nhiên liệu 3",
+  },
+};
+const GROUP_TRANSLATIONS = {
+  生管部: {
+    "zh-TW": "生管部",
+    th: "ฝ่ายวางแผนและควบคุมการผลิต",
+    vi: "Bộ phận kế hoạch và kiểm soát sản xuất",
+  },
+
+  業務部: {
+    "zh-TW": "業務部",
+    th: "ฝ่ายขาย",
+    vi: "Bộ phận kinh doanh",
+  },
+
+  製一氬焊部: {
+    "zh-TW": "製一氬焊部",
+    th: "ฝ่ายผลิต 1 งานเชื่อมอาร์กอน",
+    vi: "Bộ phận sản xuất 1 - Hàn Argon",
+  },
+
+  製一硬焊部: {
+    "zh-TW": "製一硬焊部",
+    th: "ฝ่ายผลิต 1 งานเชื่อมประสาน",
+    vi: "Bộ phận sản xuất 1 - Hàn cứng",
+  },
+
+  製二部: {
+    "zh-TW": "製二部",
+    th: "ฝ่ายผลิต 2",
+    vi: "Bộ phận sản xuất 2",
+  },
+
+  製三部: {
+    "zh-TW": "製三部",
+    th: "ฝ่ายผลิต 3",
+    vi: "Bộ phận sản xuất 3",
+  },
+
+  品保部: {
+    "zh-TW": "品保部",
+    th: "ฝ่ายประกันคุณภาพ",
+    vi: "Bộ phận đảm bảo chất lượng",
+  },
+
+  工程研發部: {
+    "zh-TW": "工程研發部",
+    th: "ฝ่ายวิศวกรรมและวิจัยพัฒนา",
+    vi: "Bộ phận kỹ thuật và nghiên cứu phát triển",
   },
 };
 const ROLE_TRANSLATIONS = {
@@ -621,6 +675,17 @@ function translateDepartment(dept) {
   }
 
   return item[currentLanguage] || item["zh-TW"];
+}
+function translateGroup(group) {
+  const value = String(group || "").trim();
+
+  const item = GROUP_TRANSLATIONS[value];
+
+  if (!item) {
+    return value;
+  }
+
+  return item[currentLanguage] || item["zh-TW"] || value;
 }
 function translateHoliday(name) {
   const value = String(name || "").trim();
