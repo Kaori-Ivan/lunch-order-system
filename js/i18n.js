@@ -7,13 +7,14 @@ const I18N = {
     employeeId: "工號",
     employeeName: "姓名",
     department: "部門",
+    group: "組別",
     role: "身分",
     generalEmployee: "一般員工",
     supervisor: "主管",
     assistant: "助理",
     enterEmployeeId: "請輸入工號",
     enterEmployeeName: "請輸入姓名",
-    departmentLoaded: "已帶入部門",
+    departmentLoaded: "已帶入部門與組別",
 
     confirmUserTitle: "請確認您的使用者資料",
     firstUseTitle: "請輸入您的資料（首次使用）",
@@ -128,6 +129,7 @@ const I18N = {
     accountDisabled: "此帳號已停用，請聯絡管理員。",
     verifyFailed: "資料錯誤：工號或姓名不相符。",
     wrongDepartment: "您目前隸屬部門為【{dept}】，請掃描正確部門 QR Code。",
+    wrongGroup: "您目前隸屬組別為【{group}】，請掃描正確組別 QR Code。",
     changeUser: "更換使用者",
     confirmChangeUser: "確定要更換使用者嗎？",
   },
@@ -138,10 +140,11 @@ const I18N = {
     employeeId: "รหัสพนักงาน",
     employeeName: "ชื่อ",
     department: "แผนก",
+    group: "กลุ่ม",
     role: "สถานะ",
     enterEmployeeId: "กรุณากรอกรหัสพนักงาน",
     enterEmployeeName: "กรุณากรอกชื่อ",
-    departmentLoaded: "ได้นำข้อมูลแผนกมาแล้ว",
+    departmentLoaded: "นำเข้าข้อมูลแผนกและกลุ่มแล้ว",
 
     confirmUserTitle: "โปรดยืนยันข้อมูลผู้ใช้งาน",
     firstUseTitle: "โปรดกรอกข้อมูลของคุณ (ใช้งานครั้งแรก)",
@@ -263,6 +266,10 @@ const I18N = {
 
     wrongDepartment:
       "คุณสังกัดแผนก【{dept}】 โปรดสแกน QR Code ของแผนกที่ถูกต้อง",
+
+    wrongGroup:
+      "คุณอยู่ในกลุ่ม【{group}】 กรุณาสแกน QR Code ของกลุ่มที่ถูกต้อง",
+
     changeUser: "เปลี่ยนผู้ใช้งาน",
     confirmChangeUser: "ต้องการเปลี่ยนผู้ใช้งานหรือไม่ ระบบจะยังคงใช้แผนกเดิม",
   },
@@ -273,10 +280,11 @@ const I18N = {
     employeeId: "Mã nhân viên",
     employeeName: "Họ và tên",
     department: "Bộ phận",
+    group: "Nhóm",
     role: "Vai trò",
     enterEmployeeId: "Vui lòng nhập mã nhân viên",
     enterEmployeeName: "Vui lòng nhập họ và tên",
-    departmentLoaded: "Đã tự động nhập bộ phận",
+    departmentLoaded: "Đã tải thông tin bộ phận và nhóm",
 
     confirmUserTitle: "Vui lòng xác nhận thông tin người dùng",
     firstUseTitle: "Vui lòng nhập thông tin (lần đầu sử dụng)",
@@ -400,6 +408,7 @@ const I18N = {
 
     wrongDepartment:
       "Bạn thuộc bộ phận【{dept}】. Vui lòng quét đúng mã QR của bộ phận.",
+    wrongGroup: "Bạn thuộc nhóm【{group}】. Vui lòng quét đúng mã QR của nhóm.",
     changeUser: "Đổi người dùng",
     confirmChangeUser:
       "Bạn có chắc muốn đổi người dùng không? Bộ phận hiện tại sẽ được giữ nguyên.",

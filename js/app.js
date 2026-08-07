@@ -1,6 +1,7 @@
 const state = {
   step: "scan",
   dept: "",
+  group: "",
   user: null,
   existingOrder: null,
   pendingOrder: null,
@@ -250,6 +251,7 @@ function profileHTML(u) {
     row(t("employeeId"), u.empId),
     row(t("employeeName"), u.name),
     row(t("department"), translateDepartment(u.dept)),
+    row(t("group"), u.group || ""),
     row(t("role"), translateRole(u.role)),
   ].join("");
 }
@@ -261,6 +263,8 @@ function renderSavedUser(u) {
   setText("showEmpId", u.empId || "");
 
   setText("showEmpName", u.name || "");
+
+  setText("showGroup", u.group || "");
 
   setText("showRole", translateRole(u.role));
 }
@@ -386,6 +390,7 @@ async function apiPost(payload) {
 async function loadSystemStatus() {
   const result = await apiPost({
     action: "getSystemStatus",
+    
   });
 
   if (!result.success) {
@@ -482,39 +487,58 @@ function showConfirmDialog({
 function getQRCodeParams() {
   const params = new URLSearchParams(window.location.search);
 
-  return {
-    dept: String(params.get("dept") || "").trim(),
-  };
+   return {
+     dept: String(params.get("dept") || "").trim(),
+     group: String(params.get("group") || "").trim(),
+   };
 }
-async function scanQRCode(qrDept = "") {
+async function scanQRCode(qrDept = "", qrGroup = "") {
   if (!guardOpen()) return;
 
   // 防止滑鼠事件被誤當成部門
   if (qrDept instanceof Event) {
     qrDept = "";
+    qrGroup = "";
   }
 
   // 正式 QR Code 參數優先
   // 測試時沒有參數，才讀取下拉選單
   state.dept = String(qrDept || $("deptSelect")?.value || "").trim();
 
-  /*  state.group = String(
+    state.group = String(
     qrGroup || $("groupSelect")?.value || ""
-  ).trim(); */
+  ).trim(); 
 
-  if (!state.dept) {
-    showAlert("未取得部門或組別，請重新掃描 QR Code。");
+if (!state.dept || !state.group) {
+  showAlert("未取得部門或組別，請重新掃描 QR Code。");
+  showPage("scan");
+  return;
+}
+  console.log("存QR", state.dept);
+  saveQRCodeContext(state.dept);
+  console.log("儲存 QR Context：", {
+    dept: state.dept,
+    group: state.group,
+  });
+
+  const savedQRCode = saveQRCodeContext(state.dept, state.group);
+
+  if (!savedQRCode) {
+    showAlert("QR Code 的部門或組別不正確。");
+
     showPage("scan");
     return;
   }
-  console.log("存QR", state.dept);
-  saveQRCodeContext(state.dept);
   // 寫入隱藏欄位
   // 寫入隱藏欄位
   const deptReadonly = $("deptReadonly");
+  const groupReadonly = $("groupReadonly");
 
   if (deptReadonly) {
     deptReadonly.value = state.dept;
+  }
+  if (groupReadonly) {
+    groupReadonly.value = state.group;
   }
   // 顯示本次 QR Code 的部門與組別
   setText("deptReadonlyText", translateDepartment(state.dept));
@@ -538,8 +562,7 @@ async function scanQRCode(qrDept = "") {
 
       // 必須使用本次掃描的 QR 部門
       dept: state.dept,
-
-      group: saved.group || "",
+      group: state.group,
 
       role: saved.role || "",
     };
@@ -777,6 +800,7 @@ async function verifyEmployee() {
       empId,
       name: empName,
       dept: state.dept,
+      group: state.group,
     });
 
     if (!result.success) {
@@ -904,6 +928,7 @@ async function checkTodayOrder() {
       empId: state.user.empId,
       name: state.user.name,
       dept: state.dept,
+      group: state.group,
       weekKey: weekKey(),
     });
 
@@ -2014,6 +2039,7 @@ async function submitOrder() {
       empId: state.user.empId,
       name: state.user.name,
       dept: state.dept,
+      group: state.group,
       weekKey: weekKey(),
       defaultFactory: state.pendingOrder.defaultFactory,
       defaultFoodType: state.pendingOrder.defaultFoodType,
@@ -2242,8 +2268,8 @@ async function initializeApp() {
      */
     const qrParams = getQRCodeParams();
 
-    if (qrParams.dept) {
-      await scanQRCode(qrParams.dept);
+    if (qrParams.dept && qrParams.group) {
+      await scanQRCode(qrParams.dept, qrParams.group);
 
       return;
     }
@@ -2254,12 +2280,11 @@ async function initializeApp() {
      */
     const savedQR = getSavedQRCodeContext();
 
-if (savedQR && savedQR.dept) {
-  await scanQRCode(savedQR.dept);
+if (savedQR && savedQR.dept && savedQR.group) {
+  await scanQRCode(savedQR.dept, savedQR.group);
 
   return;
 }
-
 /*
  * QR Code 部門資料不存在時，
  * 再從已儲存的使用者資料取得部門。
@@ -2338,6 +2363,7 @@ function resetOrderFlow() {
   state.order = null;
   state.viewingExistingOrder = false;
   state.dept = "";
+  state.group = "";
   state.isSubmitting = false;
   state.isBusy = false;
   $("deptSelect").value = "";
@@ -2358,6 +2384,7 @@ function renderQRCodeInfo() {
     "deptReadonlyText",
     state.dept ? translateDepartment(state.dept) : "未取得",
   );
+  setText("groupReadonlyText", state.group);
 
   const deptInput = $("deptReadonly");
 

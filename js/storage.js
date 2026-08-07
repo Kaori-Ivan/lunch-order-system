@@ -23,6 +23,7 @@ function saveUser(user) {
     nameMasked: user.nameMasked || "",
     nameEncoded: user.nameEncoded || "",
     dept: user.dept || "",
+    group: user.group || "",
     role: user.role || "",
   };
 
@@ -42,30 +43,47 @@ function clearSavedUser() {
   localStorage.removeItem(STORAGE_USER);
 }
 
-function saveQRCodeContext(dept) {
-  const value = String(dept || "").trim();
+function saveQRCodeContext(dept, group) {
+  const normalizedDept = String(dept || "").trim();
 
-  const validDepartments = ["燃電製一部", "燃電製二部", "燃電製三部"];
+  const normalizedGroup = String(group || "").trim();
 
-  if (!value) {
-    console.warn("QR 部門為空，未儲存");
+  const validDepartments = ["燃料電池事業處"];
+
+  const validGroups = [
+    "生管部",
+    "業務部",
+    "製一氬焊部",
+    "製一硬焊部",
+    "製二部",
+    "製三部",
+    "品保部",
+    "工程研發部",
+  ];
+
+  if (
+    !validDepartments.includes(normalizedDept) ||
+    !validGroups.includes(normalizedGroup)
+  ) {
+    console.warn("無效的 QR 部門或組別：", {
+      dept: normalizedDept,
+      group: normalizedGroup,
+    });
+
     localStorage.removeItem(STORAGE_QR);
-    return;
-  }
-
-  if (!validDepartments.includes(value)) {
-    console.warn("無效的 QR 部門：", value);
-    localStorage.removeItem(STORAGE_QR);
-    return;
+    return false;
   }
 
   const qrContext = {
-    dept: value,
+    dept: normalizedDept,
+    group: normalizedGroup,
   };
 
   localStorage.setItem(STORAGE_QR, JSON.stringify(qrContext));
 
   console.log("已儲存 QR Context：", qrContext);
+
+  return true;
 }
 
 function getSavedQRCodeContext() {
@@ -79,21 +97,41 @@ function getSavedQRCodeContext() {
     }
 
     const value = JSON.parse(raw);
+
     const dept = String(value?.dept || "").trim();
 
-    const validDepartments = ["燃電製一部", "燃電製二部", "燃電製三部"];
+    const group = String(value?.group || "").trim();
 
-    if (!validDepartments.includes(dept)) {
-      console.warn("已清除無效的 QR 部門：", dept);
+    const validDepartments = ["燃料電池事業處"];
+
+    const validGroups = [
+      "生管部",
+      "業務部",
+      "製一氬焊部",
+      "製一硬焊部",
+      "製二部",
+      "製三部",
+      "品保部",
+      "工程研發部",
+    ];
+
+    if (!validDepartments.includes(dept) || !validGroups.includes(group)) {
+      console.warn("已清除無效的 QR Context：", {
+        dept: dept,
+        group: group,
+      });
+
       localStorage.removeItem(STORAGE_QR);
       return null;
     }
 
     return {
       dept: dept,
+      group: group,
     };
   } catch (error) {
     console.error("讀取 QR Code 資料失敗：", error);
+
     localStorage.removeItem(STORAGE_QR);
     return null;
   }
