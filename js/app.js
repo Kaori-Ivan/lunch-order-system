@@ -390,7 +390,6 @@ async function apiPost(payload) {
 async function loadSystemStatus() {
   const result = await apiPost({
     action: "getSystemStatus",
-    
   });
 
   if (!result.success) {
@@ -487,10 +486,10 @@ function showConfirmDialog({
 function getQRCodeParams() {
   const params = new URLSearchParams(window.location.search);
 
-   return {
-     dept: String(params.get("dept") || "").trim(),
-     group: String(params.get("group") || "").trim(),
-   };
+  return {
+    dept: String(params.get("dept") || "").trim(),
+    group: String(params.get("group") || "").trim(),
+  };
 }
 async function scanQRCode(qrDept = "", qrGroup = "") {
   if (!guardOpen()) return;
@@ -505,15 +504,23 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
   // 測試時沒有參數，才讀取下拉選單
   state.dept = String(qrDept || $("deptSelect")?.value || "").trim();
 
-    state.group = String(
-    qrGroup || $("groupSelect")?.value || ""
-  ).trim(); 
+  state.group = String(qrGroup || $("groupSelect")?.value || "").trim();
+  alert(
+    "qrDept = " +
+      qrDept +
+      "\nqrGroup = " +
+      qrGroup +
+      "\nstate.dept = " +
+      state.dept +
+      "\nstate.group = " +
+      state.group,
+  );
 
-if (!state.dept || !state.group) {
-  showAlert("未取得部門或組別，請重新掃描 QR Code。");
-  showPage("scan");
-  return;
-}
+  if (!state.dept || !state.group) {
+    showAlert("未取得部門或組別，請重新掃描 QR Code。");
+    showPage("scan");
+    return;
+  }
   console.log("存QR", state.dept);
   saveQRCodeContext(state.dept);
   console.log("儲存 QR Context：", {
@@ -1342,20 +1349,15 @@ function areAllWorkdayMealsSelected() {
     tue: "tuesday",
     wed: "wednesday",
     thu: "thursday",
-    fri: "friday"
+    fri: "friday",
   };
 
-  const expectedMealType =
-    state.noLunch === true
-      ? "上樓用餐"
-      : "便當";
+  const expectedMealType = state.noLunch === true ? "上樓用餐" : "便當";
 
   return weeks.every(function (item) {
-    const weeklyKey =
-      weeklyKeyMap[item.key];
+    const weeklyKey = weeklyKeyMap[item.key];
 
-    const holiday =
-      state.weekHolidays?.[weeklyKey];
+    const holiday = state.weekHolidays?.[weeklyKey];
 
     /*
      * 休假日不需要選擇。
@@ -1364,39 +1366,29 @@ function areAllWorkdayMealsSelected() {
       return true;
     }
 
-    const selectedMealType =
-      getMealValue(
-        "meal_" + item.key
-      );
+    const selectedMealType = getMealValue("meal_" + item.key);
 
     /*
      * 必須選到目前整週模式，
      * 隱藏的舊訂單值不算完成。
      */
-    return (
-      selectedMealType ===
-      expectedMealType
-    );
+    return selectedMealType === expectedMealType;
   });
 }
-
 
 /**
  * 控制一週訂餐頁的下一步按鈕。
  */
 function updateWeekOrderNextState() {
-  const nextButton =
-    $("btnReview");
+  const nextButton = $("btnReview");
 
   if (!nextButton) {
     return;
   }
 
-  const completed =
-    areAllWorkdayMealsSelected();
+  const completed = areAllWorkdayMealsSelected();
 
-  nextButton.disabled =
-    !completed;
+  nextButton.disabled = !completed;
 
   if (completed) {
     clearNotice("orderNotice");
@@ -2280,36 +2272,34 @@ async function initializeApp() {
      */
     const savedQR = getSavedQRCodeContext();
 
-if (savedQR && savedQR.dept && savedQR.group) {
-  await scanQRCode(savedQR.dept, savedQR.group);
+    if (savedQR && savedQR.dept && savedQR.group) {
+      await scanQRCode(savedQR.dept, savedQR.group);
 
-  return;
-}
-/*
- * QR Code 部門資料不存在時，
- * 再從已儲存的使用者資料取得部門。
- *
- * 使用者曾成功登入過，
- * 重新整理後仍可自動查詢既有訂單。
- */
-const savedUser = getSavedUser();
+      return;
+    }
+    /*
+     * QR Code 部門資料不存在時，
+     * 再從已儲存的使用者資料取得部門。
+     *
+     * 使用者曾成功登入過，
+     * 重新整理後仍可自動查詢既有訂單。
+     */
+    const savedUser = getSavedUser();
 
-const savedUserDept = String(
-  savedUser?.dept || ""
-).trim();
+    const savedUserDept = String(savedUser?.dept || "").trim();
 
-if (savedUserDept) {
-  await scanQRCode(savedUserDept);
+    if (savedUserDept) {
+      await scanQRCode(savedUserDept);
 
-  return;
-}
+      return;
+    }
 
-/*
- * 網址、QR Code 與使用者資料
- * 都沒有部門時，才要求重新掃描。
- */
-requireQRCodeScan();
-} catch (error) {
+    /*
+     * 網址、QR Code 與使用者資料
+     * 都沒有部門時，才要求重新掃描。
+     */
+    requireQRCodeScan();
+  } catch (error) {
     console.error("initializeApp error:", error);
 
     state.systemStatus = {
