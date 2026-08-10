@@ -1091,9 +1091,14 @@ async function checkTodayOrder() {
     });
 
     on("btnBackVerify", "click", function () {
+      const qrInfoBox = $("qrInfoBox");
+
+      if (qrInfoBox) {
+        qrInfoBox.classList.add("hidden");
+      }
+
       showSavedUserProfile();
     });
-
     return true;
   } catch (error) {
     console.error("checkTodayOrder error:", error);
