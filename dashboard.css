@@ -6796,3 +6796,23 @@ body:has(.dashboard-page) .info-card b {
 .page-loading.is-hidden {
   display: none;
 }
+/* =========================
+   Sidebar 版本資訊
+========================= */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-version {
+  margin-top: auto;
+  padding: 20px 12px 6px;
+
+  text-align: center;
+
+  color: #a3a3a3;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
