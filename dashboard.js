@@ -2963,7 +2963,7 @@ function currentWeekReadonlyOrders() {
           type="button"
           class="btn btn-outline export-current-week"
         >
-          ▣ 匯出本週名單
+          ▣ 匯出查詢結果
         </button>
       </div>
 
