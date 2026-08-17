@@ -428,7 +428,20 @@ async function loadSystemStatus() {
   return true;
 }
 
-async function loadWeekHolidays() {
+async function loadWeekHolidays(forceReload = false) {
+  // 已經成功載入過，就直接沿用，不再重複呼叫後端
+  if (
+    !forceReload &&
+    state.weekHolidays &&
+    Object.keys(state.weekHolidays).length > 0
+  ) {
+    console.log("[假日資料] 使用已載入資料");
+
+    return state.weekHolidays;
+  }
+
+  console.log("[假日資料] 向後端重新讀取");
+
   const result = await apiPost({
     action: "getWeekHolidayStatus",
     weekKey: weekKey(),
