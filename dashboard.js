@@ -50,8 +50,20 @@ let dashboardData = {
   },
 };
 function initializeDashboardData() {
+  const currentWeek = getCurrentWeekRange();
+
   const nextWeek = getNextWeekRange();
 
+  /*
+   * 本週日期。
+   */
+  dashboardData.currentWeek.startDate = currentWeek.startDateValue;
+
+  dashboardData.currentWeek.endDate = currentWeek.endDateValue;
+
+  /*
+   * 下週日期。
+   */
   dashboardData.nextWeek.startDate = nextWeek.startDateValue;
 
   dashboardData.nextWeek.endDate = nextWeek.endDateValue;
@@ -76,6 +88,42 @@ function getIsoWeekId(dateValue) {
     1 + Math.round((target - firstThursday) / (7 * 24 * 60 * 60 * 1000));
 
   return `${target.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
+}
+function getCurrentWeekRange(baseDate = new Date()) {
+  const currentDate = new Date(baseDate);
+
+  /*
+   * JavaScript：
+   * 星期日 = 0
+   * 星期一 = 1
+   */
+  const currentDay = currentDate.getDay();
+
+  /*
+   * 找到本週星期一。
+   */
+  const daysFromMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+  const thisMonday = new Date(currentDate);
+
+  thisMonday.setDate(currentDate.getDate() + daysFromMonday);
+
+  /*
+   * 本週星期五。
+   */
+  const thisFriday = new Date(thisMonday);
+
+  thisFriday.setDate(thisMonday.getDate() + 4);
+
+  return {
+    startDate: formatDate(thisMonday),
+
+    endDate: formatDate(thisFriday),
+
+    startDateValue: formatDateValue(thisMonday),
+
+    endDateValue: formatDateValue(thisFriday),
+  };
 }
 function getNextWeekRange(baseDate = new Date()) {
   const currentDate = new Date(baseDate);
