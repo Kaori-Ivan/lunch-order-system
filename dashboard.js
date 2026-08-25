@@ -5219,8 +5219,11 @@ function bindCommon() {
           const errorBox = document.querySelector("#editEmployeeError");
 
           if (errorBox) {
-            errorBox.textContent = error.message || "人員資料更新失敗";
+            errorBox.textContent = `⚠ ${error.message || "人員資料更新失敗"}`;
           }
+
+          // 保留右下角提示
+          toast("更新失敗");
 
           if (saveButton) {
             saveButton.disabled = false;

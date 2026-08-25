@@ -6816,3 +6816,23 @@ body:has(.dashboard-page) .info-card b {
   line-height: 1.6;
 }
 
+/* 人員編輯錯誤提示 */
+.employee-edit-error {
+  display: none;
+  margin-top: 8px;
+  padding: 9px 12px;
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+
+  color: #b42318;
+  background: #fef3f2;
+
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+}
+
+.employee-edit-error:not(:empty) {
+  display: block;
+}
