@@ -5026,8 +5026,11 @@ function bindCommon() {
         </label>
 
         <input
-          value="${employee.employeeId}"
-          disabled
+          <input
+  type="text"
+  id="editEmployeeId"
+  value="${employee.employeeId}"
+>
         >
       </div>
 
@@ -5046,16 +5049,16 @@ function bindCommon() {
 
 
       <div class="field">
-        <label>
-          部門
-        </label>
+  <label>
+    部門
+  </label>
 
-        <input
-           type="text"
-    value="燃料電池事業處"
+  <input
+    type="text"
+    value="${employee.department || ""}"
     disabled
-        >
-      </div>
+  >
+</div>
 
 
       <div class="field">
@@ -5126,6 +5129,12 @@ function bindCommon() {
     document
       .querySelector("#saveEmployeeEdit")
       ?.addEventListener("click", async () => {
+        const employeeId =
+          document
+            .querySelector("#editEmployeeId")
+            ?.value.trim()
+            .toUpperCase() || "";
+
         const name =
           document.querySelector("#editEmployeeName")?.value.trim() || "";
 
@@ -5134,6 +5143,11 @@ function bindCommon() {
 
         const status =
           document.querySelector("#editEmployeeStatus")?.value || "啟用";
+
+        if (!employeeId) {
+          toast("請輸入工號");
+          return;
+        }
 
         if (!name) {
           toast("請輸入姓名");
@@ -5151,18 +5165,22 @@ function bindCommon() {
           saveButton.disabled = true;
           saveButton.textContent = "儲存中...";
         }
-        showLoadingOverlay(
-          status === "啟用"
-            ? `正在啟用「${employee.name}」...`
-            : `正在停用「${employee.name}」...`,
-        );
+       showLoadingOverlay(`正在更新「${name}」資料...`);
 
         try {
           const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
             method: "POST",
             body: JSON.stringify({
-              action: "updateEmployeeEnabled",
-              employeeId: employee.employeeId,
+              action: "updateEmployee",
+
+              originalEmployeeId: employee.employeeId,
+
+              employeeId: employeeId,
+
+              name: name,
+
+              group: group,
+
               enabled: status === "啟用",
             }),
           });
@@ -5174,6 +5192,12 @@ function bindCommon() {
           }
 
           // 先更新目前畫面
+          employee.employeeId = employeeId;
+
+          employee.name = name;
+
+          employee.group = group;
+
           employee.status = status;
 
           closeModal();
@@ -5183,7 +5207,7 @@ function bindCommon() {
 
           render();
 
-          toast(status === "啟用" ? "人員已啟用" : "人員已停用");
+          toast("人員資料更新完成");
         } catch (error) {
           hideLoadingOverlay();
           console.error("更新人員狀態失敗：", error);
