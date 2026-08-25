@@ -5210,9 +5210,10 @@ function bindCommon() {
           toast("人員資料更新完成");
         } catch (error) {
           hideLoadingOverlay();
-          console.error("更新人員狀態失敗：", error);
 
-          toast("更新失敗");
+          console.error("更新人員資料失敗：", error);
+
+          toast(error.message || "人員資料更新失敗");
 
           if (saveButton) {
             saveButton.disabled = false;
