@@ -5021,18 +5021,21 @@ function bindCommon() {
 
 
       <div class="field">
-        <label>
-          工號
-        </label>
+  <label>
+    工號
+  </label>
 
-        <input
-          <input
-  type="text"
-  id="editEmployeeId"
-  value="${employee.employeeId}"
->
-        >
-      </div>
+  <input
+    type="text"
+    id="editEmployeeId"
+    value="${employee.employeeId}"
+  >
+
+  <div
+    id="editEmployeeError"
+    class="employee-edit-error"
+  ></div>
+</div>
 
 
       <div class="field">
@@ -5213,7 +5216,11 @@ function bindCommon() {
 
           console.error("更新人員資料失敗：", error);
 
-          toast(error.message || "人員資料更新失敗");
+          const errorBox = document.querySelector("#editEmployeeError");
+
+          if (errorBox) {
+            errorBox.textContent = error.message || "人員資料更新失敗";
+          }
 
           if (saveButton) {
             saveButton.disabled = false;
