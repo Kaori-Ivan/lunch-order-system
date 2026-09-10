@@ -267,17 +267,16 @@
       data-i18n-placeholder="enterEmployeeId">
   </label>
 
-  <label class="hidden">
-  <span>
-    👤 <span data-i18n="employeeName">姓名</span>
-  </span>
+  <label>
+    <span>
+      👤 <span data-i18n="employeeName">姓名</span>
+    </span>
 
-  <input
-  id="empName"
-  placeholder="輸入工號後自動帶入姓名"
-  data-i18n-placeholder="autoEmployeeName"
-  readonly>
-</label>
+    <input
+      id="empName"
+      placeholder="請輸入姓名"
+      data-i18n-placeholder="enterEmployeeName">
+  </label>
 <input id="deptReadonly" type="hidden">
 <input id="groupReadonly" type="hidden">
 </div>
@@ -310,7 +309,13 @@
   <strong id="showGroup"></strong>
 </div>
 
-  
+  <div class="verify-row">
+    <span>
+      👤 <span data-i18n="role">身分</span>
+    </span>
+
+    <strong id="showRole"></strong>
+  </div>
 
 </div>
 
@@ -536,19 +541,7 @@
         <p>Lunch Order System</p>
       </div>
     </div>
-<div class="payment-reminder">
-  <div class="payment-reminder-icon"></div>
 
-  <div class="payment-reminder-text">
-    <strong data-i18n="paymentReminder">
-      繳費提醒
-    </strong>
-
-    <span data-i18n="paymentReminderText">
-      請記得繳交餐費喔！
-    </span>
-  </div>
-</div>
     <div class="confetti">
       <span></span><span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span>
@@ -575,20 +568,14 @@
 
 <div class="done-actions">
 
-  <button
+    <button
     id="btnEditDone"
     class="done-edit-btn"
     data-i18n="editOrder">
-    修改訂單
-  </button>
 
-  <button
-    type="button"
-    id="btnChangeUserDone"
-    class="done-edit-btn"
-    data-i18n="changeUser">
-    更換使用者
-  </button>
+    修改訂單
+
+</button>
 
 </div>  </div>
 </section>

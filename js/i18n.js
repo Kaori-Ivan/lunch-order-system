@@ -14,7 +14,6 @@ const I18N = {
     assistant: "助理",
     enterEmployeeId: "請輸入工號",
     enterEmployeeName: "請輸入姓名",
-    autoEmployeeName: "輸入工號後自動帶入姓名",
     departmentLoaded: "已帶入部門與組別",
 
     confirmUserTitle: "請確認您的使用者資料",
@@ -23,13 +22,14 @@ const I18N = {
     savedUserDescription:
       "已自動帶入此裝置儲存的使用者資料，請確認後開始點餐。",
 
-    firstUseDescription: "請輸入工號，確認相符後才可進入點餐。",
+    firstUseDescription:
+      "請輸入工號與姓名，系統會比對資料庫，確認相符後才可進入點餐。",
 
     query: "查詢",
     verifying: "驗證中...",
     verificationInProgress: "資料驗證中，請稍候...",
     verifySuccess: "驗證成功，歡迎使用。",
-    enterEmployeeInfo: "請輸入工號。",
+    enterEmployeeInfo: "請輸入工號與姓名。",
 
     startOrder: "開始點餐",
     rebuildUser: "重建使用者",
@@ -136,8 +136,7 @@ const I18N = {
 
     weekendClosed: "本週訂餐已截止，系統將於下週一重新開放。",
 
-    deadlineClosed: "本週訂餐已截止，系統將於下週一重新開放。",
-    userDataUpdated: "人員資料已更新，請重新輸入工號。",
+    deadlineClosed: "本週訂餐已於星期四 17:00 截止，系統將於下週一重新開放。",
 
     systemStatusUnavailable: "目前無法確認系統狀態，請稍後重新整理頁面。",
 
@@ -154,7 +153,6 @@ const I18N = {
     role: "สถานะ",
     enterEmployeeId: "กรุณากรอกรหัสพนักงาน",
     enterEmployeeName: "กรุณากรอกชื่อ",
-    autoEmployeeName: "ระบบจะแสดงชื่อโดยอัตโนมัติหลังจากกรอกรหัสพนักงาน",
     departmentLoaded: "นำเข้าข้อมูลแผนกและกลุ่มแล้ว",
 
     confirmUserTitle: "โปรดยืนยันข้อมูลผู้ใช้งาน",
@@ -164,13 +162,13 @@ const I18N = {
       "ระบบได้นำข้อมูลผู้ใช้งานที่บันทึกไว้ในอุปกรณ์นี้มาแสดง โปรดยืนยันก่อนเริ่มสั่งอาหาร",
 
     firstUseDescription:
-      "กรุณากรอกรหัสพนักงาน เมื่อยืนยันว่าข้อมูลถูกต้องแล้วจึงจะสามารถเข้าสู่หน้าสั่งอาหารได้",
+      "โปรดกรอกรหัสพนักงานและชื่อ ระบบจะตรวจสอบกับฐานข้อมูลก่อนเข้าสู่หน้าสั่งอาหาร",
 
     query: "ค้นหา",
     verifying: "กำลังตรวจสอบ...",
     verificationInProgress: "กำลังตรวจสอบข้อมูล โปรดรอสักครู่...",
     verifySuccess: "ยืนยันข้อมูลสำเร็จ",
-    enterEmployeeInfo: "กรุณากรอกรหัสพนักงาน",
+    enterEmployeeInfo: "โปรดกรอกรหัสพนักงานและชื่อ",
 
     startOrder: "เริ่มสั่งอาหาร",
     rebuildUser: "เปลี่ยนผู้ใช้งาน",
@@ -289,9 +287,7 @@ const I18N = {
       "การสั่งอาหารประจำสัปดาห์นี้ปิดแล้ว ระบบจะเปิดอีกครั้งในวันจันทร์หน้า",
 
     deadlineClosed:
-      "การสั่งอาหารประจำสัปดาห์นี้ปิดแล้ว ระบบจะเปิดให้สั่งอีกครั้งในวันจันทร์หน้า",
-    userDataUpdated:
-      "ข้อมูลพนักงานได้รับการอัปเดตแล้ว กรุณากรอกรหัสพนักงานอีกครั้ง",
+      "การสั่งอาหารประจำสัปดาห์นี้ปิดรับแล้วเมื่อวันพฤหัสบดี เวลา 17:00 น. ระบบจะเปิดอีกครั้งในวันจันทร์หน้า",
 
     systemStatusUnavailable:
       "ขณะนี้ไม่สามารถตรวจสอบสถานะระบบได้ โปรดรีเฟรชหน้าเว็บอีกครั้งในภายหลัง",
@@ -309,7 +305,6 @@ const I18N = {
     role: "Vai trò",
     enterEmployeeId: "Vui lòng nhập mã nhân viên",
     enterEmployeeName: "Vui lòng nhập họ và tên",
-    autoEmployeeName: "Họ tên sẽ tự động hiển thị sau khi nhập mã nhân viên",
     departmentLoaded: "Đã tải thông tin bộ phận và nhóm",
 
     confirmUserTitle: "Vui lòng xác nhận thông tin người dùng",
@@ -319,13 +314,13 @@ const I18N = {
       "Thông tin người dùng đã lưu trên thiết bị này được tự động điền. Vui lòng xác nhận trước khi đặt món.",
 
     firstUseDescription:
-      "Vui lòng nhập mã nhân viên. Sau khi xác nhận thông tin chính xác, bạn mới có thể vào trang đặt món.",
+      "Vui lòng nhập mã nhân viên và họ tên. Hệ thống sẽ đối chiếu dữ liệu trước khi cho phép đặt món.",
 
     query: "Tra cứu",
     verifying: "Đang xác minh...",
     verificationInProgress: "Đang xác minh dữ liệu, vui lòng chờ...",
     verifySuccess: "Xác minh thành công.",
-    enterEmployeeInfo: "Vui lòng nhập mã nhân viên.",
+    enterEmployeeInfo: "Vui lòng nhập mã nhân viên và họ tên.",
 
     startOrder: "Bắt đầu đặt món",
     rebuildUser: "Đổi người dùng",
@@ -444,9 +439,7 @@ const I18N = {
       "Đơn đặt cơm tuần này đã kết thúc. Hệ thống sẽ mở lại vào thứ Hai tuần sau.",
 
     deadlineClosed:
-      "Đặt suất ăn tuần này đã kết thúc. Hệ thống sẽ mở lại vào thứ Hai tuần sau.",
-    userDataUpdated:
-      "Thông tin nhân viên đã được cập nhật. Vui lòng nhập lại mã nhân viên.",
+      "Đơn đặt cơm tuần này đã kết thúc vào lúc 17:00 thứ Năm. Hệ thống sẽ mở lại vào thứ Hai tuần sau.",
 
     systemStatusUnavailable:
       "Hiện không thể kiểm tra trạng thái hệ thống. Vui lòng tải lại trang sau.",
