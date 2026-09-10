@@ -25,6 +25,7 @@ function saveUser(user) {
     dept: user.dept || "",
     group: user.group || "",
     role: user.role || "",
+    userVersion: user.userVersion || "",
   };
 
   localStorage.setItem(STORAGE_USER, JSON.stringify(safeUser));

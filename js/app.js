@@ -283,7 +283,6 @@ function renderSavedUser(u) {
 
  setText("showGroup", translateGroup(u.group));
 
-  setText("showRole", translateRole(u.role));
 }
 //const MOCK_API_DELAY = 50;
 /* function mockApi(p) {
@@ -594,6 +593,7 @@ async function scanQRCode(qrDept = "", qrGroup = "") {
       group: state.group,
 
       role: saved.role || "",
+      userVersion: saved.userVersion || "",
     };
 
     renderSavedUser(state.user);
@@ -824,10 +824,9 @@ async function verifyEmployee() {
   if (!guardOpen()) return;
 
   const empId = $("empId").value.trim();
-  const empName = $("empName").value.trim();
 
-  if (!empId || !empName) {
-    notice("verifyNotice", "danger", t("enterEmployeeInfo"));
+  if (!empId) {
+    notice("verifyNotice", "danger", "請輸入工號。");
     return;
   }
   setBusy(t("validatingUser"));
@@ -837,7 +836,6 @@ async function verifyEmployee() {
     const result = await apiPost({
       action: "verifyUser",
       empId,
-      name: empName,
       dept: state.dept,
       group: state.group,
     });
@@ -854,6 +852,7 @@ async function verifyEmployee() {
     }
 
     const u = result.user;
+    $("empName").value = u.name;
 
     state.user = {
       userId: u.userId,
@@ -864,6 +863,7 @@ async function verifyEmployee() {
       dept: u.dept,
       group: u.group,
       role: u.role,
+      userVersion: u.userVersion || "",
     };
 
     saveUser(state.user);
@@ -1020,7 +1020,30 @@ async function checkTodayOrder() {
 
       return false;
     }
+const savedUserVersion = String(state.user.userVersion || "");
 
+const currentUserVersion = String(result.userVersion || "");
+
+if (
+  !savedUserVersion ||
+  !currentUserVersion ||
+  savedUserVersion !== currentUserVersion
+) {
+  clearSavedUser();
+  clearUserSession();
+
+  state.user = null;
+  state.existingOrder = null;
+  state.pendingOrder = null;
+
+  showVerifyForm();
+
+  notice("verifyNotice", "warning", t("userDataUpdated"));
+
+  showPage("verify");
+
+  return false;
+}
     state.existingOrder = result.hasOrder ? result.order : null;
 
     /*
@@ -1225,13 +1248,17 @@ function updateConditionState() {
   }
 
   const noLunch = noLunchCheckbox.checked;
+
   state.noLunch = noLunch;
 
   const factoryInputs = document.querySelectorAll('input[name="factory"]');
 
   const foodTypeInputs = document.querySelectorAll('input[name="foodType"]');
 
-  // 勾選不訂便當：停用廠區及葷素
+  /*
+   * 勾選「下週上樓用餐」
+   * → 不需要廠區與葷素
+   */
   factoryInputs.forEach((input) => {
     input.disabled = noLunch;
   });
@@ -1243,7 +1270,10 @@ function updateConditionState() {
   lunchConditionBox.classList.toggle("condition-disabled", noLunch);
 
   if (noLunch) {
-    // 清除原本選取的廠區與葷素
+    /*
+     * 上樓模式不需要廠區與葷素，
+     * 清除原本選擇。
+     */
     factoryInputs.forEach((input) => {
       input.checked = false;
     });
@@ -1258,6 +1288,11 @@ function updateConditionState() {
 
     return;
   }
+
+  /*
+   * 便當模式：
+   * 必須先選廠區＋葷素。
+   */
   clearNotice("conditionNotice");
 
   const factorySelected = document.querySelector(
@@ -1268,7 +1303,6 @@ function updateConditionState() {
     'input[name="foodType"]:checked',
   );
 
-  // 未勾不訂便當時，兩項都必須選擇
   nextButton.disabled = !(factorySelected && foodTypeSelected);
 }
 function resetConditionForm() {
@@ -1287,7 +1321,11 @@ function resetConditionForm() {
       input.disabled = false;
     });
 
-  $("lunchConditionBox")?.classList.remove("condition-disabled");
+  const lunchConditionBox = $("lunchConditionBox");
+
+  if (lunchConditionBox) {
+    lunchConditionBox.classList.remove("condition-disabled");
+  }
 
   clearNotice("conditionNotice");
 
@@ -1304,15 +1342,40 @@ function loadConditionFromOrder(order) {
     return;
   }
 
-  const noLunch = order.noLunch === true;
+  const weeklyMeals = order.weeklyMeals || {};
 
+  const dayKeys = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+  /*
+   * 判斷是否為上樓模式：
+   * 忽略國定假日與不用餐，
+   * 只要實際有用餐的日期全部都是上樓用餐，
+   * 就視為上樓模式。
+   */
+  const actualMealTypes = dayKeys
+    .map((key) => {
+      return String(weeklyMeals[key]?.mealType || "").trim();
+    })
+    .filter((mealType) => {
+      return mealType && mealType !== "國定假日" && mealType !== "不用餐";
+    });
+
+  const isUpstairsMode =
+    actualMealTypes.length > 0 &&
+    actualMealTypes.every((mealType) => mealType === "上樓用餐");
+order.noLunch = isUpstairsMode;
+state.noLunch = isUpstairsMode;
   const noLunchCheckbox = $("noLunchCheckbox");
 
   if (noLunchCheckbox) {
-    noLunchCheckbox.checked = noLunch;
+    noLunchCheckbox.checked = isUpstairsMode;
   }
 
-  if (!noLunch) {
+  /*
+   * 便當模式：
+   * 帶回原本廠區＋葷素。
+   */
+  if (!isUpstairsMode) {
     const factoryInput = Array.from(
       document.querySelectorAll('input[name="factory"]'),
     ).find((input) => input.value === order.defaultFactory);
@@ -1340,11 +1403,13 @@ async function goWeekOrder() {
 
   try {
     setBusy(t("loadingWorkDays"));
+
     await loadWeekHolidays();
   } catch (error) {
     console.error("loadWeekHolidays error:", error);
 
     notice("conditionNotice", "danger", t("holidayLoadFailed"));
+
     return;
   } finally {
     clearBusy();
@@ -1352,19 +1417,51 @@ async function goWeekOrder() {
 
   const noLunch = $("noLunchCheckbox")?.checked === true;
 
-  state.noLunch = noLunch;
+  /*
+   * 記住進入這一頁之前的模式。
+   * false = 便當模式
+   * true  = 上樓模式
+   */
+  const previousNoLunch = state.pendingOrder.noLunch === true;
 
-  // 下週不訂便當
+  /*
+   * 如果使用者切換了模式，
+   * 清除前一個模式留下來的每日選擇。
+   *
+   * 例如：
+   * 原本五天都是「不用餐」
+   * 後來改成上樓模式，
+   * 不應該把五天「不用餐」繼續帶進來。
+   */
+  if (previousNoLunch !== noLunch) {
+    state.pendingOrder.weeklyMeals = {};
+
+    clearNotice("orderNotice");
+  }
+
+  state.noLunch = noLunch;
+  state.pendingOrder.noLunch = noLunch;
+
+  /*
+   * 上樓模式：
+   * 不需要廠區與葷素。
+   */
   if (noLunch) {
     state.pendingOrder.defaultFactory = "";
+
     state.pendingOrder.defaultFoodType = "";
-    state.pendingOrder.noLunch = true;
 
     renderWeekOrder();
+
     showPage("weekOrder");
+
     return;
   }
 
+  /*
+   * 便當模式：
+   * 必須先選廠區＋葷素。
+   */
   const factory = document.querySelector(
     'input[name="factory"]:checked',
   )?.value;
@@ -1377,6 +1474,7 @@ async function goWeekOrder() {
     notice("conditionNotice", "danger", t("conditionRequired"));
 
     updateConditionState();
+
     return;
   }
 
@@ -1384,9 +1482,8 @@ async function goWeekOrder() {
 
   state.pendingOrder.defaultFoodType = foodType;
 
-  state.pendingOrder.noLunch = false;
-
   renderWeekOrder();
+
   showPage("weekOrder");
 }
 function getMealValue(name) {
@@ -1409,16 +1506,12 @@ function areAllWorkdayMealsSelected() {
     fri: "friday",
   };
 
-  const expectedMealType = state.noLunch === true ? "上樓用餐" : "便當";
-
   return weeks.every(function (item) {
     const weeklyKey = weeklyKeyMap[item.key];
 
     const holiday = state.weekHolidays?.[weeklyKey];
 
-    /*
-     * 休假日不需要選擇。
-     */
+    // 國定假日不需要選擇
     if (holiday?.isHoliday) {
       return true;
     }
@@ -1426,10 +1519,22 @@ function areAllWorkdayMealsSelected() {
     const selectedMealType = getMealValue("meal_" + item.key);
 
     /*
-     * 必須選到目前整週模式，
-     * 隱藏的舊訂單值不算完成。
+     * 上樓模式：
+     * 每天可以選
+     * 1. 上樓用餐
+     * 2. 不用餐
      */
-    return selectedMealType === expectedMealType;
+    if (state.noLunch === true) {
+      return ["上樓用餐", "不用餐"].includes(selectedMealType);
+    }
+
+    /*
+     * 便當模式：
+     * 每天可以選
+     * 1. 便當
+     * 2. 不用餐
+     */
+    return ["便當", "上樓用餐", "不用餐"].includes(selectedMealType);
   });
 }
 
@@ -1453,8 +1558,7 @@ function updateWeekOrderNextState() {
 }
 function renderWeekOrder() {
   const weeks = getThisWeekDates();
-
-  const noLunch = state.noLunch === true;
+   const noLunch = state.noLunch === true;
 
   const weeklyKeyMap = {
     mon: "monday",
@@ -1541,7 +1645,7 @@ function renderWeekOrder() {
       </span>
     </label>
 
-    <label  style="display:none;">
+    <label>
       <input
         type="radio"
         name="meal_${item.key}"
@@ -1556,43 +1660,43 @@ function renderWeekOrder() {
   `
           : `
     <label>
-      <input
-        type="radio"
-        name="meal_${item.key}"
-        value="便當"
-        ${checked("便當")}
-      >
+  <input
+    type="radio"
+    name="meal_${item.key}"
+    value="便當"
+    ${checked("便當")}
+  >
 
-      <span data-i18n="lunchBox">
-        便當
-      </span>
-    </label>
+  <span data-i18n="lunchBox">
+    便當
+  </span>
+</label>
 
-    <label  style="display:none;">
-      <input
-        type="radio"
-        name="meal_${item.key}"
-        value="上樓用餐"
-        ${checked("上樓用餐")}
-      >
+<label>
+  <input
+    type="radio"
+    name="meal_${item.key}"
+    value="上樓用餐"
+    ${checked("上樓用餐")}
+  >
 
-      <span data-i18n="upstairs">
-        上樓用餐
-      </span>
-    </label>
+  <span data-i18n="upstairs">
+    上樓用餐
+  </span>
+</label>
 
-    <label  style="display:none;">
-      <input
-        type="radio"
-        name="meal_${item.key}"
-        value="不用餐"
-        ${checked("不用餐")}
-      >
+<label>
+  <input
+    type="radio"
+    name="meal_${item.key}"
+    value="不用餐"
+    ${checked("不用餐")}
+  >
 
-      <span data-i18n="noMeal">
-        不用餐
-      </span>
-    </label>
+  <span data-i18n="noMeal">
+    不用餐
+  </span>
+</label>
   `;
 
         return `
@@ -1610,7 +1714,7 @@ function renderWeekOrder() {
               </div>
             </div>
 
-            <div class="meal-options ${noLunch ? "two-options" : ""}">
+            <div class="meal-options">
               ${mealOptions}
             </div>
           </div>
@@ -1884,11 +1988,59 @@ async function buildReview() {
 
     return;
   }
+  const weeks = getThisWeekDates();
+
+  const daySettingsForValidation = [
+    {
+      weeklyKey: "monday",
+      inputKey: "mon",
+    },
+    {
+      weeklyKey: "tuesday",
+      inputKey: "tue",
+    },
+    {
+      weeklyKey: "wednesday",
+      inputKey: "wed",
+    },
+    {
+      weeklyKey: "thursday",
+      inputKey: "thu",
+    },
+    {
+      weeklyKey: "friday",
+      inputKey: "fri",
+    },
+  ];
+
+  const workingDayMeals = daySettingsForValidation
+    .filter((dayInfo) => {
+      const holiday = state.weekHolidays?.[dayInfo.weeklyKey];
+
+      return !holiday?.isHoliday;
+    })
+    .map((dayInfo) => {
+      return getMealValue("meal_" + dayInfo.inputKey);
+    });
+
+  const allNoMeal =
+    workingDayMeals.length > 0 &&
+    workingDayMeals.every((mealType) => mealType === "不用餐");
+
+  if (allNoMeal) {
+    notice(
+      "orderNotice",
+      "danger",
+      "請至少選擇一天用餐。",
+    );
+
+    return;
+  }
 
   const factory = state.pendingOrder.defaultFactory;
   const foodType = state.pendingOrder.defaultFoodType;
 
-  const weeks = getThisWeekDates();
+ 
 
   const daySettings = [
     {
@@ -2299,6 +2451,7 @@ function bindEvents() {
   });
   on("btnSubmit", "click", submitOrder);
   on("btnChangeUser", "click", changeUser);
+  on("btnChangeUserDone", "click", changeUser);
   on("btnHome", "click", goHome);
   on("btnEditDone", "click", editOrderFromDone);
 }
@@ -2473,8 +2626,6 @@ function refreshDynamicTranslations() {
    */
   if (state.user) {
     setText("showGroup", translateGroup(state.user.group));
-
-    setText("showRole", translateRole(state.user.role));
   }
 
   /*

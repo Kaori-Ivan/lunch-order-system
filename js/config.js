@@ -7,8 +7,8 @@ window.APP_CONFIG = {
   API_TIMEOUT_MS: 30000,
   //使用者訂餐API
   USER_API_URL:
-    "https://script.google.com/macros/s/AKfycbycUcCxk0nPzR8iS5_J9jwttu1Dvftwg9kJFJtnd_0abTksYgvCMabvl0gvis5ov78/exec",
+    "https://script.google.com/macros/s/AKfycbycSuP_PylVbsbFxUpAV4ZmG0y_jgly5yTqWDz8mv0mMuMNyisURQaBn2B8lY9_l9_6/exec",
   //管理者API
   ADMIN_API_URL:
-    "https://script.google.com/macros/s/AKfycbxL9mNcNTEyFRfnQ6VnCyMpiuTaJB1uKugpmiE-rifRsw444AHix27pMGzbNQJ8WgA/exec",
+    "https://script.google.com/macros/s/AKfycbzpidD5lE1x4ZKZv_PRC--RNr8vK-V8Q4Mb0WTa84ramrJWm4uJAVhvh1-cX7LHREU/exec",
 };
