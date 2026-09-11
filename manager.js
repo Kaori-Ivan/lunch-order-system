@@ -104,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // 目前登入的管理者
   let currentManager = null;
 
-
   const MANAGER_EMPLOYEE_CACHE_TIME_KEY = "managerEmployeeCacheTime";
 
   const MANAGER_EMPLOYEE_CACHE_MAX_AGE = 10 * 60 * 1000;
@@ -293,14 +292,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // 讀取下週休假日
   // =========================
   async function loadManagerWeekHolidays() {
-    console.log(
-      "送出 action =",
-      editingEmployeeId
-        ? "updateManagerProxyWeekOrder"
-        : "saveManagerProxyWeekOrder",
-    );
-
-    console.log("送出前 editingEmployeeId =", editingEmployeeId);
     const result = await managerApiPost({
       action: "getWeekHolidayStatus",
       weekKey: managerTargetWeekKey,
@@ -575,16 +566,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <div class="manager-field">
       <label>
-        數量
-      </label>
+  數量
+</label>
 
-      <input
-        type="number"
-        min="1"
-        step="1"
-        value="1"
-        data-quantity="${dayInfo.key}"
-      >
+<div class="manager-quantity">
+
+  <button
+    type="button"
+    data-quantity-minus="${dayInfo.key}"
+    aria-label="減少數量"
+  >
+    −
+  </button>
+
+  <strong
+    data-quantity-display="${dayInfo.key}"
+  >
+    1
+  </strong>
+
+  <button
+    type="button"
+    data-quantity-plus="${dayInfo.key}"
+    aria-label="增加數量"
+  >
+    ＋
+  </button>
+
+</div>
     </div>
 
   </div>
@@ -1028,91 +1037,71 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   historyList.addEventListener("click", (event) => {
-  // =========================
-  // 修改代訂
-  // =========================
-  const editButton = event.target.closest(
-    ".manager-history-edit-btn",
-  );
+    // =========================
+    // 修改代訂
+    // =========================
+    const editButton = event.target.closest(".manager-history-edit-btn");
 
-  if (editButton) {
-    const employeeId =
-      editButton.dataset.employeeId || "";
+    if (editButton) {
+      const employeeId = editButton.dataset.employeeId || "";
       editingEmployeeId = employeeId;
 
-    if (!employeeId) {
-      alert("無法取得代訂人員資料。");
+      if (!employeeId) {
+        alert("無法取得代訂人員資料。");
+        return;
+      }
+
+      const employee = employeeData.find((item) => item.id === employeeId);
+
+      if (!employee) {
+        alert("找不到此員工資料，請重新進入新增代訂頁。");
+        return;
+      }
+
+      historyPage.classList.add("hidden");
+      homePage.classList.add("hidden");
+      orderPage.classList.remove("hidden");
+
+      departmentSelect.value = employee.group || currentManager?.group || "";
+
+      departmentSelect.dispatchEvent(new Event("change"));
+
+      employeeSelect.value = employee.id;
+
+      employeeSelect.dispatchEvent(new Event("change"));
+
+      loadManagerExistingOrder(employee.id);
+      submitButton.textContent = "更新整週代訂";
+
+      return;
+    }
+    // =========================
+    // 查看 / 收合明細
+    // =========================
+    const toggleButton = event.target.closest(".manager-history-toggle-btn");
+
+    if (!toggleButton) {
       return;
     }
 
-    const employee = employeeData.find(
-      (item) => item.id === employeeId,
-    );
+    const card = toggleButton.closest(".manager-history-card");
 
-    if (!employee) {
-      alert("找不到此員工資料，請重新進入新增代訂頁。");
+    if (!card) {
       return;
     }
 
-    historyPage.classList.add("hidden");
-    homePage.classList.add("hidden");
-    orderPage.classList.remove("hidden");
+    const days = card.querySelector(".manager-history-days");
 
-    departmentSelect.value =
-      employee.group || currentManager?.group || "";
+    if (!days) {
+      return;
+    }
 
-    departmentSelect.dispatchEvent(
-      new Event("change"),
-    );
+    const isHidden = days.classList.contains("hidden");
 
-    employeeSelect.value = employee.id;
+    days.classList.toggle("hidden");
 
-employeeSelect.dispatchEvent(
-  new Event("change"),
-);
-
-loadManagerExistingOrder(employee.id);
-submitButton.textContent = "更新整週代訂";
-
-return;
-}
-  // =========================
-  // 查看 / 收合明細
-  // =========================
-  const toggleButton = event.target.closest(
-    ".manager-history-toggle-btn",
-  );
-
-  if (!toggleButton) {
-    return;
-  }
-
-  const card = toggleButton.closest(
-    ".manager-history-card",
-  );
-
-  if (!card) {
-    return;
-  }
-
-  const days = card.querySelector(
-    ".manager-history-days",
-  );
-
-  if (!days) {
-    return;
-  }
-
-  const isHidden =
-    days.classList.contains("hidden");
-
-  days.classList.toggle("hidden");
-
-  toggleButton.textContent =
-    isHidden
-      ? "收合明細 ▲"
-      : "查看明細 ▼";
-});
+    toggleButton.textContent = isHidden ? "收合明細 ▲" : "查看明細 ▼";
+  });
 
   // =========================
   // 部門連動人員
@@ -1269,20 +1258,54 @@ return;
       updateSummary();
       return;
     }
+  });
+  // =========================
+  // 便當數量 ＋ / －
+  // =========================
+  weeklyMeals.addEventListener("click", (event) => {
+    const target = event.target;
 
-    // =========================
-    // 數量
-    // =========================
-    if (target.matches("[data-quantity]")) {
-      const dayKey = target.dataset.quantity;
+    // 減少數量
+    if (target.matches("[data-quantity-minus]")) {
+      const dayKey = target.dataset.quantityMinus;
 
-      const quantity = Number(target.value);
+      const currentQuantity = Number(weeklyMealState[dayKey].quantity || 1);
 
-      weeklyMealState[dayKey].quantity =
-        Number.isInteger(quantity) && quantity >= 1 ? quantity : 1;
+      const newQuantity = Math.max(1, currentQuantity - 1);
+
+      weeklyMealState[dayKey].quantity = newQuantity;
+
+      const display = weeklyMeals.querySelector(
+        `[data-quantity-display="${dayKey}"]`,
+      );
+
+      if (display) {
+        display.textContent = newQuantity;
+      }
 
       updateSummary();
       return;
+    }
+
+    // 增加數量
+    if (target.matches("[data-quantity-plus]")) {
+      const dayKey = target.dataset.quantityPlus;
+
+      const currentQuantity = Number(weeklyMealState[dayKey].quantity || 1);
+
+      const newQuantity = currentQuantity + 1;
+
+      weeklyMealState[dayKey].quantity = newQuantity;
+
+      const display = weeklyMeals.querySelector(
+        `[data-quantity-display="${dayKey}"]`,
+      );
+
+      if (display) {
+        display.textContent = newQuantity;
+      }
+
+      updateSummary();
     }
   });
   // =========================
@@ -1311,18 +1334,17 @@ return;
   });
 
   function loadManagerExistingOrder(employeeId) {
-      console.log("=== 開始載入修改代訂 ===");
-  console.log("employeeId =", employeeId);
-  console.log("managerHistoryRecords =", managerHistoryRecords);
-    
-    
-    const employeeRecords = managerHistoryRecords.filter(
-  (item) =>
-    String(item.employeeEmpId || "").trim() ===
-    String(employeeId || "").trim(),
-);
+    console.log("=== 開始載入修改代訂 ===");
+    console.log("employeeId =", employeeId);
+    console.log("managerHistoryRecords =", managerHistoryRecords);
 
-console.log("employeeRecords =", employeeRecords);
+    const employeeRecords = managerHistoryRecords.filter(
+      (item) =>
+        String(item.employeeEmpId || "").trim() ===
+        String(employeeId || "").trim(),
+    );
+
+    console.log("employeeRecords =", employeeRecords);
 
     if (employeeRecords.length === 0) {
       alert("找不到此人員的代訂紀錄。");
@@ -1331,18 +1353,16 @@ console.log("employeeRecords =", employeeRecords);
 
     employeeRecords.forEach((record) => {
       const recordDate = String(record.orderDate || "")
-  .trim()
-  .substring(0, 10);
+        .trim()
+        .substring(0, 10);
 
-const dayEntry = Object.entries(weeklyMealState).find(
-  ([, meal]) => {
-    const mealDate = String(meal.date || "")
-      .trim()
-      .substring(0, 10);
+      const dayEntry = Object.entries(weeklyMealState).find(([, meal]) => {
+        const mealDate = String(meal.date || "")
+          .trim()
+          .substring(0, 10);
 
-    return mealDate === recordDate;
-  },
-);
+        return mealDate === recordDate;
+      });
 
       if (!dayEntry) {
         return;
@@ -1379,17 +1399,16 @@ const dayEntry = Object.entries(weeklyMealState).find(
         `[data-lunchbox-fields="${dayKey}"]`,
       );
 
-      const quantityInput = weeklyMeals.querySelector(
-        `[data-quantity="${dayKey}"]`,
+      const quantityDisplay = weeklyMeals.querySelector(
+        `[data-quantity-display="${dayKey}"]`,
       );
 
       if (record.mealType === "便當") {
         lunchboxFields?.classList.remove("hidden");
 
-        if (quantityInput) {
-          quantityInput.value = meal.quantity;
+        if (quantityDisplay) {
+          quantityDisplay.textContent = meal.quantity;
         }
-
         /*
          * 目前頁面只有一組預設廠區 / 葷素，
          * 先帶入既有便當設定。
