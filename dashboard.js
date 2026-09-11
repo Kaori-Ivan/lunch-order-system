@@ -3831,10 +3831,10 @@ function exportCurrentWeekFilteredOrders() {
   }
 
   const rows = [
-    ["訂餐週期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
+    ["用餐日期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
 
     ...orders.map((order) => [
-      formatOrderWeek(order.weekDate || dashboardData.currentWeek.startDate),
+      order.date || "",
 
       order.employeeId || "",
       order.name || "",
