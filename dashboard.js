@@ -8447,6 +8447,8 @@ function bindDeadlineSettingsEvents() {
       saveButton.disabled = true;
       saveButton.textContent = "儲存中...";
 
+      showLoadingOverlay("正在儲存截止時間設定...");
+
       const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
         method: "POST",
         body: JSON.stringify({
@@ -8477,6 +8479,8 @@ function bindDeadlineSettingsEvents() {
 
       showToast(error.message || "儲存截止時間失敗", "error");
     } finally {
+      hideLoadingOverlay();
+
       saveButton.disabled = false;
       saveButton.textContent = "💾 儲存設定";
     }
