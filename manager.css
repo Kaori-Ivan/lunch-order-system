@@ -1,0 +1,1442 @@
+/* =========================
+   管理者代訂系統
+   manager.css
+========================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Microsoft JhengHei",
+    sans-serif;
+
+  background:
+    linear-gradient(
+      180deg,
+      #eef7ff 0%,
+      #f8fbff 55%,
+      #ffffff 100%
+    );
+
+  color: #223044;
+}
+
+
+/* =========================
+   外層
+========================= */
+
+.manager-page {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px 16px;
+}
+
+
+/* =========================
+   登入卡片
+========================= */
+
+.manager-login-card {
+  width: 100%;
+  max-width: 420px;
+
+  background: #ffffff;
+
+  border: 1px solid #dceaf7;
+  border-radius: 24px;
+
+  padding: 32px 24px;
+
+  box-shadow:
+    0 12px 30px rgba(55, 94, 130, 0.08);
+}
+
+
+/* =========================
+   Logo / Icon
+========================= */
+
+.manager-logo {
+  width: 72px;
+  height: 72px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 22px;
+
+  background: #e8f4ff;
+
+  font-size: 34px;
+}
+
+
+/* =========================
+   標題
+========================= */
+
+.manager-title {
+  margin: 0;
+
+  text-align: center;
+
+  font-size: 28px;
+  font-weight: 700;
+
+  color: #1f3b57;
+}
+
+
+.manager-subtitle {
+  margin: 10px 0 28px;
+
+  text-align: center;
+
+  font-size: 14px;
+  line-height: 1.6;
+
+  color: #718399;
+}
+
+
+/* =========================
+   表單
+========================= */
+
+.manager-field {
+  margin-bottom: 20px;
+}
+
+
+.manager-field label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #30465c;
+}
+
+
+.manager-field input {
+  width: 100%;
+  height: 52px;
+
+  padding: 0 14px;
+
+  border: 1px solid #ccdce9;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  font-size: 16px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.manager-field input:focus {
+  border-color: #6baee8;
+
+  box-shadow:
+    0 0 0 4px rgba(107, 174, 232, 0.12);
+}
+
+
+/* =========================
+   按鈕
+========================= */
+
+.manager-login-btn {
+  width: 100%;
+  height: 52px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #4f9fe0;
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease;
+}
+
+
+.manager-login-btn:hover {
+  background: #428fce;
+}
+
+
+.manager-login-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================
+   提示
+========================= */
+
+.manager-login-note {
+  margin-top: 18px;
+
+  padding: 12px 14px;
+
+  border-radius: 12px;
+
+  background: #f4f9fd;
+
+  color: #6f8294;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+
+/* =========================
+   手機
+========================= */
+
+@media (max-width: 480px) {
+
+  .manager-page {
+    align-items: flex-start;
+
+    padding-top: 48px;
+  }
+
+
+  .manager-login-card {
+    padding: 28px 20px;
+  }
+
+
+  .manager-title {
+    font-size: 25px;
+  }
+
+}
+/* =========================
+   共用隱藏
+========================= */
+
+.hidden {
+  display: none !important;
+}
+
+
+/* =========================
+   管理者首頁
+========================= */
+
+.manager-home {
+  width: 100%;
+  max-width: 520px;
+}
+
+
+.manager-home-header {
+  margin-bottom: 24px;
+
+  padding: 26px 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #dceaf7;
+  border-radius: 22px;
+
+  box-shadow:
+    0 10px 28px rgba(55, 94, 130, 0.07);
+}
+
+
+.manager-home-label {
+  display: inline-block;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: #4f9fe0;
+}
+
+
+.manager-home-header h1 {
+  margin: 0 0 6px;
+
+  font-size: 28px;
+
+  color: #1f3b57;
+}
+
+
+.manager-home-header p {
+  margin: 0;
+
+  color: #718399;
+
+  font-size: 14px;
+}
+
+
+/* =========================
+   首頁功能
+========================= */
+
+.manager-home-actions {
+  display: grid;
+
+  gap: 14px;
+}
+
+
+.manager-home-card {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 20px;
+
+  border: 1px solid #dceaf7;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 22px rgba(55, 94, 130, 0.05);
+}
+
+
+.manager-home-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  background: #eaf5ff;
+
+  font-size: 24px;
+}
+
+
+.manager-home-card-text {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+
+.manager-home-card-text strong {
+  color: #263c52;
+
+  font-size: 16px;
+}
+
+
+.manager-home-card-text small {
+  color: #7a8c9e;
+
+  font-size: 13px;
+}
+
+
+.manager-home-arrow {
+  color: #9aadbd;
+
+  font-size: 28px;
+}
+/* =========================
+   管理者代訂頁
+========================= */
+
+.manager-order-page {
+  width: 100%;
+  max-width: 1100px;
+
+  margin: 0 auto;
+}
+
+/* =========================
+   頁首
+========================= */
+
+.manager-order-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin: 0 0 20px;
+
+  padding: 14px 20px;
+
+  background:
+    rgba(238, 247, 255, 0.97);
+
+  border-bottom:
+    1px solid #dceaf7;
+
+  backdrop-filter: blur(10px);
+}
+
+
+.manager-order-header h1 {
+  margin: 0;
+
+  font-size: 24px;
+  line-height: 1.25;
+
+  color: #1f3b57;
+}
+
+
+.manager-order-header p {
+  margin: 3px 0 0;
+
+  color: #718399;
+
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+
+.manager-back-btn {
+  min-width: 84px;
+  height: 42px;
+
+  border: 1px solid #d5e3ef;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #49627a;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+/* =========================
+   卡片
+========================= */
+
+.manager-order-card {
+  margin-bottom: 18px;
+
+  padding: 24px;
+
+  background: #ffffff;
+
+  border: 1px solid #dceaf7;
+  border-radius: 20px;
+
+  box-shadow:
+    0 8px 24px rgba(55, 94, 130, 0.06);
+}
+
+
+/* =========================
+   卡片標題
+========================= */
+
+.manager-order-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-bottom: 22px;
+}
+
+
+.manager-step {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #4f9fe0;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+.manager-order-title h2 {
+  margin: 0;
+
+  font-size: 19px;
+
+  color: #263c52;
+}
+
+
+.manager-order-title p {
+  margin: 4px 0 0;
+
+  color: #7a8c9e;
+
+  font-size: 13px;
+}
+
+
+/* =========================
+   表單格線
+========================= */
+
+.manager-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 16px;
+}
+
+
+/* =========================
+   欄位
+========================= */
+
+.manager-order-page .manager-field {
+  margin-bottom: 18px;
+}
+
+
+.manager-order-page .manager-field label {
+  display: block;
+
+  margin-bottom: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  color: #30465c;
+}
+
+
+.manager-order-page .manager-field input,
+.manager-order-page .manager-field select {
+  width: 100%;
+  height: 50px;
+
+  padding: 0 14px;
+
+  border: 1px solid #ccdce9;
+  border-radius: 13px;
+
+  background: #ffffff;
+
+  color: #263c52;
+
+  font-size: 16px;
+
+  outline: none;
+}
+
+
+.manager-order-page .manager-field input:focus,
+.manager-order-page .manager-field select:focus {
+  border-color: #6baee8;
+
+  box-shadow:
+    0 0 0 4px rgba(107, 174, 232, 0.12);
+}
+
+
+.manager-order-page .manager-field select:disabled {
+  background: #f4f7fa;
+
+  color: #9aabb9;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   已選人員
+========================= */
+
+.manager-employee-preview {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  margin-top: 4px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #dceaf7;
+  border-radius: 14px;
+
+  background: #f5faff;
+}
+
+
+.manager-employee-preview span {
+  color: #7890a5;
+
+  font-size: 12px;
+}
+
+
+.manager-employee-preview strong {
+  color: #203b55;
+
+  font-size: 17px;
+}
+
+
+.manager-employee-preview small {
+  color: #72879a;
+
+  font-size: 13px;
+}
+
+
+/* =========================
+   餐別
+========================= */
+
+.manager-meal-options {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+
+.manager-meal-card {
+  position: relative;
+
+  min-height: 96px;
+
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  margin: 0 !important;
+
+  border: 1px solid #d4e2ee;
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+
+.manager-meal-card input {
+  position: absolute;
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+
+.manager-meal-icon {
+  font-size: 26px;
+}
+
+
+.manager-meal-card strong {
+  color: #334b61;
+
+  font-size: 15px;
+}
+
+
+.manager-meal-card:has(input:checked) {
+  border-color: #4f9fe0;
+
+  background: #eef7ff;
+}
+
+
+/* =========================
+   數量
+========================= */
+
+.manager-quantity {
+  height: 50px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+}
+
+
+.manager-quantity button {
+  width: 46px;
+  height: 46px;
+
+  border: 1px solid #ccdce9;
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #31516e;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.manager-quantity strong {
+  min-width: 44px;
+
+  text-align: center;
+
+  color: #223b52;
+
+  font-size: 20px;
+}
+
+
+/* =========================
+   摘要
+========================= */
+
+.manager-order-summary {
+  overflow: hidden;
+
+  margin-bottom: 20px;
+
+  border: 1px solid #dce7f0;
+  border-radius: 14px;
+}
+
+
+.manager-order-summary > div {
+  display: grid;
+
+  grid-template-columns:
+    110px 1fr;
+
+  gap: 14px;
+
+  padding: 13px 15px;
+
+  border-bottom: 1px solid #e7eef4;
+}
+
+
+.manager-order-summary > div:last-child {
+  border-bottom: none;
+}
+
+
+.manager-order-summary span {
+  color: #7c8ea0;
+
+  font-size: 13px;
+}
+
+
+.manager-order-summary strong {
+  color: #2b4157;
+
+  font-size: 14px;
+}
+
+
+/* =========================
+   送出
+========================= */
+
+.manager-submit-btn {
+  width: 100%;
+  min-height: 52px;
+
+  border: none;
+  border-radius: 14px;
+
+  background: #4f9fe0;
+
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.manager-submit-btn:disabled {
+  background: #bccbd7;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================
+   手機版
+========================= */
+
+@media (max-width: 640px) {
+
+  .manager-order-page {
+    max-width: 100%;
+  }
+
+
+ .manager-order-header {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+
+  .manager-order-header h1 {
+    font-size: 24px;
+  }
+
+
+  .manager-order-card {
+    padding: 20px 16px;
+  }
+
+
+  .manager-form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+
+  .manager-order-summary > div {
+    grid-template-columns:
+      90px 1fr;
+  }
+
+}
+/* =========================
+   管理者代訂紀錄
+========================= */
+
+.manager-history-message {
+  padding: 18px 0;
+  color: #6f8194;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.manager-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.manager-history-card {
+  border: 1px solid #dbe7f1;
+  border-radius: 18px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.manager-history-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 16px 18px;
+
+  background: #f4f9fd;
+  border-bottom: 1px solid #e1ebf3;
+}
+
+.manager-history-person strong {
+  color: #17324d;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.manager-history-person span {
+  color: #71859a;
+  font-size: 14px;
+}
+
+.manager-history-days {
+  display: flex;
+  flex-direction: column;
+}
+
+.manager-history-day {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 14px 18px;
+
+  border-bottom: 1px solid #edf2f6;
+}
+
+.manager-history-day:last-child {
+  border-bottom: none;
+}
+
+.manager-history-day span {
+  flex-shrink: 0;
+
+  color: #71859a;
+  font-size: 14px;
+}
+
+.manager-history-day strong {
+  color: #17324d;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+  line-height: 1.5;
+}
+
+
+/* 手機版 */
+@media (max-width: 600px) {
+
+  .manager-history-person {
+    align-items: flex-start;
+  }
+
+  .manager-history-day {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .manager-history-day strong {
+    text-align: left;
+  }
+
+}
+/* =========================
+   代訂紀錄摘要列
+========================= */
+
+.manager-history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px 16px;
+
+  background: #ffffff;
+}
+
+.manager-history-summary span {
+  color: #5f7388;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.manager-history-toggle-btn,
+.manager-history-edit-btn {
+  flex-shrink: 0;
+
+  padding: 8px 12px;
+
+  border: 1px solid #cbd9e6;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #24415f;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.manager-history-toggle-btn:hover,
+.manager-history-edit-btn:hover {
+  background: #f4f8fb;
+}
+
+.manager-history-person > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+
+/* 手機版摘要 */
+@media (max-width: 600px) {
+
+  .manager-history-summary {
+    align-items: flex-start;
+  }
+
+  .manager-history-person {
+    gap: 10px;
+  }
+
+  .manager-history-person > div {
+    flex-wrap: wrap;
+  }
+
+}
+/* =========================
+   STEP 2 整週用餐排版
+========================= */
+
+.manager-week-range {
+  margin-bottom: 18px;
+
+  color: #24415f;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+
+/* 週一～週五外層 */
+.manager-weekly-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+/* 每一天 */
+.manager-week-day {
+  padding: 14px 16px;
+
+  border: 1px solid #dce8f2;
+  border-radius: 16px;
+
+  background: #ffffff;
+}
+
+
+/* 日期 + 選項放同一列 */
+.manager-week-day:not(:has(.manager-holiday-note)) {
+  display: grid;
+
+  grid-template-columns:
+    120px minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 16px;
+}
+
+
+/* 日期區 */
+.manager-week-day-header {
+  min-width: 0;
+}
+
+.manager-week-day-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.manager-week-day-header strong {
+  color: #17324d;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.manager-week-day-header span {
+  color: #607d99;
+
+  font-size: 15px;
+}
+
+
+/* 三種用餐方式 */
+.manager-week-meal-options {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+
+/* 每一個選項按鈕 */
+.manager-week-meal-option {
+  position: relative;
+
+  min-height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+
+  padding: 10px 12px;
+
+  border: 1px solid #d7e4ee;
+  border-radius: 13px;
+
+  background: #f8fbfd;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+/* radio 本體 */
+.manager-week-meal-option input {
+  width: 18px;
+  height: 18px;
+
+  margin: 0 9px 0 0;
+
+  flex-shrink: 0;
+
+  cursor: pointer;
+}
+
+
+/* 文字 */
+.manager-week-meal-option span {
+  color: #24415f;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  white-space: nowrap;
+}
+
+
+/* 被選到 */
+.manager-week-meal-option:has(input:checked) {
+  border-color: #5ba5df;
+
+  background: #edf7ff;
+
+  box-shadow:
+    0 0 0 3px rgba(79, 159, 224, 0.1);
+}
+
+
+/* 便當 */
+.manager-week-meal-option:nth-child(1) {
+  background: #f2f8fd;
+}
+
+
+/* 上樓用餐 */
+.manager-week-meal-option:nth-child(2) {
+  background: #fffaf0;
+}
+
+
+/* 不用餐 */
+.manager-week-meal-option:nth-child(3) {
+  background: #fff4f6;
+}
+
+
+/* =========================
+   便當細項
+========================= */
+
+.manager-week-lunchbox-fields {
+  grid-column: 1 / -1;
+
+  margin-top: 14px;
+
+  padding-top: 14px;
+
+  border-top: 1px solid #e6eef5;
+}
+
+
+/* =========================
+   假日
+========================= */
+
+.manager-holiday-badge {
+  display: inline-block;
+
+  margin-top: 6px;
+
+  padding: 4px 9px;
+
+  border-radius: 999px;
+
+  background: #f1f3f5;
+
+  color: #718096;
+
+  font-size: 12px;
+}
+
+.manager-holiday-note {
+  margin-top: 8px;
+
+  color: #718096;
+
+  font-size: 14px;
+}
+
+
+/* =========================
+   手機
+========================= */
+
+.manager-week-day:not(:has(.manager-holiday-note)) {
+  grid-template-columns: 1fr;
+
+  gap: 10px;
+}
+
+.manager-week-day-header > div {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* 手機仍維持三個餐別同一排 */
+.manager-week-meal-options {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 6px;
+}
+
+
+/* 手機餐別按鈕縮小 */
+.manager-week-meal-option {
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding: 8px 5px;
+}
+
+.manager-week-meal-option input {
+  width: 16px;
+  height: 16px;
+
+  margin-right: 5px;
+}
+
+.manager-week-meal-option span {
+  font-size: 13px;
+  white-space: nowrap;
+}
+/* =========================
+   代訂紀錄頁版面優化
+========================= */
+
+#managerHistoryPage {
+  width: 100%;
+  max-width: 1100px;
+
+  align-self: flex-start;
+
+  margin: 0 auto;
+}
+
+
+/* 主紀錄卡 */
+#managerHistoryPage
+.manager-order-card {
+  padding: 28px 30px;
+}
+
+
+/* 人數 + 搜尋 */
+.manager-history-tools {
+  display: grid;
+
+  grid-template-columns:
+    auto minmax(260px, 360px);
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin: 20px 0 22px;
+}
+
+
+/* 已代訂人數 */
+.manager-history-count {
+  color: #607b95;
+
+  font-size: 15px;
+}
+
+.manager-history-count strong {
+  margin: 0 4px;
+
+  color: #173b5e;
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+
+/* 搜尋框 */
+#managerHistorySearch {
+  width: 100%;
+  height: 46px;
+
+  padding: 0 15px;
+
+  border: 1px solid #ceddea;
+  border-radius: 13px;
+
+  background: #f9fcff;
+
+  color: #243e58;
+
+  font-size: 15px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+#managerHistorySearch::placeholder {
+  color: #93a4b4;
+}
+
+#managerHistorySearch:focus {
+  border-color: #65a8df;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(79, 159, 224, 0.1);
+}
+
+
+/* 載入中 */
+#managerHistoryLoading {
+  padding: 28px 0;
+
+  text-align: center;
+
+  color: #71879c;
+}
+
+
+/* 員工卡不要太窄 */
+.manager-history-card {
+  width: 100%;
+}
+
+
+/* =========================
+   手機
+========================= */
+
+@media (max-width: 640px) {
+
+  #managerHistoryPage
+  .manager-order-card {
+    padding: 20px 16px;
+  }
+
+
+  .manager-history-tools {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+
+    margin: 16px 0 18px;
+  }
+
+
+  #managerHistorySearch {
+    height: 44px;
+  }
+
+
+  .manager-history-count strong {
+    font-size: 20px;
+  }
+
+}

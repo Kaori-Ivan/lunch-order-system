@@ -1,0 +1,599 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>管理者代訂系統</title>
+
+  <link
+    rel="stylesheet"
+    href="manager.css"
+  >
+</head>
+
+<body>
+
+  <main class="manager-page">
+
+    <!-- 登入畫面 -->
+    <section
+      id="managerLoginPage"
+      class="manager-login-card"
+    >
+
+      <div class="manager-logo">
+        🍱
+      </div>
+
+      <h1 class="manager-title">
+        管理者代訂系統
+      </h1>
+
+      <p class="manager-subtitle">
+        管理者便當代訂專用入口
+      </p>
+
+
+      <div class="manager-field">
+
+        <label for="managerEmployeeId">
+          管理者工號
+        </label>
+
+        <input
+          id="managerEmployeeId"
+          type="text"
+          placeholder="請輸入工號"
+          autocomplete="off"
+        >
+
+      </div>
+
+
+      <button
+        id="btnManagerLogin"
+        type="button"
+        class="manager-login-btn"
+      >
+        驗證身分
+      </button>
+
+
+      <div class="manager-login-note">
+        此入口僅提供具有代訂權限的管理者使用。
+      </div>
+
+    </section>
+
+<!-- 系統未開放 -->
+<section
+  id="managerClosedPage"
+  class="manager-login-card hidden"
+>
+
+  <div class="manager-logo">
+    🔒
+  </div>
+
+  <h1 class="manager-title">
+    目前未開放代訂
+  </h1>
+
+  <p
+    id="managerClosedReason"
+    class="manager-subtitle"
+  >
+    正在確認系統開放狀態...
+  </p>
+
+  <button
+    id="btnManagerClosedRefresh"
+    type="button"
+    class="manager-login-btn"
+  >
+    重新整理
+  </button>
+
+</section>
+    <!-- 管理者首頁 -->
+    <section
+      id="managerHomePage"
+      class="manager-home hidden"
+    >
+
+      <div class="manager-home-header">
+
+        <div>
+
+          <span class="manager-home-label">
+            管理者代訂系統
+          </span>
+
+          <h1>
+            您好
+          </h1>
+
+          <p>
+            工號：
+            <strong id="homeManagerEmployeeId">
+              -
+            </strong>
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="manager-home-actions">
+
+        <button
+          id="btnNewManagerOrder"
+          type="button"
+          class="manager-home-card"
+        >
+
+          <span class="manager-home-icon">
+            🍱
+          </span>
+
+          <span class="manager-home-card-text">
+
+            <strong>
+              新增代訂
+            </strong>
+
+            <small>
+              替組別人員建立便當訂單
+            </small>
+
+          </span>
+
+          <span class="manager-home-arrow">
+            ›
+          </span>
+
+        </button>
+
+
+        <button
+          id="btnManagerOrderHistory"
+          type="button"
+          class="manager-home-card"
+        >
+
+          <span class="manager-home-icon">
+            📋
+          </span>
+
+          <span class="manager-home-card-text">
+
+            <strong>
+              代訂紀錄
+            </strong>
+
+            <small>
+              查看已建立的代訂資料
+            </small>
+
+          </span>
+
+          <span class="manager-home-arrow">
+            ›
+          </span>
+
+        </button>
+
+      </div>
+
+    </section> <!-- 管理者代訂畫面 -->
+    <!-- 管理者代訂畫面 -->
+<section
+  id="managerOrderPage"
+  class="manager-order-page hidden"
+>
+
+  <!-- 頁首 -->
+  <div class="manager-order-header">
+
+    <button
+      id="btnManagerOrderBack"
+      type="button"
+      class="manager-back-btn"
+    >
+      ← 返回
+    </button>
+
+    <div>
+      <h1>
+        管理者代訂便當
+      </h1>
+
+      <p>
+        請選擇部門與人員，替員工建立便當訂單
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- STEP 1 -->
+  <div class="manager-order-card">
+
+    <div class="manager-order-title">
+
+      <span class="manager-step">
+        1
+      </span>
+
+      <div>
+        <h2>
+          選擇代訂人員
+        </h2>
+
+        <p>
+         先選擇組別，再選擇該組別的人員
+        </p>
+      </div>
+
+    </div>
+
+
+    <div class="manager-form-grid">
+
+      <!-- 組別 -->
+      <div class="manager-field">
+
+        <label for="managerDepartment">
+          組別
+        </label>
+
+        <select id="managerDepartment">
+
+          <option value="">
+            請選擇組別
+          </option>
+
+          <option value="製一氬焊部">
+            製一氬焊部
+          </option>
+
+          <option value="製造部">
+            製造部
+          </option>
+
+          <option value="品質部">
+            品質部
+          </option>
+
+          <option value="工程部">
+            工程部
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- 人員 -->
+      <div class="manager-field">
+
+        <label for="managerEmployee">
+          人員
+        </label>
+
+        <select
+          id="managerEmployee"
+          disabled
+        >
+
+          <option value="">
+            請先選擇部門
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <!-- 選到人員後顯示 -->
+    <div
+      id="managerEmployeePreview"
+      class="manager-employee-preview hidden"
+    >
+
+      <span>
+        已選擇代訂人員
+      </span>
+
+      <strong id="managerEmployeeName">
+        -
+      </strong>
+
+      <small id="managerEmployeeDetail">
+        -
+      </small>
+
+    </div>
+
+  </div>
+
+
+  <!-- STEP 2 -->
+<div class="manager-order-card">
+
+  <div class="manager-order-title">
+
+    <span class="manager-step">
+      2
+    </span>
+
+    <div>
+      <h2>
+        設定下週用餐安排
+      </h2>
+
+      <p>
+        系統已自動帶入下週週一至週五，請逐日選擇用餐方式
+      </p>
+    </div>
+
+  </div>
+
+
+  <!-- 下週日期提示 -->
+  <div
+    id="managerWeekRange"
+    class="manager-week-range"
+  >
+    正在讀取下週日期...
+  </div>
+<div class="manager-default-meal-settings">
+
+  <div class="manager-default-meal-title">
+    <strong>
+      預設便當條件
+    </strong>
+
+    <span>
+      點選便當時會自動套用
+    </span>
+  </div>
+
+
+  <div class="manager-form-grid">
+
+    <div class="manager-field">
+
+      <label for="managerDefaultFactory">
+        預設廠區
+      </label>
+
+      <select id="managerDefaultFactory">
+
+        <option value="">
+          請選擇廠區
+        </option>
+
+        <option value="一廠">
+          一廠
+        </option>
+
+        <option value="二廠">
+          二廠
+        </option>
+
+        <option value="三廠">
+          三廠
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <div class="manager-field">
+
+      <label for="managerDefaultFoodType">
+        預設葷／素
+      </label>
+
+      <select id="managerDefaultFoodType">
+
+        <option value="">
+          請選擇葷素
+        </option>
+
+        <option value="葷食">
+          葷食
+        </option>
+
+        <option value="素食">
+          素食
+        </option>
+
+      </select>
+
+    </div>
+
+  </div>
+
+</div>
+
+  <!-- JavaScript 自動產生週一～週五 -->
+  <div
+    id="managerWeeklyMeals"
+    class="manager-weekly-meals"
+  >
+  </div>
+
+</div>
+
+  <!-- STEP 3 -->
+<div class="manager-order-card">
+
+  <div class="manager-order-title">
+
+    <span class="manager-step">
+      3
+    </span>
+
+    <div>
+      <h2>
+        確認整週代訂
+      </h2>
+
+      <p>
+        請確認代訂人員與下週用餐安排
+      </p>
+    </div>
+
+  </div>
+
+
+  <div class="manager-order-summary">
+
+    <div>
+      <span>
+        代訂人員
+      </span>
+
+      <strong id="managerSummaryEmployee">
+        尚未選擇
+      </strong>
+    </div>
+
+
+    <div>
+      <span>
+        訂餐週次
+      </span>
+
+      <strong id="managerSummaryWeek">
+        正在讀取...
+      </strong>
+    </div>
+
+  </div>
+
+
+  <!-- 整週摘要 -->
+  <div
+    id="managerWeeklySummary"
+    class="manager-weekly-summary"
+  >
+    請先設定週一至週五的用餐方式
+  </div>
+
+
+  <button
+    id="btnManagerOrderSubmit"
+    type="button"
+    class="manager-submit-btn"
+    disabled
+  >
+    確認整週代訂
+  </button>
+
+</div>
+
+</section>
+<!-- =========================
+     管理者代訂紀錄
+========================= -->
+<section
+  id="managerHistoryPage"
+  class="manager-order-page hidden"
+>
+  <div class="manager-order-shell">
+
+    <div class="manager-order-header">
+      <button
+        id="btnManagerHistoryBack"
+        type="button"
+        class="manager-back-btn"
+      >
+        ← 返回首頁
+      </button>
+
+      <div>
+        <h1>代訂紀錄</h1>
+        <p>
+          查看本週已完成的代訂資料
+        </p>
+      </div>
+    </div>
+
+    <div class="manager-order-card">
+
+      <div class="manager-order-title">
+        <div>
+          <h2>本週代訂紀錄</h2>
+          <p id="managerHistoryWeek">
+            正在讀取訂餐週次...
+          </p>
+        </div>
+      </div>
+<div
+  id="managerHistoryTools"
+  class="manager-history-tools hidden"
+>
+
+  <div class="manager-history-count">
+    已代訂
+    <strong id="managerHistoryCount">
+      0
+    </strong>
+    人
+  </div>
+
+  <input
+    id="managerHistorySearch"
+    type="search"
+    placeholder="搜尋姓名或工號"
+    autocomplete="off"
+  >
+
+</div>
+      <div
+        id="managerHistoryLoading"
+        class="manager-history-message"
+      >
+        正在讀取代訂紀錄...
+      </div>
+
+      <div
+        id="managerHistoryEmpty"
+        class="manager-history-message hidden"
+      >
+        本週尚無代訂紀錄
+      </div>
+
+      <div
+        id="managerHistoryList"
+        class="manager-history-list hidden"
+      >
+      </div>
+
+    </div>
+
+  </div>
+</section>
+  </main>
+
+
+  <script src="js/config.js"></script>
+<script src="manager.js"></script>
+
+</body>
+
+</html>
