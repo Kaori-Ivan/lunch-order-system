@@ -4627,11 +4627,56 @@ function formatOrderWeek(weekDate) {
 
   return `${startText}～${endText}`;
 }
-function getFilteredWeeklyOrders() {
+
+function getWeeklyOrdersForDisplay() {
   const orders =
     weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
       ? weeklyOrderSummaryData.data
       : [];
+
+  const displayOrders = [];
+  const proxyMap = new Map();
+
+  orders.forEach((order) => {
+    // 一般訂餐照原本顯示
+    if (order.source !== "managerProxy") {
+      displayOrders.push({
+        ...order,
+        displayQuantity: 1,
+        displaySource: "一般訂餐",
+      });
+
+      return;
+    }
+
+    // 管理者代訂合併
+    const key = [
+      order.employeeId || "",
+      order.date || "",
+      order.mealType || "",
+      order.factory || "",
+      order.diet || "",
+    ].join("|");
+
+    if (!proxyMap.has(key)) {
+      proxyMap.set(key, {
+        ...order,
+        displayQuantity: 0,
+        displaySource: "管理者代訂",
+      });
+    }
+
+    const target = proxyMap.get(key);
+
+    target.displayQuantity += 1;
+  });
+
+  displayOrders.push(...proxyMap.values());
+
+  return displayOrders;
+}
+function getFilteredWeeklyOrders() {
+  const orders = getWeeklyOrdersForDisplay();
 
   const keyword = String(orderFilters.keyword || "")
     .trim()
@@ -4642,11 +4687,9 @@ function getFilteredWeeklyOrders() {
 
     const name = String(order.name || "").toLowerCase();
     // 日期
-const matchDate =
-  !orderFilters.date ||
-  String(order.date || "") ===
-    String(orderFilters.date || "");
-    
+    const matchDate =
+      !orderFilters.date ||
+      String(order.date || "") === String(orderFilters.date || "");
 
     // 工號／姓名
     const matchKeyword =
@@ -4743,6 +4786,8 @@ function ordersTable() {
               <th>用餐方式</th>
               <th>廠區</th>
               <th>葷／素</th>
+              <th>數量</th>
+              <th>來源</th>
               <th>最後修改</th>
             </tr>
           </thead>
@@ -4753,7 +4798,7 @@ function ordersTable() {
                 ? `
     <tr>
       <td
-        colspan="9"
+        colspan="11"
         style="
           text-align: center;
           padding: 40px 20px;
@@ -4843,7 +4888,15 @@ function ordersTable() {
                             }
                           </td>
 
-                          <td>${r.updatedAt}</td>
+                          <td>
+  ${r.mealType === "便當" ? `${r.displayQuantity || 1} 份` : "1 人"}
+</td>
+
+<td>
+  ${r.displaySource || "一般訂餐"}
+</td>
+
+<td>${r.updatedAt}</td>
 
                           
                         </tr>
@@ -7264,7 +7317,7 @@ async function exportFactoryCSV(factoryName) {
     const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
       method: "POST",
       body: JSON.stringify({
-        action: "getWeeklyDailyOrders",
+        action: "getWeeklyOrderSummaryWithProxy",
         date: targetDate,
       }),
     });
@@ -7272,11 +7325,11 @@ async function exportFactoryCSV(factoryName) {
     const result = await response.json();
 
     if (!result.success) {
-      throw new Error(result.message || "讀取每日訂單失敗");
+      throw new Error(result.message || "讀取下週訂單失敗");
     }
 
     if (!Array.isArray(result.data)) {
-      throw new Error("每日訂單資料格式不正確");
+      throw new Error("下週訂單資料格式不正確");
     }
 
     const clean = (value) => String(value ?? "").trim();
@@ -7355,6 +7408,7 @@ async function exportFactoryCSV(factoryName) {
           department: clean(order.department),
           group: clean(order.group),
           meals: Array(5).fill("—"),
+          quantities: Array(5).fill(0),
         });
       }
 
@@ -7367,8 +7421,11 @@ async function exportFactoryCSV(factoryName) {
         );
       }
 
-      // 同一工號同一天只列一次
+      // 同一工號同一天保留餐別
       person.meals[dayIndex] = meal;
+
+      // 每一筆代表一份便當
+      person.quantities[dayIndex] += 1;
     }
 
     const list = Array.from(people.values()).sort((a, b) =>
@@ -7382,14 +7439,24 @@ async function exportFactoryCSV(factoryName) {
       return;
     }
 
-    const meatCounts = dates.map(
-      (_, index) =>
-        list.filter((person) => person.meals[index] === "葷").length,
+    const meatCounts = dates.map((_, index) =>
+      list.reduce((total, person) => {
+        if (person.meals[index] !== "葷") {
+          return total;
+        }
+
+        return total + person.quantities[index];
+      }, 0),
     );
 
-    const vegetarianCounts = dates.map(
-      (_, index) =>
-        list.filter((person) => person.meals[index] === "素").length,
+    const vegetarianCounts = dates.map((_, index) =>
+      list.reduce((total, person) => {
+        if (person.meals[index] !== "素") {
+          return total;
+        }
+
+        return total + person.quantities[index];
+      }, 0),
     );
 
     const rows = [
@@ -7412,7 +7479,16 @@ async function exportFactoryCSV(factoryName) {
         person.name,
         person.department,
         person.group,
-        ...person.meals,
+
+        ...person.meals.map((meal, index) => {
+          if (meal === "—") {
+            return "—";
+          }
+
+          const quantity = person.quantities[index] || 1;
+
+          return quantity > 1 ? `${meal}×${quantity}` : meal;
+        }),
       ]),
       [],
       ["葷食人數", "", "", "", ...meatCounts],
