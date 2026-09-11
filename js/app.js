@@ -1293,7 +1293,7 @@ function updateConditionState() {
 
     nextButton.disabled = false;
 
-    notice("conditionNotice", "info", t("noLunchSelected"));
+    noticeKey("conditionNotice", "info", "noLunchSelected");
 
     return;
   }
