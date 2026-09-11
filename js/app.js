@@ -734,6 +734,7 @@ async function clearLocalUser() {
   // 只清除已記住的使用者
   clearSavedUser();
   clearUserSession();
+  clearSavedQRCodeContext();
 
   // 清除目前前端狀態
   state.user = null;
@@ -2489,34 +2490,6 @@ async function initializeApp() {
 
     if (qrParams.dept && qrParams.group) {
       await scanQRCode(qrParams.dept, qrParams.group);
-
-      return;
-    }
-
-    /*
-     * 網址沒有部門時，
-     * 讀取已儲存的 QR Code 部門。
-     */
-    const savedQR = getSavedQRCodeContext();
-
-    if (savedQR && savedQR.dept && savedQR.group) {
-      await scanQRCode(savedQR.dept, savedQR.group);
-
-      return;
-    }
-    /*
-     * QR Code 部門資料不存在時，
-     * 再從已儲存的使用者資料取得部門。
-     *
-     * 使用者曾成功登入過，
-     * 重新整理後仍可自動查詢既有訂單。
-     */
-    const savedUser = getSavedUser();
-
-    const savedUserDept = String(savedUser?.dept || "").trim();
-
-    if (savedUserDept) {
-      await scanQRCode(savedUserDept);
 
       return;
     }
