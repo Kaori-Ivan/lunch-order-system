@@ -976,30 +976,88 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   historyList.addEventListener("click", (event) => {
-    const toggleButton = event.target.closest(".manager-history-toggle-btn");
+  // =========================
+  // 修改代訂
+  // =========================
+  const editButton = event.target.closest(
+    ".manager-history-edit-btn",
+  );
 
-    if (!toggleButton) {
+  if (editButton) {
+    const employeeId =
+      editButton.dataset.employeeId || "";
+
+    if (!employeeId) {
+      alert("無法取得代訂人員資料。");
       return;
     }
 
-    const card = toggleButton.closest(".manager-history-card");
+    const employee = employeeData.find(
+      (item) => item.id === employeeId,
+    );
 
-    if (!card) {
+    if (!employee) {
+      alert("找不到此員工資料，請重新進入新增代訂頁。");
       return;
     }
 
-    const days = card.querySelector(".manager-history-days");
+    historyPage.classList.add("hidden");
+    homePage.classList.add("hidden");
+    orderPage.classList.remove("hidden");
 
-    if (!days) {
-      return;
-    }
+    departmentSelect.value =
+      employee.group || currentManager?.group || "";
 
-    const isHidden = days.classList.contains("hidden");
+    departmentSelect.dispatchEvent(
+      new Event("change"),
+    );
 
-    days.classList.toggle("hidden");
+    employeeSelect.value = employee.id;
 
-    toggleButton.textContent = isHidden ? "收合明細 ▲" : "查看明細 ▼";
-  });
+    employeeSelect.dispatchEvent(
+      new Event("change"),
+    );
+
+    return;
+  }
+
+  // =========================
+  // 查看 / 收合明細
+  // =========================
+  const toggleButton = event.target.closest(
+    ".manager-history-toggle-btn",
+  );
+
+  if (!toggleButton) {
+    return;
+  }
+
+  const card = toggleButton.closest(
+    ".manager-history-card",
+  );
+
+  if (!card) {
+    return;
+  }
+
+  const days = card.querySelector(
+    ".manager-history-days",
+  );
+
+  if (!days) {
+    return;
+  }
+
+  const isHidden =
+    days.classList.contains("hidden");
+
+  days.classList.toggle("hidden");
+
+  toggleButton.textContent =
+    isHidden
+      ? "收合明細 ▲"
+      : "查看明細 ▼";
+});
 
   // =========================
   // 部門連動人員
@@ -1548,4 +1606,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // 啟動管理者代訂系統
   // =========================
   loadManagerSystemStatus();
-};);
+});
