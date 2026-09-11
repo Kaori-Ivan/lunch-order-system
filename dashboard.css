@@ -6451,6 +6451,14 @@ body:has(.dashboard-page) .info-card b {
   font-size: 14px;
 }
 
+/* 新增人員：必填欄位標題使用深色 */
+.modal:has(#newEmployeeId) .field:has(#newEmployeeId) label,
+.modal:has(#newEmployeeId) .field:has(#newEmployeeName) label,
+.modal:has(#newEmployeeId) .field:has(#newEmployeeGroup) label,
+.modal:has(#newEmployeeId) .field:has(#newEmployeeStatus) label {
+  color: #202522;
+  font-weight: 600;
+}
 
 .modal-actions {
   display: flex;
