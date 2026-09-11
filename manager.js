@@ -108,6 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // 整週用餐資料
   // =========================
   let weeklyMealState = {};
+  let managerHistoryRecords = [];
+  let editingEmployeeId = "";
   let isSubmitting = false;
 
   // =========================
@@ -688,6 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 進入新增代訂
   // =========================
   newOrderButton.addEventListener("click", async () => {
+    editingEmployeeId = "";
     newOrderButton.disabled = true;
 
     /*
@@ -793,6 +796,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const records = result.data || [];
+      managerHistoryRecords = records;
       historyCount.textContent = new Set(
         records.map((item) => item.employeeEmpId),
       ).size;
@@ -986,6 +990,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (editButton) {
     const employeeId =
       editButton.dataset.employeeId || "";
+      editingEmployeeId = employeeId;
 
     if (!employeeId) {
       alert("無法取得代訂人員資料。");
@@ -1014,12 +1019,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     employeeSelect.value = employee.id;
 
-    employeeSelect.dispatchEvent(
-      new Event("change"),
-    );
+employeeSelect.dispatchEvent(
+  new Event("change"),
+);
 
-    return;
-  }
+loadManagerExistingOrder(employee.id);
+submitButton.textContent = "更新整週代訂";
+
+return;
 
   // =========================
   // 查看 / 收合明細
@@ -1254,6 +1261,101 @@ document.addEventListener("DOMContentLoaded", () => {
   defaultFoodType.addEventListener("change", () => {
     syncManagerDefaultMealSettings();
   });
+
+  function loadManagerExistingOrder(employeeId) {
+      console.log("=== 開始載入修改代訂 ===");
+  console.log("employeeId =", employeeId);
+  console.log("managerHistoryRecords =", managerHistoryRecords);
+    
+    
+    const employeeRecords = managerHistoryRecords.filter(
+      (item) => item.employeeEmpId === employeeId,
+    );
+
+    if (employeeRecords.length === 0) {
+      alert("找不到此人員的代訂紀錄。");
+      return;
+    }
+
+    employeeRecords.forEach((record) => {
+      const recordDate = String(record.orderDate || "")
+  .trim()
+  .substring(0, 10);
+
+const dayEntry = Object.entries(weeklyMealState).find(
+  ([, meal]) => {
+    const mealDate = String(meal.date || "")
+      .trim()
+      .substring(0, 10);
+
+    return mealDate === recordDate;
+  },
+);
+
+      if (!dayEntry) {
+        return;
+      }
+
+      const [dayKey, meal] = dayEntry;
+
+      // 國定假日不覆蓋
+      if (meal.mealType === "國定假日") {
+        return;
+      }
+
+      meal.mealType = record.mealType || "";
+
+      if (record.mealType === "便當") {
+        meal.factory = record.factory || "";
+        meal.foodType = record.foodType || "";
+        meal.quantity = Number(record.quantity) || 1;
+      } else {
+        meal.factory = "";
+        meal.foodType = "";
+        meal.quantity = 1;
+      }
+
+      const radio = weeklyMeals.querySelector(
+        `[data-day="${dayKey}"][data-meal-type][value="${record.mealType}"]`,
+      );
+
+      if (radio) {
+        radio.checked = true;
+      }
+
+      const lunchboxFields = weeklyMeals.querySelector(
+        `[data-lunchbox-fields="${dayKey}"]`,
+      );
+
+      const quantityInput = weeklyMeals.querySelector(
+        `[data-quantity="${dayKey}"]`,
+      );
+
+      if (record.mealType === "便當") {
+        lunchboxFields?.classList.remove("hidden");
+
+        if (quantityInput) {
+          quantityInput.value = meal.quantity;
+        }
+
+        /*
+         * 目前頁面只有一組預設廠區 / 葷素，
+         * 先帶入既有便當設定。
+         */
+        if (record.factory) {
+          defaultFactory.value = record.factory;
+        }
+
+        if (record.foodType) {
+          defaultFoodType.value = record.foodType;
+        }
+      } else {
+        lunchboxFields?.classList.add("hidden");
+      }
+    });
+
+    updateSummary();
+  }
   function formatManagerHistoryDate(dateText) {
     if (!dateText) {
       return "";
