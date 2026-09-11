@@ -7214,15 +7214,29 @@ async function exportCSV() {
     }
 
     let orders = Array.isArray(result.data) ? result.data : [];
-    // 加入管理者代訂資料，不影響原本每日訂單明細
-    const proxyOrders =
-      weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
-        ? weeklyOrderSummaryData.data.filter(
-            (order) => order.source === "managerProxy",
-          )
-        : [];
 
+    // =========================
+    // 讀取管理者代訂完整每日明細
+    // =========================
+    const proxyResponse = await fetch(APP_CONFIG.ADMIN_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getManagerProxyDailyOrders",
+        date: targetDate,
+      }),
+    });
+
+    const proxyResult = await proxyResponse.json();
+
+    if (!proxyResult.success) {
+      throw new Error(proxyResult.message || "讀取管理者代訂明細失敗");
+    }
+
+    const proxyOrders = Array.isArray(proxyResult.data) ? proxyResult.data : [];
+
+    // 原本一般訂餐完整保留，再加入管理者代訂
     orders = [...orders, ...proxyOrders];
+    
 
     // =========================
     // 套用目前畫面的查詢條件
@@ -7266,7 +7280,18 @@ async function exportCSV() {
     // =========================
 
     const rows = [
-      ["日期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
+      [
+        "日期",
+        "工號",
+        "姓名",
+        "部門",
+        "組別",
+        "用餐方式",
+        "廠區",
+        "葷／素",
+        "數量",
+        "來源",
+      ],
 
       ...orders.map((order) => [
         order.date || "",
@@ -7277,6 +7302,8 @@ async function exportCSV() {
         order.mealType || "",
         order.factory || "",
         order.diet || "",
+        order.quantity || "",
+        order.source === "managerProxy" ? "管理者代訂" : "一般訂餐",
       ]),
     ];
 
