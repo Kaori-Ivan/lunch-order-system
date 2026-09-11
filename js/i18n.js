@@ -542,6 +542,11 @@ const DEPARTMENT_TRANSLATIONS = {
     th: "ฝ่ายผลิตเซลล์เชื้อเพลิง",
     vi: "Bộ phận sản xuất pin nhiên liệu",
   }, */
+  燃料電池事業部: {
+    "zh-TW": "燃料電池事業部",
+    th: "ฝ่ายธุรกิจเซลล์เชื้อเพลิง",
+    vi: "Khối kinh doanh pin nhiên liệu",
+  },
   燃料電池事業處: {
     "zh-TW": "燃料電池事業處",
     th: "ฝ่ายธุรกิจเซลล์เชื้อเพลิง",
