@@ -1188,6 +1188,8 @@ const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
   }
 
   function setManagerOrderFormLocked(locked) {
+    orderPage.classList.toggle("is-submitting", locked);
+
     backButton.disabled = locked;
     departmentSelect.disabled = locked;
     employeeSelect.disabled = locked;
@@ -1333,6 +1335,9 @@ const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
       // =========================
       // 上樓用餐 / 不用餐
       // =========================
+      if (meal.mealType === "上樓用餐") {
+        hasActualMeal = true;
+      }
       summaryLines.push(`
       <div class="manager-week-summary-row">
 

@@ -1440,3 +1440,30 @@ body {
   }
 
 }
+/* =========================
+   代訂送出中鎖定畫面
+========================= */
+
+.manager-order-page.is-submitting {
+  position: relative;
+  pointer-events: none;
+  user-select: none;
+}
+
+.manager-order-page.is-submitting::after {
+  content: "訂單送出中，請稍候...";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+
+  color: #24415f;
+  font-size: 18px;
+  font-weight: 700;
+}
