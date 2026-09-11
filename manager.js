@@ -253,6 +253,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // 讀取下週休假日
   // =========================
   async function loadManagerWeekHolidays() {
+    console.log(
+      "送出 action =",
+      editingEmployeeId
+        ? "updateManagerProxyWeekOrder"
+        : "saveManagerProxyWeekOrder",
+    );
+
+    console.log("送出前 editingEmployeeId =", editingEmployeeId);
     const result = await managerApiPost({
       action: "getWeekHolidayStatus",
       weekKey: managerTargetWeekKey,
