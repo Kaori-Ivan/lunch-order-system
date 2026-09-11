@@ -3690,6 +3690,15 @@ async function exportCurrentWeekFilteredOrders() {
     }
 
     let orders = Array.isArray(result.data) ? result.data : [];
+    // 加入管理者代訂資料，不影響原本每日訂單明細
+    const proxyOrders =
+      weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
+        ? weeklyOrderSummaryData.data.filter(
+            (order) => order.source === "managerProxy",
+          )
+        : [];
+
+    orders = [...orders, ...proxyOrders];
 
     // =========================
     // 套用本週目前的查詢條件
