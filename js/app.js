@@ -2037,11 +2037,7 @@ async function buildReview() {
     workingDayMeals.every((mealType) => mealType === "不用餐");
 
   if (allNoMeal) {
-    notice(
-      "orderNotice",
-      "danger",
-      "請至少選擇一天用餐。",
-    );
+    noticeKey("orderNotice", "danger", "atLeastOneMeal");
 
     return;
   }
