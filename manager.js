@@ -96,11 +96,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 正式人員資料
   // =========================
-let employeeData = [];
-let managerEmployeesLoaded = false;
-let managerEmployeesLoadingPromise = null;
+  let employeeData = [];
+  let managerEmployeesLoaded = false;
+  let managerEmployeesLoadingPromise = null;
 
-const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
+  const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
   // 目前登入的管理者
   let currentManager = null;
 
@@ -950,6 +950,31 @@ const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
 
     homePage.classList.remove("hidden");
   });
+  // =========================
+  // 代訂紀錄搜尋
+  // =========================
+  historySearch.addEventListener("input", () => {
+    const keyword = historySearch.value.trim().toLowerCase();
+
+    const cards = historyList.querySelectorAll(".manager-history-card");
+
+    cards.forEach((card) => {
+      const employeeId = card.dataset.employeeId?.toLowerCase() || "";
+
+      const employeeName =
+        card
+          .querySelector(".manager-history-person strong")
+          ?.textContent?.trim()
+          ?.toLowerCase() || "";
+
+      const matched =
+        !keyword ||
+        employeeId.includes(keyword) ||
+        employeeName.includes(keyword);
+
+      card.classList.toggle("hidden", !matched);
+    });
+  });
   historyList.addEventListener("click", (event) => {
     const toggleButton = event.target.closest(".manager-history-toggle-btn");
 
@@ -1438,7 +1463,6 @@ const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
         continue;
       }
 
-
       if (meal.mealType === "上樓用餐") {
         hasActualMeal = true;
       }
@@ -1524,4 +1548,4 @@ const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
   // 啟動管理者代訂系統
   // =========================
   loadManagerSystemStatus();
-});
+};);
