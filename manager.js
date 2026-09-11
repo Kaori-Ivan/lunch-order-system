@@ -1027,7 +1027,7 @@ loadManagerExistingOrder(employee.id);
 submitButton.textContent = "更新整週代訂";
 
 return;
-
+}
   // =========================
   // 查看 / 收合明細
   // =========================
@@ -1269,8 +1269,12 @@ return;
     
     
     const employeeRecords = managerHistoryRecords.filter(
-      (item) => item.employeeEmpId === employeeId,
-    );
+  (item) =>
+    String(item.employeeEmpId || "").trim() ===
+    String(employeeId || "").trim(),
+);
+
+console.log("employeeRecords =", employeeRecords);
 
     if (employeeRecords.length === 0) {
       alert("找不到此人員的代訂紀錄。");
