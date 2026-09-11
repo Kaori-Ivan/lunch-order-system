@@ -8649,7 +8649,7 @@ async function loadWeeklyOrderSummary(targetDate) {
   const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
     method: "POST",
     body: JSON.stringify({
-      action: "getWeeklyOrderSummary",
+      action: "getWeeklyOrderSummaryWithProxy",
       date: targetDate,
     }),
   });
