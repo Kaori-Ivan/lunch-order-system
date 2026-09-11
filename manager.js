@@ -122,79 +122,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // 呼叫原訂餐系統 API
   // =========================
   async function managerApiPost(payload) {
-    let lastError = null;
+    const controller = new AbortController();
 
-    for (let attempt = 0; attempt <= MANAGER_API_RETRY_COUNT; attempt += 1) {
-      const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
 
-      const timeout = setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await fetch(APP_CONFIG.USER_API_URL, {
+        method: "POST",
 
-      try {
-        const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
-          method: "POST",
+        body: JSON.stringify(payload),
 
-          body: JSON.stringify({
-            action: "getEmployees",
-          }),
+        signal: controller.signal,
+      });
 
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.message || "讀取人員資料失敗");
-        }
-
-        employeeData = (result.data || [])
-          .filter((employee) => {
-            return employee.enabled === true;
-          })
-          .map((employee) => {
-            return {
-              id: employee.employeeId,
-              name: employee.name,
-              department: employee.department,
-              group: employee.group || "",
-              role: employee.role || "",
-            };
-          });
-
-        managerEmployeesLoaded = true;
-
-        sessionStorage.setItem(
-          MANAGER_EMPLOYEE_CACHE_KEY,
-          JSON.stringify(employeeData),
-        );
-
-        sessionStorage.setItem(
-          MANAGER_EMPLOYEE_CACHE_TIME_KEY,
-          String(Date.now()),
-        );
-
-        console.log("管理者代訂人員資料：", employeeData);
-
-        return;
-      } catch (error) {
-        lastError = error;
-
-        console.warn(`讀取人員資料失敗，第 ${attempt + 1} 次：`, error);
-
-        if (attempt < MANAGER_API_RETRY_COUNT) {
-          await new Promise((resolve) => {
-            setTimeout(resolve, MANAGER_API_RETRY_DELAY);
-          });
-        }
-      } finally {
-        clearTimeout(timeout);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
-    }
 
-    throw lastError;
+      return await response.json();
+    } finally {
+      clearTimeout(timeout);
+    }
   }
   // =========================
   // 讀取正式員工資料
@@ -257,61 +205,79 @@ document.addEventListener("DOMContentLoaded", () => {
       // =========================
       // 沒有快取才呼叫正式 API
       // =========================
-      const controller = new AbortController();
+      let lastError = null;
 
-      const timeout = setTimeout(() => controller.abort(), 12000);
+      for (let attempt = 0; attempt <= MANAGER_API_RETRY_COUNT; attempt += 1) {
+        const controller = new AbortController();
 
-      try {
-        const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
-          method: "POST",
+        const timeout = setTimeout(() => controller.abort(), 12000);
 
-          body: JSON.stringify({
-            action: "getEmployees",
-          }),
+        try {
+          const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+            method: "POST",
 
-          signal: controller.signal,
-        });
+            body: JSON.stringify({
+              action: "getEmployees",
+            }),
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-          throw new Error(result.message || "讀取人員資料失敗");
-        }
-
-        employeeData = (result.data || [])
-          .filter((employee) => {
-            return employee.enabled === true;
-          })
-          .map((employee) => {
-            return {
-              id: employee.employeeId,
-              name: employee.name,
-              department: employee.department,
-              group: employee.group || "",
-              role: employee.role || "",
-            };
+            signal: controller.signal,
           });
 
-        managerEmployeesLoaded = true;
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
 
-        sessionStorage.setItem(
-          MANAGER_EMPLOYEE_CACHE_KEY,
-          JSON.stringify(employeeData),
-        );
+          const result = await response.json();
 
-        sessionStorage.setItem(
-          MANAGER_EMPLOYEE_CACHE_TIME_KEY,
-          String(Date.now()),
-        );
+          if (!result.success) {
+            throw new Error(result.message || "讀取人員資料失敗");
+          }
 
-        console.log("管理者代訂人員資料：", employeeData);
-      } finally {
-        clearTimeout(timeout);
+          employeeData = (result.data || [])
+            .filter((employee) => {
+              return employee.enabled === true;
+            })
+            .map((employee) => {
+              return {
+                id: employee.employeeId,
+                name: employee.name,
+                department: employee.department,
+                group: employee.group || "",
+                role: employee.role || "",
+              };
+            });
+
+          managerEmployeesLoaded = true;
+
+          sessionStorage.setItem(
+            MANAGER_EMPLOYEE_CACHE_KEY,
+            JSON.stringify(employeeData),
+          );
+
+          sessionStorage.setItem(
+            MANAGER_EMPLOYEE_CACHE_TIME_KEY,
+            String(Date.now()),
+          );
+
+          console.log("管理者代訂人員資料：", employeeData);
+
+          return;
+        } catch (error) {
+          lastError = error;
+
+          console.warn(`讀取人員資料失敗，第 ${attempt + 1} 次：`, error);
+
+          if (attempt < MANAGER_API_RETRY_COUNT) {
+            await new Promise((resolve) => {
+              setTimeout(resolve, MANAGER_API_RETRY_DELAY);
+            });
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
       }
+
+      throw lastError;
     })();
 
     try {
