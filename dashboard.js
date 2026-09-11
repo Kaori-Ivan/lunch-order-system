@@ -318,7 +318,6 @@ const historyPeriods = [
   },
 ];
 
-
 let page = "dashboard";
 /* ========================================
    休假日設定
@@ -328,6 +327,14 @@ let holidays = [];
 
 let holidaysLoaded = false;
 let holidaysLoading = false;
+
+/* ========================================
+   訂餐截止時間設定
+======================================== */
+
+let deadlineSettingData = null;
+let deadlineSettingLoaded = false;
+let deadlineSettingLoading = false;
 /* ========================================
    人員資料管理
 ======================================== */
@@ -342,7 +349,7 @@ async function loadEmployees() {
   }
 
   try {
-    const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+    const response = await fetchWithTimeout(APP_CONFIG.ADMIN_API_URL, {
       method: "POST",
       body: JSON.stringify({
         action: "getEmployees",
@@ -404,6 +411,40 @@ async function loadHolidays() {
     throw error;
   }
 }
+async function loadDeadlineSetting() {
+  const nextWeek = getNextWeekRange();
+
+  const targetWeekKey = nextWeek.startDateValue;
+
+  try {
+    const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getDeadlineSetting",
+
+        targetWeekKey: targetWeekKey,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "讀取截止時間設定失敗");
+    }
+
+    deadlineSettingData = result.setting;
+
+    deadlineSettingLoaded = true;
+
+    console.log("截止時間設定讀取成功：", deadlineSettingData);
+  } catch (error) {
+    console.error("截止時間設定讀取失敗：", error);
+
+    deadlineSettingLoaded = false;
+
+    throw error;
+  }
+}
 async function loadHolidaysAndRender() {
   if (holidaysLoaded) {
     render();
@@ -428,6 +469,36 @@ async function loadHolidaysAndRender() {
 
     // ★ 關鍵：資料回來後重新畫一次
     if (page === "holidays") {
+      render();
+    }
+  }
+}
+async function loadDeadlineSettingAndRender() {
+  console.log("★★ 進入 loadDeadlineSettingAndRender", {
+    deadlineSettingLoaded,
+    deadlineSettingLoading,
+  });
+  if (deadlineSettingLoaded) {
+    render();
+    return;
+  }
+
+  if (deadlineSettingLoading) {
+    return;
+  }
+
+  deadlineSettingLoading = true;
+
+  render();
+
+  try {
+    await loadDeadlineSetting();
+  } catch (error) {
+    console.error("載入截止時間設定失敗：", error);
+  } finally {
+    deadlineSettingLoading = false;
+
+    if (page === "deadline-settings") {
       render();
     }
   }
@@ -476,6 +547,7 @@ let selectedSpecialOrderDate = "";
 /* 訂餐管理目前開啟的分頁 */
 let orderTab = "next-week";
 let orderFilters = {
+  date: "",
   keyword: "",
   group: "",
   mealType: "",
@@ -499,6 +571,7 @@ let nextWeekOrderSubmittedAt = "";
 let currentWeekPageNo = 1;
 const currentWeekPageSize = 8;
 let currentWeekFilters = {
+  date: "",
   keyword: "",
   group: "",
   diningMethod: "",
@@ -615,6 +688,18 @@ function renderNavigation() {
   </span>
 </button>
 
+<button
+  type="button"
+  class="nav-subitem ${page === "deadline-settings" ? "active" : ""}"
+  data-page="deadline-settings"
+>
+  <span class="nav-subitem-icon">🕒</span>
+
+  <span>
+    訂餐截止時間設定
+  </span>
+</button>
+
     </div>
   `;
 }
@@ -635,6 +720,9 @@ nav.addEventListener("click", (event) => {
     // 本週供餐使用自己的分頁狀態
     if (orderTab === "current-week") {
       currentWeekPageNo = 1;
+
+      loadCurrentWeekOrdersAndRender();
+      return;
     }
 
     if (orderTab === "next-week") {
@@ -672,6 +760,10 @@ nav.addEventListener("click", (event) => {
 
   if (page === "holidays") {
     loadHolidaysAndRender();
+    return;
+  }
+  if (page === "deadline-settings") {
+    loadDeadlineSettingAndRender();
     return;
   }
 
@@ -737,6 +829,21 @@ function setHeader() {
     return;
   }
 
+  // 訂餐截止時間設定
+  if (page === "deadline-settings") {
+    pageTitle.innerHTML = `
+    <span class="deadline-title-icon">⚙️</span>
+    訂餐截止時間設定
+  `;
+
+    pageSubtitle.textContent = "設定本週訂餐的截止日期與時間。";
+
+    if (topActions) {
+      topActions.innerHTML = "";
+    }
+
+    return;
+  }
   // 其餘頁面恢復日期卡
   if (topActions) {
     topActions.innerHTML = `
@@ -757,6 +864,33 @@ function setHeader() {
   if (page === "dashboard") {
     pageTitle.textContent = "首頁總覽";
     pageSubtitle.textContent = "快速掌握下週訂餐與本週供餐狀況";
+
+    if (topActions) {
+      const refreshButton = document.createElement("button");
+
+      refreshButton.type = "button";
+      refreshButton.className = "btn btn-outline";
+      refreshButton.id = "refreshDashboardBtn";
+      refreshButton.title = "重新整理";
+      refreshButton.setAttribute("aria-label", "重新整理");
+
+
+
+      refreshButton.innerHTML = `
+  <span class="refresh-icon">⟳</span>
+`;
+
+      refreshButton.addEventListener("click", () => {
+        refreshButton.disabled = true;
+        refreshButton.classList.add("is-loading");
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 250);
+      });
+
+      topActions.insertBefore(refreshButton, topActions.firstElementChild);
+    }
 
     return;
   }
@@ -793,6 +927,7 @@ function render() {
     orders: ordersView,
     employees: employeesView,
     holidays: holidaysView,
+    "deadline-settings": deadlineSettingsView,
   };
 
   const selectedView = pageViews[page];
@@ -1327,6 +1462,153 @@ function holidaysView() {
   </div>
 `;
 }
+function deadlineSettingsView() {
+  const currentWeek = getCurrentWeekRange();
+
+  const nextWeek = getNextWeekRange();
+
+  // 本週星期一
+  const currentMonday = new Date(`${currentWeek.startDateValue}T00:00:00`);
+
+  // 本週星期四 = 本週星期一 + 3 天
+  const deadlineThursday = new Date(currentMonday);
+
+  deadlineThursday.setDate(currentMonday.getDate() + 3);
+
+  const defaultDeadlineDate = formatDate(deadlineThursday);
+  const currentDeadlineDate =
+    deadlineSettingData?.deadlineDate || formatDateValue(deadlineThursday);
+
+  const currentDeadlineTime = deadlineSettingData?.deadlineTime || "17:00";
+
+  const currentDeadlineDateObject = new Date(`${currentDeadlineDate}T00:00:00`);
+
+  const currentDeadlineDisplay = formatDate(currentDeadlineDateObject);
+
+  return `
+    <div class="deadline-settings-page">
+
+      <!-- 目前設定 -->
+      <section class="card deadline-current-card">
+
+        <div class="deadline-current-header">
+          <span class="deadline-current-icon">
+            🕒
+          </span>
+
+          <h3>
+            目前設定（本週）
+          </h3>
+        </div>
+
+
+        <div class="deadline-current-content">
+
+          <div class="deadline-current-block">
+
+            <span class="deadline-current-label">
+              本週訂餐截止時間
+            </span>
+
+            <strong class="deadline-current-value">
+  ${currentDeadlineDisplay}　${currentDeadlineTime}
+</strong>
+
+          </div>
+
+
+          <div class="deadline-current-divider"></div>
+
+
+          <div class="deadline-current-block">
+
+            <span class="deadline-current-label">
+              📅 本週訂餐週期
+            </span>
+
+            <strong class="deadline-current-range">
+              ${nextWeek.startDate}
+              ～
+              ${nextWeek.endDate}
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+            <!-- 調整本週截止時間 -->
+      <section class="card deadline-edit-card">
+
+        <div class="deadline-edit-header">
+          <span class="deadline-edit-icon">
+            ✏️
+          </span>
+
+          <h3>
+            調整本週截止時間
+          </h3>
+        </div>
+
+
+        <div class="deadline-edit-grid">
+
+          <div class="field deadline-field">
+            <label for="deadlineDateInput">
+              截止日期
+            </label>
+
+            <input
+              type="date"
+              id="deadlineDateInput"
+              value="${currentDeadlineDate}"
+            >
+          </div>
+
+
+          <div class="field deadline-field">
+            <label for="deadlineTimeInput">
+              截止時間
+            </label>
+
+            <select id="deadlineTimeInput">
+  ${Array.from({ length: 48 }, (_, index) => {
+    const hour = String(Math.floor(index / 2)).padStart(2, "0");
+
+    const minute = index % 2 === 0 ? "00" : "30";
+
+    const timeValue = `${hour}:${minute}`;
+
+    return `
+      <option
+        value="${timeValue}"
+        ${timeValue === currentDeadlineTime ? "selected" : ""}
+      >
+        ${timeValue}
+      </option>
+    `;
+  }).join("")}
+</select>
+          </div>
+
+        </div>
+
+
+        <div class="deadline-edit-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="saveDeadlineBtn"
+          >
+            💾 儲存設定
+          </button>
+        </div>
+
+      </section>
+
+    </div>
+  `;
+}
 function createEmployeePagination(totalPages) {
   if (totalPages <= 1) {
     return `
@@ -1393,29 +1675,8 @@ function createEmployeePagination(totalPages) {
     .join("");
 }
 function dashboardView() {
-  const orderSummary = getNextWeekOrderSummary();
-  const serviceDays = getNextWeekWorkdays().length;
-
-  const weeklyLunchBoxTotal = orderSummary.lunchBoxTotal * serviceDays;
-
-  const weeklyUpstairsTotal = orderSummary.dineUpstairs * serviceDays;
-
-  const nextWeek = {
-    start: dashboardData.nextWeek.startDate,
-    end: dashboardData.nextWeek.endDate,
-
-    lunchBoxTotal: orderSummary.lunchBoxTotal,
-    dineUpstairs: orderSummary.dineUpstairs,
-    meat: orderSummary.meat,
-    vegetarian: orderSummary.vegetarian,
-
-    newcomer: getNextWeekNewcomerTotal(),
-
-    deadline: "07/18（五）12:00",
-    remaining: "2 天 03:24:45",
-  };
-
-  const factorySummary = getNextWeekFactorySummary();
+  // 下週首頁改用真正的每日統計
+  const nextWeekDailySummary = getNextWeekDailySummary();
 
   const currentWeekServiceDays = getCurrentWeekWorkdays(
     dashboardData.currentWeek.startDate,
@@ -1454,15 +1715,14 @@ function dashboardView() {
     vegetarianPerDay: currentWeekVegetarian,
 
     // 整週數量
-    lunchBoxWeeklyTotal:
-      currentWeekLunchBoxOrders.length * currentWeekServiceDays,
+    // 每日制：每一筆資料本身就代表一天，因此直接累計筆數
+    lunchBoxWeeklyTotal: currentWeekLunchBoxOrders.length,
 
-    dineUpstairsWeeklyTotal:
-      currentWeekUpstairsOrders.length * currentWeekServiceDays,
+    dineUpstairsWeeklyTotal: currentWeekUpstairsOrders.length,
 
-    meatWeeklyTotal: currentWeekMeat * currentWeekServiceDays,
+    meatWeeklyTotal: currentWeekMeat,
 
-    vegetarianWeeklyTotal: currentWeekVegetarian * currentWeekServiceDays,
+    vegetarianWeeklyTotal: currentWeekVegetarian,
 
     // 新人目前先保留舊資料
     newcomerTotal: getCurrentWeekNewcomerTotal(),
@@ -1473,154 +1733,189 @@ function dashboardView() {
   return `
     <div class="dashboard-page">
 
-      <!-- 上方：下週主要統計 -->
-      <div class="dashboard-metrics">
+            <!-- 上方：下週每日供餐 -->
+      <section class="card dashboard-daily-overview">
 
-        <div class="card dashboard-total-card dashboard-primary-card">
-          <div class="dashboard-metric-icon">🍱</div>
+        <div class="dashboard-daily-heading">
 
-          <div class="dashboard-total-content">
-            <span class="dashboard-label">下週便當總數</span>
+  <div>
+    <h3>📊 下週每日供餐概覽</h3>
 
-            <div class="dashboard-main-number">
-  <strong>${nextWeek.lunchBoxTotal}</strong>
-  <small>份／日</small>
+    <p>
+      依日期查看一廠、二廠及上樓用餐人數
+    </p>
+  </div>
+
+
+  <div class="dashboard-daily-actions">
+
+  <div class="dashboard-heading-export">
+
+    <span class="dashboard-heading-export-title">
+      📥 匯出明細
+    </span>
+
+    <button
+      type="button"
+      class="factory-export-button"
+      data-export-factory="一廠"
+    >
+      一廠 Excel
+    </button>
+
+    <button
+      type="button"
+      class="factory-export-button"
+      data-export-factory="二廠"
+    >
+      二廠 Excel
+    </button>
+
+  </div>
+
+
+  <button
+    type="button"
+    class="dashboard-daily-link"
+    data-order-nav="next-week"
+  >
+    前往「下週訂餐」查看明細 ›
+  </button>
+
 </div>
 
-<p class="dashboard-week-total">
-  下週預計共 ${weeklyLunchBoxTotal} 份
-</p>
-
-<div class="dashboard-meal-chips">
-  <span class="dashboard-chip meat-chip">
-    🍖 葷食 ${nextWeek.meat}／日
-  </span>
-
-  <span class="dashboard-chip veg-chip">
-    🌿 素食 ${nextWeek.vegetarian}／日
-  </span>
-</div>
-          </div>
-        </div>
-
-        <div class="card dashboard-small-metric dashboard-primary-card">
-          <div class="dashboard-small-icon dine-icon">🏠</div>
-
-          <div>
-            <span class="dashboard-label">下週上樓用餐</span>
-
-            <div class="dashboard-small-number dine-number">
-  <strong>${nextWeek.dineUpstairs}</strong>
-  <small>人／日</small>
 </div>
 
-<p class="dashboard-week-total">
-  下週固定共 ${weeklyUpstairsTotal} 人次
-</p>
 
-<span class="dashboard-note">
-  不含新人追加
-</span>
-          </div>
+        <div class="dashboard-daily-grid">
+
+          ${nextWeekDailySummary
+            .map(
+              (day) => `
+                <article class="dashboard-day-card">
+
+                  <div class="dashboard-day-date">
+                    ${day.displayDate}（${day.weekday}）
+                  </div>
+
+
+                  <!-- 一廠 -->
+                  <div class="dashboard-day-row">
+
+                    <div class="dashboard-day-row-title">
+                      <span class="dashboard-day-icon factory-one-icon">
+                        🍱
+                      </span>
+
+                      <span>一廠便當</span>
+                    </div>
+
+                    <div class="dashboard-day-number">
+                      <strong>${day.factory1.total}</strong>
+                      <small>人</small>
+                    </div>
+
+                    <div class="dashboard-day-diet">
+                      <span class="meat-text">
+                        葷 ${day.factory1.meat}
+                      </span>
+
+                      <span class="dashboard-day-divider"></span>
+
+                      <span class="veg-text">
+                        素 ${day.factory1.vegetarian}
+                      </span>
+                    </div>
+
+                  </div>
+
+
+                  <!-- 二廠 -->
+                  <div class="dashboard-day-row">
+
+                    <div class="dashboard-day-row-title">
+                      <span class="dashboard-day-icon factory-two-icon">
+                        🍱
+                      </span>
+
+                      <span>二廠便當</span>
+                    </div>
+
+                    <div class="dashboard-day-number">
+                      <strong>${day.factory2.total}</strong>
+                      <small>人</small>
+                    </div>
+
+                    <div class="dashboard-day-diet">
+                      <span class="meat-text">
+                        葷 ${day.factory2.meat}
+                      </span>
+
+                      <span class="dashboard-day-divider"></span>
+
+                      <span class="veg-text">
+                        素 ${day.factory2.vegetarian}
+                      </span>
+                    </div>
+
+                  </div>
+
+
+                  <!-- 上樓 -->
+                  <div class="dashboard-day-row dashboard-day-upstairs">
+
+                    <div class="dashboard-day-row-title">
+                      <span class="dashboard-day-icon upstairs-icon">
+                        🏠
+                      </span>
+
+                      <span>上樓用餐</span>
+                    </div>
+
+                    <div class="dashboard-day-number upstairs-number">
+                      <strong>${day.upstairs}</strong>
+                      <small>人</small>
+                    </div>
+
+                  </div>
+
+
+                  <!-- 當日總計 -->
+                  <div class="dashboard-day-total">
+
+                    <div>
+                      <span class="dashboard-day-total-icon">
+                        👥
+                      </span>
+
+                      <strong>當日總計</strong>
+                    </div>
+
+                    <div>
+                      <strong>${day.total}</strong>
+                      <small>人</small>
+                    </div>
+
+                  </div>
+
+                </article>
+              `,
+            )
+            .join("")}
+
         </div>
 
-        <div class="card dashboard-small-metric newcomer-card">
-          <div class="dashboard-small-icon newcomer-icon">👤</div>
-
-          <div>
-            <div class="dashboard-label-row">
-              <span class="dashboard-label">下周新人用餐</span>
-              <span class="newcomer-badge">提醒</span>
-            </div>
-
-            <div class="dashboard-small-number newcomer-number">
-              <strong>${nextWeek.newcomer}</strong>
-              <small>人</small>
-            </div>
-
-            <p>不含於固定上樓人數</p>
-          </div>
-        </div>
+      </section>
 
         <!-- 下週訂單分廠匯出 -->
-<div class="card factory-export-card">
 
-  <div class="factory-export-title">
-    <span class="factory-export-title-icon">⬇</span>
-
-    <div>
-      <h3>匯出明細（下週訂單）</h3>
-      <p>各廠區訂單明細下載（Excel）</p>
-    </div>
-  </div>
-
-  <div class="factory-export-list">
-
-    <div class="factory-export-row">
-
-      <div class="factory-export-info">
-        <span class="factory-export-icon">🏢</span>
-        <strong>一廠</strong>
-      </div>
-
-      <div class="factory-export-count">
-        <strong>
-          ${factorySummary.find((row) => row.factory === "一廠")?.total || 0}
-        </strong>
-        <span>份</span>
-      </div>
-
-      <button
-        type="button"
-        class="factory-export-button"
-        data-export-factory="一廠"
-      >
-        ⬇ 下載 Excel
-      </button>
-
-    </div>
-
-    <div class="factory-export-row">
-
-      <div class="factory-export-info">
-        <span class="factory-export-icon">🏭</span>
-        <strong>二廠</strong>
-      </div>
-
-      <div class="factory-export-count">
-        <strong>
-          ${factorySummary.find((row) => row.factory === "二廠")?.total || 0}
-        </strong>
-        <span>份</span>
-      </div>
-
-      <button
-        type="button"
-        class="factory-export-button"
-        data-export-factory="二廠"
-      >
-        ⬇ 下載 Excel
-      </button>
-
-    </div>
-
-  </div>
-
-  <p class="factory-export-note">
-    ＊明細內容包含便當人員名單、廠區、葷素等資訊
-  </p>
+  
 
 </div>
       </div>
 
-      <!-- 下方：左邊下週廠區統計，右邊本週參考 -->
-      <div class="dashboard-lower-grid">
 
-        ${nextWeekFactorySummary(factorySummary)}
-
-        ${currentWeekOverview(currentWeek)}
-
-      </div>
+${currentWeekDailyOverview()}
 
     </div>
   `;
@@ -1647,39 +1942,37 @@ function currentWeekOverview(data) {
 
           <div class="current-week-content">
 
-            <span>固定便當</span>
+            <span>本週便當</span>
 
-            <div>
-              <strong>
-                ${data.lunchBoxPerDay}
-              </strong>
+<div>
+  <strong>
+    ${data.lunchBoxWeeklyTotal}
+  </strong>
 
-              <small>份／日</small>
-            </div>
+  <small>份</small>
+</div>
 
-            <p>
-              本週預計共
-              ${data.lunchBoxWeeklyTotal}
-              份
-            </p>
+<p>
+  依每日訂餐紀錄累計
+</p>
 
           </div>
 
           <div class="current-week-meals">
 
             <span class="meat-text">
-              葷食
-              <b>${data.meatPerDay}</b>
-              ／日
-            </span>
+  葷食
+  <b>${data.meatWeeklyTotal}</b>
+  份
+</span>
 
-            <span class="meal-divider"></span>
+<span class="meal-divider"></span>
 
-            <span class="veg-text">
-              素食
-              <b>${data.vegetarianPerDay}</b>
-              ／日
-            </span>
+<span class="veg-text">
+  素食
+  <b>${data.vegetarianWeeklyTotal}</b>
+  份
+</span>
 
           </div>
 
@@ -1694,21 +1987,19 @@ function currentWeekOverview(data) {
 
           <div class="current-week-content">
 
-            <span>固定上樓</span>
+            <span>本週上樓用餐</span>
 
-            <div>
-              <strong>
-                ${data.dineUpstairsPerDay}
-              </strong>
+<div>
+  <strong>
+    ${data.dineUpstairsWeeklyTotal}
+  </strong>
 
-              <small>人／日</small>
-            </div>
+  <small>人次</small>
+</div>
 
-            <p>
-              本週固定共
-              ${data.dineUpstairsWeeklyTotal}
-              人次，不含新人
-            </p>
+<p>
+  依每日訂餐紀錄累計，不含新人
+</p>
 
           </div>
 
@@ -1738,6 +2029,254 @@ function currentWeekOverview(data) {
             </p>
 
           </div>
+
+        </div>
+
+      </div>
+
+    </section>
+  `;
+}
+function currentWeekDailyOverview() {
+  const days = getCurrentWeekDailySummary();
+
+  const today = formatDateValue(new Date());
+
+  return `
+    <section class="card current-week-simple-overview">
+
+      <div class="current-week-simple-heading">
+
+        <div class="current-week-simple-title">
+
+          <span class="current-week-simple-title-icon">
+            📅
+          </span>
+
+          <div>
+            <h3>
+              本週供餐概覽
+            </h3>
+
+            <p>
+              ${formatSpecialOrderDate(dashboardData.currentWeek.startDate)}
+              ～
+              ${formatSpecialOrderDate(dashboardData.currentWeek.endDate)}
+            </p>
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="dashboard-daily-link"
+          data-order-nav="current-week"
+        >
+          前往「本週供餐」查看明細 ›
+        </button>
+
+      </div>
+
+
+      <div class="current-week-simple-content">
+
+        <div class="current-week-other-days">
+
+          ${days
+            .map((day) => {
+              const isToday = day.dateValue === today;
+
+              if (isToday) {
+                return `
+                  <article class="current-week-today-card">
+
+                    <div class="current-week-today-header">
+
+                      <div>
+                        <span>
+                          今日
+                        </span>
+
+                        <strong>
+                          ${day.displayDate}
+                          （${day.weekday}）
+                        </strong>
+                      </div>
+
+                      <span class="current-week-today-badge">
+                        今天
+                      </span>
+
+                    </div>
+
+
+                    <div class="current-week-today-body">
+
+                      <div class="current-week-today-row">
+
+                        <div>
+                          <span class="current-week-simple-icon lunchbox">
+                            🍱
+                          </span>
+
+                          <span>
+                            便當
+                          </span>
+                        </div>
+
+                        <div>
+                          <strong>
+                            ${day.lunchBoxTotal}
+                          </strong>
+
+                          <small>
+                            人
+                          </small>
+                        </div>
+
+                      </div>
+
+
+                      <div class="current-week-today-row">
+
+                        <div>
+                          <span class="current-week-simple-icon upstairs">
+                            🏠
+                          </span>
+
+                          <span>
+                            上樓用餐
+                          </span>
+                        </div>
+
+                        <div class="upstairs-number">
+                          <strong>
+                            ${day.upstairsTotal}
+                          </strong>
+
+                          <small>
+                            人
+                          </small>
+                        </div>
+
+                      </div>
+
+
+                      <div class="current-week-today-total">
+
+                        <div>
+                          <span>
+                            👥
+                          </span>
+
+                          <strong>
+                            今日供餐
+                          </strong>
+                        </div>
+
+                        <div>
+                          <strong>
+                            ${day.total}
+                          </strong>
+
+                          <small>
+                            人
+                          </small>
+                        </div>
+
+                      </div>
+
+                    </div>
+
+
+                    <div class="current-week-today-message">
+                      ☀ 今天也辛苦了！
+                    </div>
+
+                  </article>
+                `;
+              }
+
+              return `
+                <article class="current-week-mini-card">
+
+                  <div class="current-week-mini-date">
+                    ${day.displayDate}
+                    （${day.weekday}）
+                  </div>
+
+
+                  <div class="current-week-mini-stats">
+
+                    <div>
+
+                      <span class="current-week-simple-icon lunchbox">
+                        🍱
+                      </span>
+
+                      <span>
+                        便當
+                      </span>
+
+                      <strong>
+                        ${day.lunchBoxTotal}
+                      </strong>
+
+                      <small>
+                        人
+                      </small>
+
+                    </div>
+
+
+                    <div>
+
+                      <span class="current-week-simple-icon upstairs">
+                        🏠
+                      </span>
+
+                      <span>
+                        上樓
+                      </span>
+
+                      <strong class="upstairs-value">
+                        ${day.upstairsTotal}
+                      </strong>
+
+                      <small>
+                        人
+                      </small>
+
+                    </div>
+
+                  </div>
+
+
+                  <div class="current-week-mini-total">
+
+                    <span>
+                      👥 共
+                    </span>
+
+                    <div>
+
+                      <strong>
+                        ${day.total}
+                      </strong>
+
+                      <small>
+                        人
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                </article>
+              `;
+            })
+            .join("")}
 
         </div>
 
@@ -2100,93 +2639,147 @@ function nextWeekOrderStatView({
     `;
 }
 function nextWeekOrderStatusView() {
-  const orderSummary = getNextWeekOrderSummary();
-  const serviceDays = getNextWeekWorkdays().length;
+  // 直接取得「逐日」統計資料
+  const dailySummary = getNextWeekDailySummary();
 
-  /*
-   * 目前先沿用既有的最後更新時間。
-   * 未來串接後端後，可將這個值改成 API 回傳的最後更新時間。
-   */
-  const lastUpdated = nextWeekOrderSubmittedAt || "2026/08/06 15:01";
+  const days = dailySummary.map((day) => {
+    const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
+
+    const newcomerTotal = newcomerSummary.total;
+
+    // 上樓用餐 + 新人
+    const actualUpstairs = day.upstairs + newcomerTotal;
+
+    return {
+      ...day,
+
+      lunchBoxTotal: day.lunchBoxTotal,
+
+      upstairsTotal: actualUpstairs,
+
+      newcomerTotal,
+
+      total: day.lunchBoxTotal + actualUpstairs,
+    };
+  });
 
   return `
-    <section
-      class="card next-week-order-summary next-week-order-summary-modern next-week-overview-compact"
-    >
+    <section class="card next-week-daily-overview">
 
-      <!-- 左側：下週訂餐週期 -->
-      <div class="next-week-order-period">
+      <div class="next-week-daily-heading">
 
-        <span class="next-week-order-label">
-          📅 下週訂餐週期
-        </span>
-
-        <h3>
-          ${formatSpecialOrderDate(dashboardData.nextWeek.startDate)}
-          ～
-          ${formatSpecialOrderDate(dashboardData.nextWeek.endDate)}
-        </h3>
-
-        <div class="next-week-readonly-meta">
-
-    <div class="next-week-last-update">
-
-        <span class="label">
-            🕒 最後更新
-        </span>
-
-        <span class="time">
-            ${lastUpdated}
-        </span>
-
-    </div>
-
-    <span class="next-week-readonly-badge">
-        目前僅供查閱
-    </span>
-
-</div>
+        <div>
+          <h3>
+            📊 下週每日供餐概覽
+          </h3>
+        </div>
 
       </div>
 
-      <!-- 右側：四項訂餐統計 -->
-      <div class="next-week-order-stat-list">
 
-        ${nextWeekOrderStatView({
-          icon: "🛍️",
-          label: "固定便當",
-          value: orderSummary.lunchBoxTotal,
-          unit: "份／日",
-          colorClass: "lunchbox-stat",
-          description: `整週共 ${orderSummary.lunchBoxTotal * serviceDays} 份`,
-        })}
+      <div class="next-week-daily-grid">
 
-        ${nextWeekOrderStatView({
-          icon: "🏠",
-          label: "固定上樓",
-          value: orderSummary.dineUpstairs,
-          unit: "人／日",
-          colorClass: "upstairs-stat",
-          description: `整週共 ${orderSummary.dineUpstairs * serviceDays} 人次`,
-        })}
+        ${days
+          .map(
+            (day) => `
+              <article class="next-week-daily-card">
 
-        ${nextWeekOrderStatView({
-          icon: "🍖",
-          label: "葷食",
-          value: orderSummary.meat,
-          unit: "份／日",
-          colorClass: "meat-stat",
-          description: `整週共 ${orderSummary.meat * serviceDays} 份`,
-        })}
+                <div class="next-week-daily-date">
+                  ${day.displayDate}（${day.weekday}）
+                </div>
 
-        ${nextWeekOrderStatView({
-          icon: "🌿",
-          label: "素食",
-          value: orderSummary.vegetarian,
-          unit: "份／日",
-          colorClass: "vegetarian-stat",
-          description: `整週共 ${orderSummary.vegetarian * serviceDays} 份`,
-        })}
+
+                <!-- 便當 -->
+
+                <div class="next-week-daily-row">
+
+                  <div class="next-week-daily-label">
+
+                    <span class="next-week-daily-icon lunchbox">
+                      🍱
+                    </span>
+
+                    <span>
+                      便當
+                    </span>
+
+                  </div>
+
+                  <div class="next-week-daily-value lunchbox-value">
+
+                    <strong>
+                      ${day.lunchBoxTotal}
+                    </strong>
+
+                    <small>
+                      人
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <!-- 上樓 -->
+
+                <div class="next-week-daily-row">
+
+                  <div class="next-week-daily-label">
+
+                    <span class="next-week-daily-icon upstairs">
+                      🏠
+                    </span>
+
+                    <span>
+                      上樓用餐
+                    </span>
+
+                  </div>
+
+                  <div class="next-week-daily-value upstairs-value">
+
+                    <strong>
+                      ${day.upstairsTotal}
+                    </strong>
+
+                    <small>
+                      人
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                ${
+                  day.newcomerTotal > 0
+                    ? `
+                      <div class="next-week-daily-newcomer">
+                        新人 +${day.newcomerTotal}
+                      </div>
+                    `
+                    : ""
+                }
+
+
+                <!-- 當日總計 -->
+
+                <div class="next-week-daily-total">
+
+                  <span>
+                    當日總計
+                  </span>
+
+                  <strong>
+                    ${day.total} 人
+                  </strong>
+
+                </div>
+
+              </article>
+            `,
+          )
+          .join("")}
 
       </div>
 
@@ -2222,35 +2815,25 @@ function getNextWeekWorkdays() {
   );
 }
 function nextWeekUpstairsScheduleView() {
-  const orderSummary = getNextWeekOrderSummary();
+  const dailySummary = getNextWeekDailySummary();
 
-  const fixedUpstairsTotal = orderSummary.dineUpstairs;
+  const days = dailySummary.map((day) => {
+    const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
 
-  const workdays = getNextWeekWorkdays();
+    const newcomerTotal = newcomerSummary.total;
 
-  const days = workdays.map((day) => {
-    const newcomerRows =
-      newcomerMealData && Array.isArray(newcomerMealData.data)
-        ? newcomerMealData.data
-        : [];
-
-    const newcomerRecords = newcomerRows.filter(
-      (item) => item.date === day.dateValue,
-    );
-
-    const newcomerTotal = newcomerRecords.reduce(
-      (sum, item) => sum + item.quantity,
-      0,
-    );
+    const fixedUpstairsTotal = day.upstairs;
 
     return {
       ...day,
+
+      fixedUpstairsTotal,
+
       newcomerTotal,
 
       actualTotal: fixedUpstairsTotal + newcomerTotal,
     };
   });
-
   const weeklyNewcomerTotal = days.reduce(
     (sum, day) => sum + day.newcomerTotal,
     0,
@@ -2266,9 +2849,9 @@ function nextWeekUpstairsScheduleView() {
           <h3>📅 下週上樓供餐（含新人）</h3>
 
           <p>
-            固定上樓 ${fixedUpstairsTotal} 人／日，
-            下方為加入每日新人後的實際人數
-          </p>
+  依每日訂餐紀錄統計上樓人數，
+  下方為加入每日新人後的實際人數
+</p>
         </div>
       </div>
 
@@ -2303,8 +2886,8 @@ function nextWeekUpstairsScheduleView() {
                   <small>
                     ${
                       day.newcomerTotal > 0
-                        ? `固定 ${fixedUpstairsTotal}＋新人 ${day.newcomerTotal}`
-                        : `固定 ${fixedUpstairsTotal}`
+                        ? `員工 ${day.fixedUpstairsTotal}＋新人 ${day.newcomerTotal}`
+                        : `員工 ${day.fixedUpstairsTotal}`
                     }
                   </small>
 
@@ -2369,6 +2952,77 @@ function getCurrentWeekWorkdays(startDateValue) {
   return workdays.filter(
     (day) => !holidays.some((holiday) => holiday.date === day.dateValue),
   );
+}
+
+function getCurrentWeekDailySummary() {
+  const workdays = getCurrentWeekWorkdays(dashboardData.currentWeek.startDate);
+
+  const orders =
+    currentWeekOrderSummaryData &&
+    Array.isArray(currentWeekOrderSummaryData.data)
+      ? currentWeekOrderSummaryData.data
+      : [];
+
+  return workdays.map((day) => {
+    // =========================
+    // 只抓這一天的正式員工訂餐
+    // =========================
+
+    const dailyOrders = orders.filter(
+      (order) => String(order.date || "") === String(day.dateValue || ""),
+    );
+
+    // =========================
+    // 當日便當
+    // =========================
+
+    const lunchBoxOrders = dailyOrders.filter(
+      (order) => order.mealType === "便當",
+    );
+
+    const lunchBoxTotal = lunchBoxOrders.length;
+
+    // =========================
+    // 當日固定員工上樓
+    // =========================
+
+    const upstairsOrders = dailyOrders.filter(
+      (order) => order.mealType === "上樓用餐",
+    );
+
+    const fixedUpstairs = upstairsOrders.length;
+
+    // =========================
+    // 當日新人
+    // =========================
+
+    const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
+
+    const newcomerTotal = newcomerSummary.total;
+
+    // 上樓總數 =
+    // 正式員工上樓 + 新人
+    const upstairsTotal = fixedUpstairs + newcomerTotal;
+
+    return {
+      dateValue: day.dateValue,
+
+      displayDate: day.displayDate,
+
+      weekday: day.weekday,
+
+      // 保留既有欄位名稱
+      lunchBoxTotal,
+
+      fixedUpstairs,
+
+      newcomerTotal,
+
+      upstairsTotal,
+
+      total: lunchBoxTotal + upstairsTotal,
+    };
+  });
 }
 function getNewcomerSummaryByDate(dateValue) {
   const rows =
@@ -2485,7 +3139,7 @@ function currentWeekSupplyTabView() {
   return `
     <div class="current-week-supply-page">
 
-      ${currentWeekSupplySummary(currentWeek)}
+      ${currentWeekDailySupplyView()}
 
       <div class="spacer"></div>
 
@@ -2525,18 +3179,15 @@ function getCurrentWeekSupplySummary() {
     dashboardData.currentWeek.startDate,
   ).length;
 
-  const dailyLunchBoxTotal = lunchBoxOrders.length;
-
-  const dineUpstairsTotal = upstairsOrders.length;
-
   return {
-    dailyLunchBoxTotal,
+    // 每日制：每一筆本身就是一天的訂餐紀錄
+    dailyLunchBoxTotal: lunchBoxOrders.length,
 
-    weeklyLunchBoxTotal: dailyLunchBoxTotal * serviceDays,
+    weeklyLunchBoxTotal: lunchBoxOrders.length,
 
-    dineUpstairsTotal,
+    dineUpstairsTotal: upstairsOrders.length,
 
-    fixedUpstairsWeeklyTotal: dineUpstairsTotal * serviceDays,
+    fixedUpstairsWeeklyTotal: upstairsOrders.length,
 
     meatTotal: meatOrders.length,
 
@@ -2642,9 +3293,253 @@ function currentWeekSupplySummary(data) {
     </section>
   `;
 }
+function currentWeekDailySupplyView() {
+    const workdays = getCurrentWeekWorkdays(
+      dashboardData.currentWeek.startDate,
+    );
+
+    const orders =
+      currentWeekOrderSummaryData &&
+      Array.isArray(currentWeekOrderSummaryData.data)
+        ? currentWeekOrderSummaryData.data
+        : [];
+
+    const days = workdays.map((day) => {
+      // =========================
+      // 只抓這一天的訂單
+      // =========================
+      const dailyOrders = orders.filter(
+        (order) => String(order.date || "") === String(day.dateValue || ""),
+      );
+
+      // =========================
+      // 當日便當
+      // =========================
+      const lunchBoxOrders = dailyOrders.filter(
+        (order) => order.mealType === "便當",
+      );
+
+      const meatTotal = lunchBoxOrders.filter(
+        (order) => order.diet === "葷食",
+      ).length;
+
+      const vegetarianTotal = lunchBoxOrders.filter(
+        (order) => order.diet === "素食",
+      ).length;
+
+      // =========================
+      // 當日正式員工上樓
+      // =========================
+      const upstairsOrders = dailyOrders.filter(
+        (order) => order.mealType === "上樓用餐",
+      );
+
+      // =========================
+      // 當日新人
+      // =========================
+      const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
+
+      const newcomerTotal = newcomerSummary.total;
+
+      const actualUpstairs = upstairsOrders.length + newcomerTotal;
+
+      return {
+        ...day,
+
+        lunchBox: lunchBoxOrders.length,
+
+        meat: meatTotal,
+
+        vegetarian: vegetarianTotal,
+
+        upstairs: actualUpstairs,
+
+        newcomer: newcomerTotal,
+
+        total: lunchBoxOrders.length + actualUpstairs,
+      };
+    });
+
+  return `
+    <section class="card current-week-daily-panel">
+
+      <div class="current-week-daily-panel-heading">
+
+        <div>
+          <h3>
+            📊 本週每日供餐概要
+          </h3>
+
+          <p>
+            依日期查看每日實際供餐人數
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="current-week-daily-panel-grid">
+
+        ${days
+          .map(
+            (day) => `
+              <article class="current-week-daily-panel-card">
+
+                <!-- 日期 -->
+
+                <div class="current-week-daily-panel-date">
+
+                  ${day.displayDate}
+                  （${day.weekday}）
+
+                </div>
+
+
+                <!-- 便當 -->
+
+                <div class="current-week-daily-panel-row">
+
+                  <div class="current-week-daily-panel-label">
+
+                    <span class="current-week-daily-panel-icon lunchbox">
+                      🍱
+                    </span>
+
+                    <div>
+                      <strong>便當</strong>
+                    </div>
+
+                  </div>
+
+
+                  <div class="current-week-daily-panel-number">
+
+                    <strong>
+                      ${day.lunchBox}
+                    </strong>
+
+                    <small>人</small>
+
+                  </div>
+
+
+                  <div class="current-week-daily-panel-diet">
+
+                    <span class="meat">
+                      葷 ${day.meat}
+                    </span>
+
+                    <span class="divider"></span>
+
+                    <span class="veg">
+                      素 ${day.vegetarian}
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <!-- 上樓 -->
+
+                <div class="current-week-daily-panel-row upstairs-row">
+
+                  <div class="current-week-daily-panel-label">
+
+                    <span class="current-week-daily-panel-icon upstairs">
+                      🏠
+                    </span>
+
+                    <strong>
+                      上樓用餐
+                    </strong>
+
+                  </div>
+
+
+                  <div class="current-week-daily-panel-number upstairs">
+
+                    <strong>
+                      ${day.upstairs}
+                    </strong>
+
+                    <small>人</small>
+
+                  </div>
+
+                  ${
+                    day.newcomer > 0
+                      ? `
+                        <div class="current-week-daily-newcomer">
+                          新人 +${day.newcomer}
+                        </div>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+
+                <!-- 當日總計 -->
+
+                <div class="current-week-daily-panel-total">
+
+                  <div>
+                    <span>👥</span>
+                    <strong>當日總計</strong>
+                  </div>
+
+                  <div>
+                    <strong>
+                      ${day.total}
+                    </strong>
+
+                    <small>人</small>
+                  </div>
+
+                </div>
+
+              </article>
+            `,
+          )
+          .join("")}
+
+      </div>
+
+    </section>
+  `;
+}
 function currentWeekOrderFilterView() {
+  const workdays = getCurrentWeekWorkdays(dashboardData.currentWeek.startDate);
   return `
     <div class="current-week-order-filter">
+
+      <div class="field current-week-date-field">
+
+        <label>日期</label>
+
+        <select id="currentWeekDate">
+
+          <option value="">
+            全部日期
+          </option>
+
+          ${workdays
+            .map(
+              (day) => `
+                <option
+                  value="${day.dateValue}"
+                  ${currentWeekFilters.date === day.dateValue ? "selected" : ""}
+                >
+                  ${day.displayDate}（${day.weekday}）
+                </option>
+              `,
+            )
+            .join("")}
+
+        </select>
+
+      </div>
 
       <div class="field current-week-keyword-field">
         <label>工號／姓名</label>
@@ -2772,52 +3667,154 @@ function currentWeekOrderFilterView() {
     </div>
   `;
 }
-function getFilteredCurrentWeekOrders() {
-  const keyword = currentWeekFilters.keyword.trim().toLowerCase();
+async function exportCurrentWeekFilteredOrders() {
+  toast("正在準備匯出資料...");
 
-  const orders =
-    currentWeekOrderSummaryData &&
-    Array.isArray(currentWeekOrderSummaryData.data)
-      ? currentWeekOrderSummaryData.data
-      : [];
+  try {
+    // 本週星期一作為 API 查詢基準日
+    const targetDate = dashboardData.currentWeek.startDate;
 
-  return orders.filter((order) => {
-    const matchesKeyword =
-      !keyword ||
-      String(order.employeeId || "")
-        .toLowerCase()
-        .includes(keyword) ||
-      String(order.name || "")
-        .toLowerCase()
-        .includes(keyword);
+    // 取得真正的每日訂餐明細
+    const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getWeeklyDailyOrders",
+        date: targetDate,
+      }),
+    });
 
-    const matchesGroup =
-      !currentWeekFilters.group || order.group === currentWeekFilters.group;
+    const result = await response.json();
 
-    const matchesDiningMethod =
-      !currentWeekFilters.diningMethod ||
-      order.mealType === currentWeekFilters.diningMethod;
+    if (!result.success) {
+      throw new Error(result.message || "讀取本週每日訂單明細失敗");
+    }
 
-    const matchesFactory =
-      !currentWeekFilters.factory ||
-      order.factory === currentWeekFilters.factory;
+    let orders = Array.isArray(result.data) ? result.data : [];
 
-    const matchesMealType =
-      !currentWeekFilters.mealType ||
-      order.diet === currentWeekFilters.mealType;
+    // =========================
+    // 套用本週目前的查詢條件
+    // =========================
 
-    return (
-      matchesKeyword &&
-      matchesGroup &&
-      matchesDiningMethod &&
-      matchesFactory &&
-      matchesMealType
-    );
-  });
+    const keyword = currentWeekFilters.keyword.trim().toLowerCase();
+
+    orders = orders.filter((order) => {
+      // 日期
+      const matchesDate =
+        !currentWeekFilters.date || order.date === currentWeekFilters.date;
+
+      // 工號／姓名
+      const matchesKeyword =
+        !keyword ||
+        String(order.employeeId || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(order.name || "")
+          .toLowerCase()
+          .includes(keyword);
+
+      // 組別
+      const matchesGroup =
+        !currentWeekFilters.group || order.group === currentWeekFilters.group;
+
+      // 用餐方式
+      const matchesDiningMethod =
+        !currentWeekFilters.diningMethod ||
+        order.mealType === currentWeekFilters.diningMethod;
+
+      // 廠區
+      const matchesFactory =
+        !currentWeekFilters.factory ||
+        order.factory === currentWeekFilters.factory;
+
+      // 葷／素
+      const matchesMealType =
+        !currentWeekFilters.mealType ||
+        order.diet === currentWeekFilters.mealType;
+
+      return (
+        matchesDate &&
+        matchesKeyword &&
+        matchesGroup &&
+        matchesDiningMethod &&
+        matchesFactory &&
+        matchesMealType
+      );
+    });
+
+    // 沒有資料
+    if (orders.length === 0) {
+      toast("目前沒有可匯出的本週訂單");
+      return;
+    }
+
+    // =========================
+    // CSV
+    // =========================
+
+    const rows = [
+      ["日期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
+
+      ...orders.map((order) => [
+        order.date || "",
+        order.employeeId || "",
+        order.name || "",
+        order.department || "",
+        order.group || "",
+        order.mealType || "",
+        order.factory || "",
+        order.diet || "",
+      ]),
+    ];
+
+    const csv =
+      "\ufeff" +
+      rows
+        .map((row) =>
+          row
+            .map((value) => {
+              const text = String(value ?? "");
+
+              return `"${text.replace(/"/g, '""')}"`;
+            })
+            .join(","),
+        )
+        .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+
+    // 有指定日期 → 檔名使用指定日期
+    // 沒指定日期 → 檔名使用本週日期範圍
+    link.download = currentWeekFilters.date
+      ? `本週供餐明細_${currentWeekFilters.date}.csv`
+      : `本週供餐明細_${dashboardData.currentWeek.startDate}_${dashboardData.currentWeek.endDate}.csv`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+    toast(`已匯出 ${orders.length} 筆本週供餐明細`);
+  } catch (error) {
+    console.error("匯出本週每日訂單明細失敗：", error);
+
+    toast(error.message || "匯出本週每日訂單明細失敗");
+  }
 }
 function exportCurrentWeekFilteredOrders() {
-  const orders =
-    getFilteredCurrentWeekOrders();
+  toast("正在準備匯出資料...");
+
+  const orders = getFilteredCurrentWeekOrders();
 
   if (orders.length === 0) {
     toast("目前沒有可匯出的本週訂單");
@@ -2825,22 +3822,10 @@ function exportCurrentWeekFilteredOrders() {
   }
 
   const rows = [
-    [
-      "訂餐週期",
-      "工號",
-      "姓名",
-      "部門",
-      "組別",
-      "用餐方式",
-      "廠區",
-      "葷／素",
-    ],
+    ["訂餐週期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
 
     ...orders.map((order) => [
-      formatOrderWeek(
-        order.weekDate ||
-        dashboardData.currentWeek.startDate
-      ),
+      formatOrderWeek(order.weekDate || dashboardData.currentWeek.startDate),
 
       order.employeeId || "",
       order.name || "",
@@ -2858,8 +3843,7 @@ function exportCurrentWeekFilteredOrders() {
       .map((row) =>
         row
           .map((value) => {
-            const text =
-              String(value ?? "");
+            const text = String(value ?? "");
 
             return `"${text.replace(/"/g, '""')}"`;
           })
@@ -2867,25 +3851,17 @@ function exportCurrentWeekFilteredOrders() {
       )
       .join("\n");
 
-  const blob =
-    new Blob(
-      [csv],
-      {
-        type:
-          "text/csv;charset=utf-8",
-      },
-    );
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8",
+  });
 
-  const url =
-    URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
 
-  const link =
-    document.createElement("a");
+  const link = document.createElement("a");
 
   link.href = url;
 
-  link.download =
-    `本週供餐明細_${dashboardData.currentWeek.startDate}_${dashboardData.currentWeek.endDate}.csv`;
+  link.download = `本週供餐明細_${dashboardData.currentWeek.startDate}_${dashboardData.currentWeek.endDate}.csv`;
 
   document.body.appendChild(link);
 
@@ -2895,9 +3871,7 @@ function exportCurrentWeekFilteredOrders() {
 
   URL.revokeObjectURL(url);
 
-  toast(
-    `已匯出 ${orders.length} 筆本週供餐明細`
-  );
+  toast(`已匯出 ${orders.length} 筆本週供餐明細`);
 }
 function currentWeekPagination(totalPages) {
   if (totalPages <= 1) {
@@ -2972,6 +3946,54 @@ function currentWeekPagination(totalPages) {
     </div>
   `;
 }
+
+function getFilteredCurrentWeekOrders() {
+  const keyword = currentWeekFilters.keyword.trim().toLowerCase();
+
+  const orders =
+    currentWeekOrderSummaryData &&
+    Array.isArray(currentWeekOrderSummaryData.data)
+      ? currentWeekOrderSummaryData.data
+      : [];
+
+  return orders.filter((order) => {
+    const matchesDate =
+      !currentWeekFilters.date ||
+      String(order.date || "") === String(currentWeekFilters.date || "");
+    const matchesKeyword =
+      !keyword ||
+      String(order.employeeId || "")
+        .toLowerCase()
+        .includes(keyword) ||
+      String(order.name || "")
+        .toLowerCase()
+        .includes(keyword);
+
+    const matchesGroup =
+      !currentWeekFilters.group || order.group === currentWeekFilters.group;
+
+    const matchesDiningMethod =
+      !currentWeekFilters.diningMethod ||
+      order.mealType === currentWeekFilters.diningMethod;
+
+    const matchesFactory =
+      !currentWeekFilters.factory ||
+      order.factory === currentWeekFilters.factory;
+
+    const matchesMealType =
+      !currentWeekFilters.mealType ||
+      order.diet === currentWeekFilters.mealType;
+
+    return (
+      matchesDate &&
+      matchesKeyword &&
+      matchesGroup &&
+      matchesDiningMethod &&
+      matchesFactory &&
+      matchesMealType
+    );
+  });
+}
 function currentWeekReadonlyOrders() {
   const filteredOrders = getFilteredCurrentWeekOrders();
   const totalPages = Math.max(
@@ -3029,6 +4051,7 @@ function currentWeekReadonlyOrders() {
 
           <thead>
             <tr>
+            <th>日期</th>
               <th>部門</th>
               <th>組別</th>
               <th>工號</th>
@@ -3046,7 +4069,7 @@ function currentWeekReadonlyOrders() {
                 ? `
                   <tr>
                     <td
-                      colspan="8"
+                      colspan="9"
                       class="current-week-empty-result"
                     >
                       查無符合條件的本週訂單
@@ -3057,6 +4080,9 @@ function currentWeekReadonlyOrders() {
                     .map(
                       (order) => `
                         <tr>
+                        <td>
+  ${order.date ? formatSpecialOrderDate(order.date) : "—"}
+</td>
                           <td>${order.department}</td>
 
                           <td>${order.group}</td>
@@ -3437,7 +4463,30 @@ function filterBar(type) {
   ];
   return `
   <div class="card toolbar weekly-order-filter">
+<div class="field order-date-field">
+  <label>日期</label>
 
+  <select id="orderDateFilter">
+
+    <option value="">
+      全部日期
+    </option>
+
+    ${getNextWeekWorkdays()
+      .map(
+        (day) => `
+          <option
+            value="${day.dateValue}"
+            ${orderFilters.date === day.dateValue ? "selected" : ""}
+          >
+            ${day.displayDate}（${day.weekday}）
+          </option>
+        `,
+      )
+      .join("")}
+
+  </select>
+</div>
     <div class="field order-keyword-field">
       <label>工號／姓名</label>
 
@@ -3589,10 +4638,15 @@ function getFilteredWeeklyOrders() {
     .toLowerCase();
 
   return orders.filter((order) => {
-    const employeeId = String(order.employeeId || "")
-      .toLowerCase()
+    const employeeId = String(order.employeeId || "").toLowerCase();
 
     const name = String(order.name || "").toLowerCase();
+    // 日期
+const matchDate =
+  !orderFilters.date ||
+  String(order.date || "") ===
+    String(orderFilters.date || "");
+    
 
     // 工號／姓名
     const matchKeyword =
@@ -3614,13 +4668,27 @@ function getFilteredWeeklyOrders() {
     const matchDiet = !orderFilters.diet || order.diet === orderFilters.diet;
 
     return (
-      matchKeyword && matchGroup && matchMealType && matchFactory && matchDiet
+      matchDate &&
+      matchKeyword &&
+      matchGroup &&
+      matchMealType &&
+      matchFactory &&
+      matchDiet
     );
   });
 }
 function ordersTable() {
-  const orders = getFilteredWeeklyOrders();
+  const orders = [...getFilteredWeeklyOrders()].sort((a, b) => {
+    const dateCompare = String(a.date || "").localeCompare(
+      String(b.date || ""),
+    );
 
+    if (dateCompare !== 0) {
+      return dateCompare;
+    }
+
+    return String(a.name || "").localeCompare(String(b.name || ""), "zh-Hant");
+  });
   const totalPages = Math.max(1, Math.ceil(orders.length / 8));
 
   // 如果篩選後頁數變少，避免停在不存在的頁數
@@ -3657,7 +4725,7 @@ function ordersTable() {
             class="btn btn-outline refresh-orders"
             type="button"
           >
-            ↻ 重新整理
+            ↻ 
           </button>
         </div>
       </div>
@@ -3667,7 +4735,7 @@ function ordersTable() {
 
           <thead>
             <tr>
-              <th>訂餐週期</th>
+            <th>日期</th>
               <th>部門</th>
               <th>組別</th>
               <th>工號</th>
@@ -3727,7 +4795,9 @@ function ordersTable() {
                     .map(
                       (r) => `
                         <tr>
-                          <td>${formatOrderWeek(r.weekDate)}</td>
+                          <td>
+  ${r.date ? formatSpecialOrderDate(r.date) : "—"}
+</td>
 
                           <td>${r.department}</td>
 
@@ -4332,11 +5402,37 @@ function pagination(total, pageSize = 10) {
   `;
 }
 function bindCommon() {
+  // 僅處理首頁的「前往明細」按鈕
+  if (page === "dashboard") {
+    content.querySelectorAll("[data-order-nav]").forEach((button) => {
+      button.onclick = () => {
+        const targetTab = button.dataset.orderNav;
+
+        if (targetTab !== "next-week" && targetTab !== "current-week") {
+          return;
+        }
+
+        page = "orders";
+        orderTab = targetTab;
+        pageNo = 1;
+
+        if (targetTab === "current-week") {
+          currentWeekPageNo = 1;
+          loadCurrentWeekOrdersAndRender();
+        } else {
+          loadNextWeekOrdersAndRender();
+        }
+      };
+    });
+  }
   if (page === "employees") {
     bindEmployeeEvents();
   }
   if (page === "holidays") {
     bindHolidayEvents();
+  }
+  if (page === "deadline-settings") {
+    bindDeadlineSettingsEvents();
   }
   const submitNextWeekOrderButton = document.querySelector(
     "#submitNextWeekOrder",
@@ -4395,6 +5491,8 @@ function bindCommon() {
       if (page !== "orders" || orderTab !== "next-week") {
         return;
       }
+      orderFilters.date =
+        document.querySelector("#orderDateFilter")?.value || "";
 
       orderFilters.keyword =
         document.querySelector("#orderKeyword")?.value.trim() || "";
@@ -4430,22 +5528,23 @@ function bindCommon() {
 
       document.querySelector(".do-search")?.click();
     });
-    document
-      .querySelector("#orderKeyword")
-      ?.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") {
-          return;
-        }
+  document
+    .querySelector("#orderKeyword")
+    ?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
 
-        event.preventDefault();
+      event.preventDefault();
 
-        document.querySelector(".do-search")?.click();
-      });
+      document.querySelector(".do-search")?.click();
+    });
   document.querySelectorAll(".clear-filter").forEach((button) => {
     button.onclick = () => {
       // 下週訂單
       if (page === "orders" && orderTab === "next-week") {
         orderFilters = {
+          date: "",
           keyword: "",
           group: "",
           mealType: "",
@@ -4489,13 +5588,30 @@ function bindCommon() {
       toast("廠區統計匯出功能尚未串接");
     };
   });
-  document.querySelectorAll("[data-export-factory]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const factoryName = button.dataset.exportFactory;
+    document.querySelectorAll("[data-export-factory]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (button.disabled) return;
 
-      exportFactoryCSV(factoryName);
+        const factoryName = button.dataset.exportFactory;
+        const originalText = button.textContent;
+
+        button.disabled = true;
+        button.textContent = "準備下載中...";
+
+        try {
+          toast(`正在準備${factoryName}下載資料...`);
+          await exportFactoryCSV(factoryName);
+        } catch (error) {
+          console.error("廠區訂單匯出失敗：", error);
+          window.alert(
+            `${factoryName}下載失敗：\n${error.message || String(error)}`,
+          );
+        } finally {
+          button.disabled = false;
+          button.textContent = originalText;
+        }
+      });
     });
-  });
 
   document.querySelectorAll(".export-history").forEach((button) => {
     button.onclick = () => {
@@ -4564,13 +5680,13 @@ function bindCommon() {
               ${order.updatedAt}
             </p>
           </div>
-        `,
+        `,function openEditOrder(employeeId, weekDate)
       );
     };
   }); */
   document.querySelectorAll(".edit-row").forEach((button) => {
     button.onclick = () => {
-      openEditOrder(button.dataset.employeeId, button.dataset.weekDate);
+      openEditOrder(button.dataset.employeeId, button.dataset.date);
     };
   });
   document
@@ -4659,14 +5775,15 @@ function bindCommon() {
       showLoadingOverlay("正在刪除新人用餐資料...");
 
       try {
-        const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+        const response = await fetchWithTimeout(APP_CONFIG.ADMIN_API_URL, {
           method: "POST",
 
           body: JSON.stringify({
             action: "deleteNewcomerMeal",
 
-            // index 0 對應 Sheet 第 2 列
-            rowIndex: index + 2,
+            batchId: item.batchId,
+
+            // 相容舊版本
             rowIndex: item.rowIndex,
           }),
         });
@@ -4677,14 +5794,9 @@ function bindCommon() {
           throw new Error(result.message || "刪除新人用餐資料失敗");
         }
 
-        // 清掉舊快取
-        newcomerMealData = null;
-        newcomerMealLoaded = false;
-
-        // 重新抓 Sheet 最新資料
-        const newResult = await loadNewcomerMeals();
-
-        newcomerMealData = newResult;
+        newcomerMealData.data = newcomerMealData.data.filter(
+          (record) => record.batchId !== item.batchId,
+        );
 
         newcomerMealLoaded = true;
 
@@ -4715,15 +5827,15 @@ function bindCommon() {
 
   searchCurrentWeekButton?.addEventListener("click", () => {
     currentWeekFilters = {
+      date: document.querySelector("#currentWeekDate")?.value || "",
       keyword: document.querySelector("#currentWeekKeyword")?.value || "",
       group: document.querySelector("#currentWeekGroup")?.value || "",
       diningMethod:
         document.querySelector("#currentWeekDiningMethod")?.value || "",
-
       factory: document.querySelector("#currentWeekFactory")?.value || "",
-
       mealType: document.querySelector("#currentWeekMealType")?.value || "",
     };
+
     currentWeekPageNo = 1;
     render();
   });
@@ -4737,6 +5849,7 @@ function bindCommon() {
     .querySelector("#clearCurrentWeekOrders")
     ?.addEventListener("click", () => {
       currentWeekFilters = {
+        date: "",
         keyword: "",
         group: "",
         diningMethod: "",
@@ -5168,7 +6281,7 @@ function bindCommon() {
           saveButton.disabled = true;
           saveButton.textContent = "儲存中...";
         }
-       showLoadingOverlay(`正在更新「${name}」資料...`);
+        showLoadingOverlay(`正在更新「${name}」資料...`);
 
         try {
           const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
@@ -5350,14 +6463,16 @@ function bindCommon() {
     });
   });
 }
-function openEditOrder(employeeId, weekDate) {
+function openEditOrder(employeeId, date) {
   const orders =
     weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
       ? weeklyOrderSummaryData.data
       : [];
 
   const order = orders.find(
-    (item) => item.employeeId === employeeId && item.weekDate === weekDate,
+    (item) =>
+      String(item.employeeId || "") === String(employeeId || "") &&
+      String(item.date || "") === String(date || ""),
   );
 
   if (!order) {
@@ -5378,13 +6493,13 @@ function openEditOrder(employeeId, weekDate) {
       </div>
 
       <div class="field">
-        <label>訂餐週期</label>
+  <label>用餐日期</label>
 
-        <input
-          value="${formatOrderWeek(order.weekDate)}"
-          disabled
-        >
-      </div>
+  <input
+    value="${formatSpecialOrderDate(order.date)}"
+    disabled
+  >
+</div>
 
       <div class="field">
         <label>用餐方式</label>
@@ -5512,7 +6627,7 @@ function openEditOrder(employeeId, weekDate) {
 
             employeeId: orderData.employeeId,
 
-            weekDate: orderData.weekDate,
+            date: orderData.date,
 
             mealType: orderData.mealType,
 
@@ -5601,7 +6716,7 @@ function openEditOrder(employeeId, weekDate) {
 
       await saveOrderEdit({
         employeeId: order.employeeId,
-        weekDate: order.weekDate,
+        date: order.date,
         mealType,
         factory,
         diet,
@@ -5756,8 +6871,9 @@ function openEditNewcomerMeal(index) {
           body: JSON.stringify({
             action: "updateNewcomerMeal",
 
-            // Sheet 第一列是標題
-            // 所以資料 index 0 = Sheet 第 2 列
+            batchId: item.batchId,
+
+            // 保留 rowIndex 只供舊資料相容
             rowIndex: item.rowIndex,
 
             date,
@@ -5773,14 +6889,7 @@ function openEditNewcomerMeal(index) {
           throw new Error(result.message || "更新新人用餐資料失敗");
         }
 
-        // 清掉新人快取
-        newcomerMealData = null;
-        newcomerMealLoaded = false;
-
-        // 重新從 Sheet 抓最新資料
-        const newResult = await loadNewcomerMeals();
-
-        newcomerMealData = newResult;
+        newcomerMealData.data[index] = result.data;
 
         newcomerMealLoaded = true;
 
@@ -5934,14 +7043,14 @@ function openSpecialOrder() {
           throw new Error(result.message || "新增新人用餐資料失敗");
         }
 
-        // 清除舊的新人快取
-        newcomerMealData = null;
-        newcomerMealLoaded = false;
+        if (!newcomerMealData || !Array.isArray(newcomerMealData.data)) {
+          newcomerMealData = {
+            success: true,
+            data: [],
+          };
+        }
 
-        // 重新從 Sheet 讀取最新資料
-        const newResult = await loadNewcomerMeals();
-
-        newcomerMealData = newResult;
+        newcomerMealData.data.push(result.data);
 
         newcomerMealLoaded = true;
 
@@ -6021,158 +7130,343 @@ function hidePageLoading() {
 function hideLoadingOverlay() {
   document.querySelector("#loadingOverlay")?.remove();
 }
-function exportCSV() {
-  // 取得目前「查詢後」的下週訂單
-  const orders = getFilteredWeeklyOrders();
+async function exportCSV() {
+  try {
+    toast("正在準備匯出資料...");
+    // 取得目前下週的基準日期
+    const targetDate = dashboardData.nextWeek.startDate;
 
-  // 沒有資料就不產生空白檔案
-  if (!orders.length) {
-    toast("目前沒有可匯出的訂單資料");
-    return;
-  }
+    // 讀取真正的每日訂餐明細
+    const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getWeeklyDailyOrders",
+        date: targetDate,
+      }),
+    });
 
-  const rows = [
-    ["訂餐週期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
+    const result = await response.json();
 
-    ...orders.map((order) => [
-      formatOrderWeek(order.weekDate),
-      order.employeeId || "",
-      order.name || "",
-      order.department || "",
-      order.group || "",
-      order.mealType || "",
-      order.factory || "",
-      order.diet || "",
-    ]),
-  ];
+    if (!result.success) {
+      throw new Error(result.message || "讀取每日訂單明細失敗");
+    }
 
-  const csv =
-    "\ufeff" +
-    rows
-      .map((row) =>
-        row
-          .map((value) => {
-            const text = String(value ?? "");
+    let orders = Array.isArray(result.data) ? result.data : [];
 
-            return `"${text.replace(/"/g, '""')}"`;
-          })
-          .join(","),
-      )
-      .join("\n");
+    // =========================
+    // 套用目前畫面的查詢條件
+    // =========================
 
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8",
-  });
+    const keyword = String(orderFilters.keyword || "")
+      .trim()
+      .toLowerCase();
 
-  const link = document.createElement("a");
+    orders = orders.filter((order) => {
+      const employeeId = String(order.employeeId || "").toLowerCase();
 
-  const url = URL.createObjectURL(blob);
+      const name = String(order.name || "").toLowerCase();
 
-  link.href = url;
+      // 工號／姓名
+      const matchKeyword =
+        !keyword || employeeId.includes(keyword) || name.includes(keyword);
 
-  // 取得目前週期
-  const weekDate = orders[0]?.weekDate || "下週";
+      // 組別
+      const matchGroup =
+        !orderFilters.group || order.group === orderFilters.group;
 
-  link.download = `下週訂餐明細_${weekDate}.csv`;
+      // 用餐方式
+      const matchMealType =
+        !orderFilters.mealType || order.mealType === orderFilters.mealType;
 
-  document.body.appendChild(link);
+      // 日期
+      const matchDate = !orderFilters.date || order.date === orderFilters.date;
 
-  link.click();
+      return matchKeyword && matchGroup && matchMealType && matchDate;
+    });
 
-  document.body.removeChild(link);
-
-  URL.revokeObjectURL(url);
-}
-async function exportFactoryCSV(factoryName) {
-  // =========================
-  // 尚未讀取下週訂單時
-  // 先從 Sheet 取得最新資料
-  // =========================
-  if (!weeklyOrderSummaryData || !Array.isArray(weeklyOrderSummaryData.data)) {
-    showLoadingOverlay(`正在讀取${factoryName}訂單...`);
-
-    try {
-      const targetDate = dashboardData.nextWeek.startDate;
-
-      const result = await loadWeeklyOrderSummary(targetDate);
-
-      weeklyOrderSummaryData = result;
-      weeklyOrderSummaryLoaded = true;
-    } catch (error) {
-      hideLoadingOverlay();
-
-      console.error("讀取下週訂單失敗：", error);
-
-      toast("讀取下週訂單失敗");
-
+    // 沒有資料就不產生空白檔案
+    if (!orders.length) {
+      toast("目前沒有可匯出的訂單資料");
       return;
     }
 
-    hideLoadingOverlay();
+    // =========================
+    // CSV 資料
+    // =========================
+
+    const rows = [
+      ["日期", "工號", "姓名", "部門", "組別", "用餐方式", "廠區", "葷／素"],
+
+      ...orders.map((order) => [
+        order.date || "",
+        order.employeeId || "",
+        order.name || "",
+        order.department || "",
+        order.group || "",
+        order.mealType || "",
+        order.factory || "",
+        order.diet || "",
+      ]),
+    ];
+
+    const csv =
+      "\ufeff" +
+      rows
+        .map((row) =>
+          row
+            .map((value) => {
+              const text = String(value ?? "");
+
+              return `"${text.replace(/"/g, '""')}"`;
+            })
+            .join(","),
+        )
+        .join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    const link = document.createElement("a");
+
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+
+    // 指定日期時，檔名顯示該日期
+    // 沒指定日期時，顯示下週明細
+    link.download = orderFilters.date
+      ? `下週訂餐明細_${orderFilters.date}.csv`
+      : `下週訂餐明細_${targetDate}.csv`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    toast(`已匯出 ${orders.length} 筆下週訂單明細`);
+  } catch (error) {
+    console.error("匯出每日訂單明細失敗：", error);
+
+    toast(error.message || "匯出每日訂單明細失敗");
   }
-  const orders =
-    weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
-      ? weeklyOrderSummaryData.data
-      : [];
+}
+async function exportFactoryCSV(factoryName) {
+  try {
+    toast(`正在整理${factoryName}每日便當名單...`);
 
-  const factoryOrders = orders.filter(
-    (order) => order.mealType === "便當" && order.factory === factoryName,
-  );
+    const targetDate = dashboardData.nextWeek.startDate;
 
-  if (factoryOrders.length === 0) {
-    toast(`${factoryName}目前沒有便當訂單`);
-    return;
+    // 使用每日訂餐明細，不使用整週摘要
+    const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "getWeeklyDailyOrders",
+        date: targetDate,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "讀取每日訂單失敗");
+    }
+
+    if (!Array.isArray(result.data)) {
+      throw new Error("每日訂單資料格式不正確");
+    }
+
+    const clean = (value) => String(value ?? "").trim();
+
+    // 統一為 YYYY-MM-DD，方便比對日期
+    const normalizeDate = (value) => {
+      const match = clean(value).match(
+        /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?=$|[T\s（(])/,
+      );
+
+      return match
+        ? `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`
+        : "";
+    };
+
+    const monday = new Date(`${targetDate}T00:00:00`);
+
+    if (Number.isNaN(monday.getTime())) {
+      throw new Error("下週日期不正確，請重新整理後再試");
+    }
+
+    const weekdays = ["一", "二", "三", "四", "五"];
+
+    const dates = weekdays.map((_, index) => {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + index);
+      return formatDateValue(date);
+    });
+
+    const people = new Map();
+
+    for (const order of result.data) {
+      const mealType = clean(order.mealType);
+
+      if (
+        clean(order.factory) !== factoryName ||
+        !["便當", "固定便當"].includes(mealType)
+      ) {
+        continue;
+      }
+
+      const date = normalizeDate(order.date);
+
+      if (!date) {
+        throw new Error("便當明細中有無法辨識的日期，請檢查每日訂單資料");
+      }
+
+      const dayIndex = dates.indexOf(date);
+
+      if (dayIndex === -1) continue;
+
+      const employeeId = clean(order.employeeId);
+      const name = clean(order.name);
+
+      if (!employeeId) {
+        throw new Error(`${name || "某筆便當訂單"}缺少工號，無法整理名單`);
+      }
+
+      const diet = clean(order.diet);
+      let meal;
+
+      if (["葷", "葷食"].includes(diet)) {
+        meal = "葷";
+      } else if (["素", "素食"].includes(diet)) {
+        meal = "素";
+      } else {
+        throw new Error(
+          `${employeeId} ${name} 在 ${date} 的葷素資料不明：${diet || "空白"}`,
+        );
+      }
+
+      if (!people.has(employeeId)) {
+        people.set(employeeId, {
+          employeeId,
+          name,
+          department: clean(order.department),
+          group: clean(order.group),
+          meals: Array(5).fill("—"),
+        });
+      }
+
+      const person = people.get(employeeId);
+      const previousMeal = person.meals[dayIndex];
+
+      if (previousMeal !== "—" && previousMeal !== meal) {
+        throw new Error(
+          `${employeeId} ${name} 在 ${date} 有不同葷素紀錄，請先確認訂單`,
+        );
+      }
+
+      // 同一工號同一天只列一次
+      person.meals[dayIndex] = meal;
+    }
+
+    const list = Array.from(people.values()).sort((a, b) =>
+      a.employeeId.localeCompare(b.employeeId, "zh-TW", {
+        numeric: true,
+      }),
+    );
+
+    if (!list.length) {
+      toast(`${factoryName}下週沒有可匯出的便當訂單`);
+      return;
+    }
+
+    const meatCounts = dates.map(
+      (_, index) =>
+        list.filter((person) => person.meals[index] === "葷").length,
+    );
+
+    const vegetarianCounts = dates.map(
+      (_, index) =>
+        list.filter((person) => person.meals[index] === "素").length,
+    );
+
+    const rows = [
+      [`${factoryName}下週便當名單`],
+      ["訂餐週期", `${dates[0]} ～ ${dates[4]}`],
+      ["說明", "葷＝葷食；素＝素食；—＝無便當"],
+      [],
+      [
+        "工號",
+        "姓名",
+        "部門",
+        "組別",
+        ...dates.map(
+          (date, index) =>
+            `${date.slice(5).replace("-", "/")}（${weekdays[index]}）`,
+        ),
+      ],
+      ...list.map((person) => [
+        person.employeeId,
+        person.name,
+        person.department,
+        person.group,
+        ...person.meals,
+      ]),
+      [],
+      ["葷食人數", "", "", "", ...meatCounts],
+      ["素食人數", "", "", "", ...vegetarianCounts],
+      [
+        "便當總人數",
+        "",
+        "",
+        "",
+        ...meatCounts.map((count, index) => count + vegetarianCounts[index]),
+      ],
+    ];
+
+    const csv =
+      "\ufeff" +
+      rows
+        .map((row) =>
+          row
+            .map((value) => {
+              let text = String(value ?? "");
+
+              // 避免文字被 Excel 當成公式執行
+              if (/^[=+\-@\t\r\n]/.test(text) && text !== "—") {
+                text = "'" + text;
+              }
+
+              return `"${text.replace(/"/g, '""')}"`;
+            })
+            .join(","),
+        )
+        .join("\r\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `下週便當名單_${factoryName}_${dates[0]}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // 給瀏覽器時間啟動下載
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+    toast(`已產生${factoryName}便當名單，共 ${list.length} 人`);
+  } catch (error) {
+    console.error("匯出廠區便當名單失敗：", error);
+    window.alert(`匯出失敗：\n${error.message || String(error)}`);
   }
-
-  const rows = [
-    ["訂餐週期", "工號", "姓名", "部門", "組別", "廠區", "葷／素"],
-
-    ...factoryOrders.map((order) => [
-      formatOrderWeek(order.weekDate),
-      order.employeeId || "",
-      order.name || "",
-      order.department || "",
-      order.group || "",
-      order.factory || "",
-      order.diet || "",
-    ]),
-  ];
-
-  const csv =
-    "\ufeff" +
-    rows
-      .map((row) =>
-        row
-          .map((value) => {
-            const text = String(value ?? "");
-
-            return `"${text.replace(/"/g, '""')}"`;
-          })
-          .join(","),
-      )
-      .join("\n");
-
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8",
-  });
-
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-
-  link.href = url;
-
-  const weekDate = factoryOrders[0]?.weekDate || "下週";
-
-  link.download = `下週便當明細_${factoryName}_${weekDate}.csv`;
-
-  document.body.appendChild(link);
-
-  link.click();
-
-  link.remove();
-
-  URL.revokeObjectURL(url);
 }
 function initializeDashboardHeader() {
   updateNextWeekRange();
@@ -6268,7 +7562,34 @@ if (newcomerMeals.length > 0) {
 }
 
 selectedSpecialOrderDate = dashboardData.nextWeek.startDate;
+console.time("首頁全部載入");
 
+const weeklyStart = performance.now();
+const weeklyPromise = loadDashboardWeeklyOrders().then(() => {
+  console.log(
+    "下週訂單載入時間：",
+    Math.round(performance.now() - weeklyStart),
+    "ms",
+  );
+});
+
+const currentStart = performance.now();
+const currentPromise = loadDashboardCurrentWeekOrders().then(() => {
+  console.log(
+    "本週訂單載入時間：",
+    Math.round(performance.now() - currentStart),
+    "ms",
+  );
+});
+
+const newcomerStart = performance.now();
+const newcomerPromise = loadDashboardNewcomerMeals().then(() => {
+  console.log(
+    "新人資料載入時間：",
+    Math.round(performance.now() - newcomerStart),
+    "ms",
+  );
+});
 async function initializeApp() {
   showPageLoading();
 
@@ -6279,11 +7600,39 @@ async function initializeApp() {
 
     render();
 
-    await Promise.all([
-      loadDashboardWeeklyOrders(),
-      loadDashboardCurrentWeekOrders(),
-      loadDashboardNewcomerMeals(),
-    ]);
+    console.time("首頁全部載入");
+
+    const weeklyStart = performance.now();
+    const weeklyPromise = loadDashboardWeeklyOrders().then(() => {
+      console.log(
+        "下週訂單載入時間：",
+        Math.round(performance.now() - weeklyStart),
+        "ms",
+      );
+    });
+
+    const currentStart = performance.now();
+    const currentPromise = loadDashboardCurrentWeekOrders().then(() => {
+      console.log(
+        "本週訂單載入時間：",
+        Math.round(performance.now() - currentStart),
+        "ms",
+      );
+    });
+
+    const newcomerStart = performance.now();
+    const newcomerPromise = loadDashboardNewcomerMeals().then(() => {
+      console.log(
+        "新人資料載入時間：",
+        Math.round(performance.now() - newcomerStart),
+        "ms",
+      );
+    });
+    await Promise.all([weeklyPromise, currentPromise, newcomerPromise]);
+
+    console.timeEnd("首頁全部載入");
+
+    console.timeEnd("首頁全部載入");
 
     render();
   } catch (error) {
@@ -6367,6 +7716,108 @@ function getNextWeekFactorySummary() {
       meat,
       vegetarian,
       total: meat + vegetarian,
+    };
+  });
+}
+function getNextWeekDailySummary() {
+  const workdays = getNextWeekWorkdays();
+
+  const orders =
+    weeklyOrderSummaryData && Array.isArray(weeklyOrderSummaryData.data)
+      ? weeklyOrderSummaryData.data
+      : [];
+
+  return workdays.map((day) => {
+    // =========================
+    // 只抓這一天的訂餐資料
+    // =========================
+
+    const dailyOrders = orders.filter(
+      (order) => String(order.date || "") === String(day.dateValue || ""),
+    );
+
+    // =========================
+    // 便當
+    // =========================
+
+    const lunchBoxOrders = dailyOrders.filter(
+      (order) => order.mealType === "便當",
+    );
+
+    // =========================
+    // 上樓用餐
+    // =========================
+
+    const upstairsOrders = dailyOrders.filter(
+      (order) => order.mealType === "上樓用餐",
+    );
+
+    // =========================
+    // 一廠
+    // =========================
+
+    const factory1Orders = lunchBoxOrders.filter(
+      (order) => order.factory === "一廠",
+    );
+
+    const factory1Meat = factory1Orders.filter(
+      (order) => order.diet === "葷食",
+    ).length;
+
+    const factory1Vegetarian = factory1Orders.filter(
+      (order) => order.diet === "素食",
+    ).length;
+
+    console.log("首頁每日一廠檢查：", {
+      date: day.dateValue,
+      dailyOrders,
+      lunchBoxOrders,
+      factory1Orders,
+    });
+    // =========================
+    // 二廠
+    // =========================
+
+    const factory2Orders = lunchBoxOrders.filter(
+      (order) => order.factory === "二廠",
+    );
+
+    const factory2Meat = factory2Orders.filter(
+      (order) => order.diet === "葷食",
+    ).length;
+
+    const factory2Vegetarian = factory2Orders.filter(
+      (order) => order.diet === "素食",
+    ).length;
+
+    return {
+      dateValue: day.dateValue,
+
+      displayDate: day.displayDate,
+
+      weekday: day.weekday,
+
+      factory1: {
+        meat: factory1Meat,
+
+        vegetarian: factory1Vegetarian,
+
+        total: factory1Orders.length,
+      },
+
+      factory2: {
+        meat: factory2Meat,
+
+        vegetarian: factory2Vegetarian,
+
+        total: factory2Orders.length,
+      },
+
+      upstairs: upstairsOrders.length,
+
+      lunchBoxTotal: lunchBoxOrders.length,
+
+      total: lunchBoxOrders.length + upstairsOrders.length,
     };
   });
 }
@@ -6689,34 +8140,18 @@ function openCreateEmployeeModal() {
         >
 
       </div>
-
-      <div class="field">
+<div class="field">
 
   <label>
-    身分 *
+    身分
   </label>
 
-  <select id="newEmployeeRole">
-    <option value="">
-      請選擇身分
-    </option>
-
-    <option value="員工">
-      員工
-    </option>
-
-    <option value="課長">
-      課長
-    </option>
-
-    <option value="副理">
-      副理
-    </option>
-
-    <option value="經理">
-      經理
-    </option>
-  </select>
+  <input
+    type="text"
+    id="newEmployeeRole"
+    value="員工"
+    disabled
+  >
 
 </div>
 
@@ -6799,11 +8234,6 @@ function openCreateEmployeeModal() {
 
       if (!group) {
         toast("請輸入組別");
-        return;
-      }
-
-      if (!role) {
-        toast("請選擇身分");
         return;
       }
 
@@ -6954,11 +8384,11 @@ function bindHolidayEvents() {
         // 刪除成功
         // =========================
 
-        // 清除目前休假日快取
-        holidaysLoaded = false;
+        // 刪除成功後，直接從目前前端資料移除該筆
+        holidays = holidays.filter((item) => item.id !== holidayId);
 
-        // 從 Sheet 重新取得最新資料
-        await loadHolidays();
+        // 目前資料仍然視為已載入
+        holidaysLoaded = true;
 
         // 先關閉中央遮罩
         hideLoadingOverlay();
@@ -6985,6 +8415,71 @@ function bindHolidayEvents() {
         button.disabled = false;
       }
     });
+  });
+}
+function bindDeadlineSettingsEvents() {
+  const saveButton = document.querySelector("#saveDeadlineBtn");
+
+  const dateInput = document.querySelector("#deadlineDateInput");
+
+  const timeInput = document.querySelector("#deadlineTimeInput");
+
+  if (!saveButton || !dateInput || !timeInput) {
+    return;
+  }
+
+  saveButton.addEventListener("click", async () => {
+    const nextWeek = getNextWeekRange();
+
+    const targetWeekKey = nextWeek.startDateValue;
+
+    const deadlineDate = dateInput.value;
+
+    const deadlineTime = timeInput.value;
+
+   if (!deadlineDate || !deadlineTime) {
+     showToast("請選擇截止日期與時間", "error");
+
+     return;
+   }
+
+    try {
+      saveButton.disabled = true;
+      saveButton.textContent = "儲存中...";
+
+      const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "saveDeadlineSetting",
+
+          targetWeekKey: targetWeekKey,
+
+          deadlineDate: deadlineDate,
+
+          deadlineTime: deadlineTime,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "儲存截止時間失敗");
+      }
+
+      deadlineSettingData = result.setting;
+      deadlineSettingLoaded = true;
+
+      render();
+
+      showToast("截止時間設定已儲存", "success");
+    } catch (error) {
+      console.error("儲存截止時間失敗：", error);
+
+      showToast(error.message || "儲存截止時間失敗", "error");
+    } finally {
+      saveButton.disabled = false;
+      saveButton.textContent = "💾 儲存設定";
+    }
   });
 }
 function openCreateHolidayModal() {
@@ -7163,8 +8658,54 @@ async function loadWeeklyOrderSummary(targetDate) {
 
   return result;
 }
+async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    return response;
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("系統回應逾時，請稍後再試");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+  const controller = new AbortController();
+
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("系統回應逾時，請重新整理確認資料後再操作");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 async function loadNewcomerMeals() {
-  const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+  const response = await fetchWithTimeout(APP_CONFIG.ADMIN_API_URL, {
     method: "POST",
     body: JSON.stringify({
       action: "getNewcomerMeals",
@@ -7187,6 +8728,47 @@ async function testWeeklyOrderSummaryFrontend() {
     console.log("週訂單前端讀取成功：", result);
   } catch (error) {
     console.error("週訂單前端讀取失敗：", error);
+  }
+}
+
+async function loadCurrentWeekOrdersAndRender() {
+  if (
+    currentWeekOrderSummaryLoaded &&
+    currentWeekOrderSummaryData &&
+    Array.isArray(currentWeekOrderSummaryData.data)
+  ) {
+    render();
+    return;
+  }
+
+  if (currentWeekOrderSummaryLoading) {
+    return;
+  }
+
+  currentWeekOrderSummaryLoading = true;
+
+  render();
+
+  try {
+    const targetDate = dashboardData.currentWeek.startDate;
+
+    const result = await loadWeeklyOrderSummary(targetDate);
+
+    currentWeekOrderSummaryData = result;
+
+    currentWeekOrderSummaryLoaded = true;
+
+    console.log("本週訂單資料讀取成功：", currentWeekOrderSummaryData);
+  } catch (error) {
+    console.error("本週訂單資料讀取失敗：", error);
+
+    currentWeekOrderSummaryLoaded = false;
+  } finally {
+    currentWeekOrderSummaryLoading = false;
+
+    if (page === "orders" && orderTab === "current-week") {
+      render();
+    }
   }
 }
 async function loadNextWeekOrdersAndRender() {
@@ -7343,4 +8925,39 @@ async function loadDashboardNewcomerMeals() {
       render();
     }
   }
+}
+function showToast(message, type = "success") {
+  const oldToast = document.querySelector(".custom-toast");
+
+  if (oldToast) {
+    oldToast.remove();
+  }
+
+  const toast = document.createElement("div");
+
+  toast.className = `custom-toast custom-toast-${type}`;
+
+  toast.innerHTML = `
+    <div class="custom-toast-icon">
+      ${type === "success" ? "✓" : "!"}
+    </div>
+
+    <div class="custom-toast-message">
+      ${message}
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("show");
+  });
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+
+    setTimeout(() => {
+      toast.remove();
+    }, 250);
+  }, 2200);
 }

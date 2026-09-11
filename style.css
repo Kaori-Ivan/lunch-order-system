@@ -1847,7 +1847,87 @@ input[readonly] {
   color: #64748b;
   font-size: 12px;
 }
+.payment-reminder {
+  width: fit-content;
+max-width: 100%;
+margin: 0 auto 22px;
+padding: 10px 16px;
 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 20px;
+
+  color: #be123c;
+}
+
+.payment-reminder-icon {
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+  background: #ffe4e6;
+  position: relative;
+}
+
+/* 錢包圖案 */
+.payment-reminder-icon::before {
+  content: "";
+  width: 25px;
+  height: 18px;
+
+  border: 3px solid #e11d48;
+  border-radius: 5px;
+
+  box-sizing: border-box;
+}
+
+.payment-reminder-icon::after {
+  content: "";
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  right: 10px;
+  top: 21px;
+
+  border-radius: 50%;
+  background: #e11d48;
+}
+
+.payment-reminder-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.payment-reminder-text strong::after {
+  content: "｜";
+  margin-left: 6px;
+  font-weight: 400;
+  color: #f43f5e;
+}
+
+.payment-reminder-text strong {
+  font-size: 18px;
+  font-weight: 900;
+  color: #be123c;
+}
+
+.payment-reminder-text span {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e11d48;
+}
 .done-check {
   width: 140px;
   height: 140px;
@@ -2077,6 +2157,42 @@ input[readonly] {
   .done-brand {
     margin-bottom: 70px;
   }
+ .payment-reminder {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  padding: 9px 12px;
+
+  gap: 10px;
+  border-radius: 14px;
+}
+
+.payment-reminder-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+}
+
+.payment-reminder-icon::before {
+  width: 22px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.payment-reminder-icon::after {
+  width: 6px;
+  height: 6px;
+  right: 8px;
+  top: 18px;
+}
+
+.payment-reminder-text strong {
+  font-size: 16px;
+}
+
+.payment-reminder-text span {
+  font-size: 13px;
+}
 
   .done-check {
     width: 118px;
@@ -2531,4 +2647,50 @@ input[readonly] {
   font-weight: 600;
   color: #8b93a3;
   white-space: nowrap;
+}
+/* 電腦與手機：確認訂單標題靠左 */
+#page-review .review-top {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* 移除標題左側的空白佔位 */
+#page-review .review-top > span:first-child {
+  display: none;
+}
+
+#page-review .review-top h2 {
+  margin: 0;
+  text-align: left;
+  justify-self: start;
+}
+
+/* 完成頁：按鈕之間保留間距 */
+#page-done .done-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+#page-done .done-actions .done-edit-btn {
+  margin: 0;
+}
+
+/* 手機版：完成頁按鈕上下排列 */
+@media (max-width: 768px) {
+  #page-done .done-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #page-done .done-actions .done-edit-btn {
+    width: 100%;
+    max-width: 320px;
+    min-width: 0;
+    height: auto;
+    min-height: 58px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+    white-space: normal;
+  }
 }
