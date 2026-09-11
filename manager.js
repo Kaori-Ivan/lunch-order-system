@@ -96,10 +96,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // =========================
   // 正式人員資料
   // =========================
-  let employeeData = [];
-  let managerEmployeesLoaded = false;
+let employeeData = [];
+let managerEmployeesLoaded = false;
+let managerEmployeesLoadingPromise = null;
 
-  const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
+const MANAGER_EMPLOYEE_CACHE_KEY = "managerEmployeeCache";
   // 目前登入的管理者
   let currentManager = null;
 
@@ -146,76 +147,103 @@ document.addEventListener("DOMContentLoaded", () => {
   // 讀取正式員工資料
   // =========================
   async function loadManagerEmployees() {
+    // 已經成功載入過，就直接使用現有資料
     if (managerEmployeesLoaded) {
       return;
     }
 
-    const cachedData = sessionStorage.getItem(MANAGER_EMPLOYEE_CACHE_KEY);
-
-    if (cachedData) {
-      try {
-        employeeData = JSON.parse(cachedData);
-
-        if (Array.isArray(employeeData) && employeeData.length > 0) {
-          managerEmployeesLoaded = true;
-          console.log("使用快取人員資料：", employeeData);
-          return;
-        }
-      } catch (error) {
-        console.warn("快取人員資料解析失敗：", error);
-        sessionStorage.removeItem(MANAGER_EMPLOYEE_CACHE_KEY);
-      }
+    // 如果目前已經有一支人員 API 正在執行，
+    // 不要再發第二支，直接等待同一個 Promise
+    if (managerEmployeesLoadingPromise) {
+      return managerEmployeesLoadingPromise;
     }
 
-    const controller = new AbortController();
+    managerEmployeesLoadingPromise = (async () => {
+      // =========================
+      // 先讀 sessionStorage 快取
+      // =========================
+      const cachedData = sessionStorage.getItem(MANAGER_EMPLOYEE_CACHE_KEY);
 
-    const timeout = setTimeout(() => controller.abort(), 12000);
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
 
-    try {
-      const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
-        method: "POST",
+          if (Array.isArray(parsedData) && parsedData.length > 0) {
+            employeeData = parsedData;
+            managerEmployeesLoaded = true;
 
-        body: JSON.stringify({
-          action: "getEmployees",
-        }),
+            console.log("使用快取人員資料：", employeeData);
 
-        signal: controller.signal,
-      });
+            return;
+          }
+        } catch (error) {
+          console.warn("快取人員資料解析失敗：", error);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+          sessionStorage.removeItem(MANAGER_EMPLOYEE_CACHE_KEY);
+        }
       }
 
-      const result = await response.json();
+      // =========================
+      // 沒有快取才呼叫正式 API
+      // =========================
+      const controller = new AbortController();
 
-      if (!result.success) {
-        throw new Error(result.message || "讀取人員資料失敗");
-      }
+      const timeout = setTimeout(() => controller.abort(), 12000);
 
-      employeeData = (result.data || [])
-        .filter((employee) => {
-          return employee.enabled === true;
-        })
-        .map((employee) => {
-          return {
-            id: employee.employeeId,
-            name: employee.name,
-            department: employee.department,
-            group: employee.group || "",
-            role: employee.role || "",
-          };
+      try {
+        const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+          method: "POST",
+
+          body: JSON.stringify({
+            action: "getEmployees",
+          }),
+
+          signal: controller.signal,
         });
 
-      managerEmployeesLoaded = true;
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
 
-      sessionStorage.setItem(
-        MANAGER_EMPLOYEE_CACHE_KEY,
-        JSON.stringify(employeeData),
-      );
+        const result = await response.json();
 
-      console.log("管理者代訂人員資料：", employeeData);
+        if (!result.success) {
+          throw new Error(result.message || "讀取人員資料失敗");
+        }
+
+        employeeData = (result.data || [])
+          .filter((employee) => {
+            return employee.enabled === true;
+          })
+          .map((employee) => {
+            return {
+              id: employee.employeeId,
+              name: employee.name,
+              department: employee.department,
+              group: employee.group || "",
+              role: employee.role || "",
+            };
+          });
+
+        managerEmployeesLoaded = true;
+
+        sessionStorage.setItem(
+          MANAGER_EMPLOYEE_CACHE_KEY,
+          JSON.stringify(employeeData),
+        );
+
+        console.log("管理者代訂人員資料：", employeeData);
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
+
+    try {
+      await managerEmployeesLoadingPromise;
     } finally {
-      clearTimeout(timeout);
+      // 不論成功或失敗，
+      // 這一次請求結束後都要解除鎖
+      managerEmployeesLoadingPromise = null;
     }
   }
 
@@ -1158,6 +1186,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return `${weekNames[date.getDay()]} ${month}/${day}`;
   }
+
+  function setManagerOrderFormLocked(locked) {
+    backButton.disabled = locked;
+    departmentSelect.disabled = locked;
+    employeeSelect.disabled = locked;
+    defaultFactory.disabled = locked;
+    defaultFoodType.disabled = locked;
+
+    weeklyMeals.querySelectorAll("input, select, button").forEach((element) => {
+      element.disabled = locked;
+    });
+
+    submitButton.disabled = locked;
+  }
   // =========================
   // 更新摘要
   // =========================
@@ -1410,7 +1452,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const originalText = submitButton.textContent;
 
     try {
-      submitButton.disabled = true;
+      setManagerOrderFormLocked(true);
 
       submitButton.textContent = "整週代訂送出中...";
 
@@ -1458,6 +1500,8 @@ document.addEventListener("DOMContentLoaded", () => {
       alert(error.message || "整週代訂失敗，請稍後再試。");
     } finally {
       isSubmitting = false;
+
+      setManagerOrderFormLocked(false);
 
       submitButton.textContent = originalText;
 
