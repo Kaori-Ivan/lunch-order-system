@@ -1650,7 +1650,9 @@ const dayEntry = Object.entries(weeklyMealState).find(
       submitButton.textContent = "整週代訂送出中...";
 
       const result = await managerApiPost({
-        action: "saveManagerProxyWeekOrder",
+        action: editingEmployeeId
+          ? "updateManagerProxyWeekOrder"
+          : "saveManagerProxyWeekOrder",
 
         managerEmpId: currentManager.id,
 
@@ -1672,6 +1674,9 @@ const dayEntry = Object.entries(weeklyMealState).find(
       // 保留組長登入狀態與組別
       // =========================
 
+      // 修改完成後退出修改模式
+      editingEmployeeId = "";
+      submitButton.textContent = "送出整週代訂";
       // 清除目前代訂人員
       employeeSelect.value = "";
 
@@ -1696,7 +1701,9 @@ const dayEntry = Object.entries(weeklyMealState).find(
 
       setManagerOrderFormLocked(false);
 
-      submitButton.textContent = originalText;
+      submitButton.textContent = editingEmployeeId
+        ? "更新整週代訂"
+        : "送出整週代訂";
 
       updateSummary();
     }
