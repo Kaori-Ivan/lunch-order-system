@@ -1326,7 +1326,8 @@ body {
    代訂紀錄頁版面優化
 ========================= */
 
-#managerHistoryPage {
+#managerHistoryPage,
+#managerAddEmployeePage {
   width: 100%;
   max-width: 1100px;
 

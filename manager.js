@@ -15,6 +15,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const orderPage = document.getElementById("managerOrderPage");
   const historyPage = document.getElementById("managerHistoryPage");
+
+  const addEmployeePage = document.getElementById("managerAddEmployeePage");
+
   const closedPage = document.getElementById("managerClosedPage");
 
   const closedReason = document.getElementById("managerClosedReason");
@@ -39,6 +42,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const historyButton = document.getElementById("btnManagerOrderHistory");
 
   const historyBackButton = document.getElementById("btnManagerHistoryBack");
+  const addEmployeeButton = document.getElementById("btnManagerAddEmployee");
+  const addEmployeeBackButton = document.getElementById(
+    "btnManagerAddEmployeeBack",
+  );
+
+  const newEmployeeDepartment = document.getElementById(
+    "newEmployeeDepartment",
+  );
+
+  const newEmployeeGroup = document.getElementById("newEmployeeGroup");
+
+  const newEmployeeId =
+  document.getElementById("newEmployeeId");
+
+  const newEmployeeName =
+    document.getElementById("newEmployeeName");
+
+  const addEmployeeSubmitButton =
+    document.getElementById("btnManagerAddEmployeeSubmit");
 
   const historyWeek = document.getElementById("managerHistoryWeek");
 
@@ -803,6 +825,28 @@ document.addEventListener("DOMContentLoaded", () => {
       newOrderButton.disabled = false;
     }
   });
+
+  // =========================
+  // 進入新增人員
+  // =========================
+  addEmployeeButton.addEventListener("click", () => {
+    if (!currentManager) {
+      alert("管理者登入資料已失效，請重新登入。");
+      return;
+    }
+
+    // 隱藏其他頁面
+    homePage.classList.add("hidden");
+    orderPage.classList.add("hidden");
+    historyPage.classList.add("hidden");
+
+    // 自動帶入登入管理者的部門與組別
+    newEmployeeDepartment.value = currentManager.department || "";
+    newEmployeeGroup.value = currentManager.group || "";
+
+    // 顯示新增人員頁面
+    addEmployeePage.classList.remove("hidden");
+  });
   // =========================
   // 進入代訂紀錄
   // =========================
@@ -1011,6 +1055,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
     homePage.classList.remove("hidden");
   });
+  addEmployeeBackButton.addEventListener("click", () => {
+  addEmployeePage.classList.add("hidden");
+
+  homePage.classList.remove("hidden");
+});
+// =========================
+// 管理者代訂－新增人員
+// =========================
+addEmployeeSubmitButton.addEventListener("click", async () => {
+  const employeeId =
+    newEmployeeId.value.trim().toUpperCase();
+
+  const name =
+    newEmployeeName.value.trim();
+
+  const group =
+    newEmployeeGroup.value.trim();
+
+  if (!employeeId) {
+    alert("請輸入員工工號");
+    newEmployeeId.focus();
+    return;
+  }
+
+  if (!name) {
+    alert("請輸入員工姓名");
+    newEmployeeName.focus();
+    return;
+  }
+
+  if (!group) {
+    alert("無法取得管理者組別，請重新登入");
+    return;
+  }
+
+  try {
+    addEmployeeSubmitButton.disabled = true;
+    addEmployeeSubmitButton.textContent = "新增中...";
+
+    const response = await fetch(
+      APP_CONFIG.ADMIN_API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          action: "addManagerProxyEmployee",
+          employeeId,
+          name,
+          group
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!result.success) {
+      alert(result.message || "新增人員失敗");
+      return;
+    }
+
+    alert("人員新增完成");
+
+    newEmployeeId.value = "";
+    newEmployeeName.value = "";
+
+  } catch (error) {
+    console.error(
+      "管理者代訂新增人員失敗：",
+      error
+    );
+
+    alert("新增人員失敗，請稍後再試");
+
+  } finally {
+    addEmployeeSubmitButton.disabled = false;
+    addEmployeeSubmitButton.textContent = "確認新增人員";
+  }
+});
   // =========================
   // 代訂紀錄搜尋
   // =========================
