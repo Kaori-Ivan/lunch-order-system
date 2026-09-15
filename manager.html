@@ -121,6 +121,18 @@
 
             <span class="manager-home-arrow"> › </span>
           </button>
+
+          <button id="btnManagerEditEmployee" type="button" class="manager-home-card">
+  <span class="manager-home-icon">👥</span>
+
+  <span class="manager-home-card-text">
+    <strong>修改人員</strong>
+    <small>修改自己負責組別的人員資料</small>
+  </span>
+
+  <span class="manager-home-arrow">›</span>
+</button>
+
         </div>
       </section>
       <!-- 管理者代訂畫面 -->
@@ -436,6 +448,122 @@
         </div>
         </div>
       </section>
+
+
+      <!-- =========================
+     修改人員頁面
+========================= -->
+<section id="managerEditEmployeePage" class="manager-order-page hidden">
+  <div class="manager-order-shell">
+
+    <div class="manager-order-header">
+      <button
+        id="btnManagerEditEmployeeBack"
+        type="button"
+        class="manager-back-btn"
+      >
+        ← 返回首頁
+      </button>
+
+      <div>
+        <h1>修改人員</h1>
+        <p>修改自己負責組別的人員資料</p>
+      </div>
+    </div>
+
+    <div class="manager-order-card">
+
+      <div class="manager-order-title">
+        <span class="manager-step">1</span>
+
+        <div>
+          <h2>選擇人員</h2>
+          <p>請先選擇需要修改的人員</p>
+        </div>
+      </div>
+
+      <div class="manager-field">
+        <label for="editEmployeeSelect">人員</label>
+
+        <select id="editEmployeeSelect">
+          <option value="">請選擇人員</option>
+        </select>
+      </div>
+
+      <div id="editEmployeeForm" class="hidden">
+
+  <div class="manager-order-title">
+    <span class="manager-step">2</span>
+
+    <div>
+      <h2>修改人員資料</h2>
+      <p>確認資料後再進行修改</p>
+    </div>
+  </div>
+
+  <div class="manager-form-grid">
+
+    <div class="manager-field">
+      <label for="editEmployeeId">工號</label>
+      <input
+        id="editEmployeeId"
+        type="text"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="manager-field">
+      <label for="editEmployeeName">姓名</label>
+      <input
+        id="editEmployeeName"
+        type="text"
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="manager-field">
+      <label for="editEmployeeDepartment">部門</label>
+      <input
+        id="editEmployeeDepartment"
+        type="text"
+        readonly
+      >
+    </div>
+
+    <div class="manager-field">
+      <label for="editEmployeeGroup">組別</label>
+      <input
+        id="editEmployeeGroup"
+        type="text"
+        readonly
+      >
+    </div>
+
+    <div class="manager-field">
+      <label for="editEmployeeEnabled">狀態</label>
+
+      <select id="editEmployeeEnabled">
+        <option value="true">啟用</option>
+        <option value="false">停用</option>
+      </select>
+    </div>
+
+  </div>
+
+  <button
+    id="btnManagerEditEmployeeSubmit"
+    type="button"
+    class="manager-submit-btn"
+  >
+    儲存修改
+  </button>
+
+</div>
+
+    </div>
+
+  </div>
+</section>
     </main>
 
     <script src="js/config.js"></script>
