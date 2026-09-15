@@ -1327,7 +1327,8 @@ body {
 ========================= */
 
 #managerHistoryPage,
-#managerAddEmployeePage {
+#managerAddEmployeePage,
+#managerEditEmployeePage {
   width: 100%;
   max-width: 1100px;
 

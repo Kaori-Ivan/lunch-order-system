@@ -977,6 +977,19 @@ editEmployeeButton.addEventListener("click", () => {
   addEmployeePage.classList.add("hidden");
 
   editEmployeePage.classList.remove("hidden");
+
+  // 每次進入修改人員頁面時
+// 先恢復成初始狀態
+editEmployeeForm.classList.add("hidden");
+
+editEmployeeSelect.value = "";
+
+editEmployeeId.value = "";
+editEmployeeName.value = "";
+editEmployeeDepartment.value = "";
+editEmployeeGroup.value = "";
+editEmployeeEnabled.value = "true";
+
   loadEditEmployees();
 });
 
