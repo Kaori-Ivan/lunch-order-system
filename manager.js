@@ -1080,7 +1080,41 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      alert("人員資料修改完成");
+     alert("人員資料修改完成");
+
+// =========================
+// 修改成功後清除舊的人員快取
+// =========================
+sessionStorage.removeItem(
+  MANAGER_EMPLOYEE_CACHE_KEY
+);
+
+sessionStorage.removeItem(
+  MANAGER_EMPLOYEE_CACHE_TIME_KEY
+);
+
+managerEmployeesLoaded = false;
+employeeData = [];
+
+// =========================
+// 清空目前修改中的人員資料
+// =========================
+editEmployeeId.value = "";
+editEmployeeName.value = "";
+editEmployeeDepartment.value = "";
+editEmployeeGroup.value = "";
+editEmployeeEnabled.value = "true";
+
+// 隱藏 STEP 2 修改區
+editEmployeeForm.classList.add("hidden");
+
+// =========================
+// 重新取得最新人員名單
+// =========================
+await loadEditEmployees();
+
+// 回到「請選擇人員」
+editEmployeeSelect.value = "";
     } catch (error) {
       console.error("管理者代訂修改人員失敗：", error);
 
