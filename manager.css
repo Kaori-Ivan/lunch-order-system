@@ -1490,3 +1490,10 @@ body {
   font-size: 18px;
   font-weight: 700;
 }
+/* =========================
+   修改人員頁－固定從頁面上方開始
+========================= */
+
+#managerEditEmployeePage {
+  align-self: flex-start;
+}
