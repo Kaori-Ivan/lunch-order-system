@@ -44,39 +44,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const historyBackButton = document.getElementById("btnManagerHistoryBack");
   const addEmployeeButton = document.getElementById("btnManagerAddEmployee");
 
-  const editEmployeeButton =
-  document.getElementById("btnManagerEditEmployee");
+  const editEmployeeButton = document.getElementById("btnManagerEditEmployee");
 
-const editEmployeePage =
-  document.getElementById("managerEditEmployeePage");
+  const editEmployeePage = document.getElementById("managerEditEmployeePage");
 
-const editEmployeeBackButton =
-  document.getElementById("btnManagerEditEmployeeBack");
+  const editEmployeeBackButton = document.getElementById(
+    "btnManagerEditEmployeeBack",
+  );
 
-  const editEmployeeSelect =
-  document.getElementById("editEmployeeSelect");
+  const editEmployeeSelect = document.getElementById("editEmployeeSelect");
 
+  const editEmployeeForm = document.getElementById("editEmployeeForm");
 
-  const editEmployeeForm =
-  document.getElementById("editEmployeeForm");
+  const editEmployeeId = document.getElementById("editEmployeeId");
 
-const editEmployeeId =
-  document.getElementById("editEmployeeId");
+  const editEmployeeName = document.getElementById("editEmployeeName");
 
-const editEmployeeName =
-  document.getElementById("editEmployeeName");
+  const editEmployeeDepartment = document.getElementById(
+    "editEmployeeDepartment",
+  );
 
-const editEmployeeDepartment =
-  document.getElementById("editEmployeeDepartment");
+  const editEmployeeGroup = document.getElementById("editEmployeeGroup");
 
-const editEmployeeGroup =
-  document.getElementById("editEmployeeGroup");
+  const editEmployeeEnabled = document.getElementById("editEmployeeEnabled");
 
-const editEmployeeEnabled =
-  document.getElementById("editEmployeeEnabled");
-
-const editEmployeeSubmitButton =
-  document.getElementById("btnManagerEditEmployeeSubmit");
+  const editEmployeeSubmitButton = document.getElementById(
+    "btnManagerEditEmployeeSubmit",
+  );
   const addEmployeeBackButton = document.getElementById(
     "btnManagerAddEmployeeBack",
   );
@@ -87,14 +81,13 @@ const editEmployeeSubmitButton =
 
   const newEmployeeGroup = document.getElementById("newEmployeeGroup");
 
-  const newEmployeeId =
-  document.getElementById("newEmployeeId");
+  const newEmployeeId = document.getElementById("newEmployeeId");
 
-  const newEmployeeName =
-    document.getElementById("newEmployeeName");
+  const newEmployeeName = document.getElementById("newEmployeeName");
 
-  const addEmployeeSubmitButton =
-    document.getElementById("btnManagerAddEmployeeSubmit");
+  const addEmployeeSubmitButton = document.getElementById(
+    "btnManagerAddEmployeeSubmit",
+  );
 
   const historyWeek = document.getElementById("managerHistoryWeek");
 
@@ -343,86 +336,69 @@ const editEmployeeSubmitButton =
       managerEmployeesLoadingPromise = null;
     }
   }
-let editEmployees = [];
-async function loadEditEmployees() {
-  if (!currentManager) {
-    return;
-  }
+  let editEmployees = [];
+  async function loadEditEmployees() {
+    if (!currentManager) {
+      return;
+    }
 
-  editEmployeeSelect.innerHTML =
-    '<option value="">載入中...</option>';
+    editEmployeeSelect.innerHTML = '<option value="">載入中...</option>';
 
-  editEmployeeSelect.disabled = true;
+    editEmployeeSelect.disabled = true;
 
-  try {
-    const response = await fetch(
-      APP_CONFIG.ADMIN_API_URL,
-      {
+    try {
+      const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8"
+          "Content-Type": "text/plain;charset=utf-8",
         },
         body: JSON.stringify({
-          action: "getEmployees"
-        })
+          action: "getEmployees",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "取得人員資料失敗");
       }
-    );
 
-    const result = await response.json();
+      const employees = Array.isArray(result.data) ? result.data : [];
 
-    if (!result.success) {
-      throw new Error(
-        result.message || "取得人員資料失敗"
+      // 只保留目前登入負責人自己組別的人員
+      // 修改人員需要包含「啟用」與「停用」
+      editEmployees = employees.filter(
+        (employee) =>
+          employee.group === currentManager.group && employee.role === "員工",
       );
-    }
 
-    const employees = Array.isArray(result.data)
-      ? result.data
-      : [];
+      editEmployeeSelect.innerHTML = '<option value="">請選擇人員</option>';
 
-    // 只保留目前登入負責人自己組別的人員
-    // 修改人員需要包含「啟用」與「停用」
-    editEmployees = employees.filter(
-  employee =>
-    employee.group === currentManager.group &&
-    employee.role === "員工"
-);
+      editEmployees.forEach((employee) => {
+        const option = document.createElement("option");
 
-    editEmployeeSelect.innerHTML =
-      '<option value="">請選擇人員</option>';
+        option.value = employee.employeeId;
 
-    editEmployees.forEach(employee => {
-      const option =
-        document.createElement("option");
+        option.textContent =
+          `${employee.employeeId}｜${employee.name}` +
+          `${employee.enabled ? "" : "（停用）"}`;
 
-      option.value = employee.employeeId;
+        editEmployeeSelect.appendChild(option);
+      });
 
-      option.textContent =
-        `${employee.employeeId}｜${employee.name}` +
-        `${employee.enabled ? "" : "（停用）"}`;
+      if (editEmployees.length === 0) {
+        editEmployeeSelect.innerHTML =
+          '<option value="">目前沒有可修改的人員</option>';
+      }
+    } catch (error) {
+      console.error("載入修改人員名單失敗：", error);
 
-      editEmployeeSelect.appendChild(option);
-    });
-
-    if (editEmployees.length === 0) {
       editEmployeeSelect.innerHTML =
-        '<option value="">目前沒有可修改的人員</option>';
+        '<option value="">人員資料載入失敗</option>';
+    } finally {
+      editEmployeeSelect.disabled = false;
     }
-
-  } catch (error) {
-    console.error(
-      "載入修改人員名單失敗：",
-      error
-    );
-
-    editEmployeeSelect.innerHTML =
-      '<option value="">人員資料載入失敗</option>';
-
-  } finally {
-    editEmployeeSelect.disabled = false;
   }
-}
-
 
   // =========================
   // 讀取下週休假日
@@ -836,6 +812,7 @@ async function loadEditEmployees() {
         return;
       }
 
+      console.log("verifyManager API 回傳：", result);
       const manager = result.manager;
 
       // =========================
@@ -963,114 +940,97 @@ async function loadEditEmployees() {
   });
 
   // =========================
-// 進入修改人員
-// =========================
-editEmployeeButton.addEventListener("click", () => {
-  if (!currentManager) {
-    alert("管理者登入資料已失效，請重新登入。");
-    return;
-  }
-
-  homePage.classList.add("hidden");
-  orderPage.classList.add("hidden");
-  historyPage.classList.add("hidden");
-  addEmployeePage.classList.add("hidden");
-
-  editEmployeePage.classList.remove("hidden");
-
-  // 每次進入修改人員頁面時
-// 先恢復成初始狀態
-editEmployeeForm.classList.add("hidden");
-
-editEmployeeSelect.value = "";
-
-editEmployeeId.value = "";
-editEmployeeName.value = "";
-editEmployeeDepartment.value = "";
-editEmployeeGroup.value = "";
-editEmployeeEnabled.value = "true";
-
-  loadEditEmployees();
-});
-
-// =========================
-// 修改人員－返回首頁
-// =========================
-editEmployeeBackButton.addEventListener("click", () => {
-  editEmployeePage.classList.add("hidden");
-  homePage.classList.remove("hidden");
-});
-// =========================
-// 修改人員－選擇人員
-// =========================
-editEmployeeSelect.addEventListener("change", () => {
-  const employeeId =
-    editEmployeeSelect.value.trim();
-
-  // 沒有選擇人員時，隱藏修改區
-  if (!employeeId) {
-    editEmployeeForm.classList.add("hidden");
-    return;
-  }
-
-  // 從剛才載入的人員資料中找到該員工
-  const employee = editEmployees.find(
-    item => item.employeeId === employeeId
-  );
-
-  if (!employee) {
-    alert("找不到此人員資料");
-    editEmployeeForm.classList.add("hidden");
-    return;
-  }
-
-  // 將資料帶入修改表單
-  editEmployeeId.value =
-    employee.employeeId || "";
-
-  editEmployeeName.value =
-    employee.name || "";
-
-  editEmployeeDepartment.value =
-    employee.department || "";
-
-  editEmployeeGroup.value =
-    employee.group || "";
-
-  editEmployeeEnabled.value =
-    employee.enabled ? "true" : "false";
-
-  // 顯示修改區
-  editEmployeeForm.classList.remove("hidden");
-});
-
-
-// =========================
-// 修改人員－儲存修改
-// =========================
-editEmployeeSubmitButton.addEventListener(
-  "click",
-  async () => {
+  // 進入修改人員
+  // =========================
+  editEmployeeButton.addEventListener("click", () => {
     if (!currentManager) {
       alert("管理者登入資料已失效，請重新登入。");
       return;
     }
 
-    const originalEmployeeId =
-      editEmployeeSelect.value
-        .trim()
-        .toUpperCase();
+    homePage.classList.add("hidden");
+    orderPage.classList.add("hidden");
+    historyPage.classList.add("hidden");
+    addEmployeePage.classList.add("hidden");
 
-    const employeeId =
-      editEmployeeId.value
-        .trim()
-        .toUpperCase();
+    editEmployeePage.classList.remove("hidden");
 
-    const name =
-      editEmployeeName.value.trim();
+    // 每次進入修改人員頁面時
+    // 先恢復成初始狀態
+    editEmployeeForm.classList.add("hidden");
 
-    const enabled =
-      editEmployeeEnabled.value === "true";
+    editEmployeeSelect.value = "";
+
+    editEmployeeId.value = "";
+    editEmployeeName.value = "";
+    editEmployeeDepartment.value = "";
+    editEmployeeGroup.value = "";
+    editEmployeeEnabled.value = "true";
+
+    loadEditEmployees();
+  });
+
+  // =========================
+  // 修改人員－返回首頁
+  // =========================
+  editEmployeeBackButton.addEventListener("click", () => {
+    editEmployeePage.classList.add("hidden");
+    homePage.classList.remove("hidden");
+  });
+  // =========================
+  // 修改人員－選擇人員
+  // =========================
+  editEmployeeSelect.addEventListener("change", () => {
+    const employeeId = editEmployeeSelect.value.trim();
+
+    // 沒有選擇人員時，隱藏修改區
+    if (!employeeId) {
+      editEmployeeForm.classList.add("hidden");
+      return;
+    }
+
+    // 從剛才載入的人員資料中找到該員工
+    const employee = editEmployees.find(
+      (item) => item.employeeId === employeeId,
+    );
+
+    if (!employee) {
+      alert("找不到此人員資料");
+      editEmployeeForm.classList.add("hidden");
+      return;
+    }
+
+    // 將資料帶入修改表單
+    editEmployeeId.value = employee.employeeId || "";
+
+    editEmployeeName.value = employee.name || "";
+
+    editEmployeeDepartment.value = employee.department || "";
+
+    editEmployeeGroup.value = employee.group || "";
+
+    editEmployeeEnabled.value = employee.enabled ? "true" : "false";
+
+    // 顯示修改區
+    editEmployeeForm.classList.remove("hidden");
+  });
+
+  // =========================
+  // 修改人員－儲存修改
+  // =========================
+  editEmployeeSubmitButton.addEventListener("click", async () => {
+    if (!currentManager) {
+      alert("管理者登入資料已失效，請重新登入。");
+      return;
+    }
+
+    const originalEmployeeId = editEmployeeSelect.value.trim().toUpperCase();
+
+    const employeeId = editEmployeeId.value.trim().toUpperCase();
+
+    const name = editEmployeeName.value.trim();
+
+    const enabled = editEmployeeEnabled.value === "true";
 
     if (!originalEmployeeId) {
       alert("請先選擇要修改的人員");
@@ -1091,71 +1051,46 @@ editEmployeeSubmitButton.addEventListener(
 
     try {
       editEmployeeSubmitButton.disabled = true;
-      editEmployeeSubmitButton.textContent =
-        "儲存中...";
+      editEmployeeSubmitButton.textContent = "儲存中...";
 
-      const response = await fetch(
-        APP_CONFIG.ADMIN_API_URL,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({
-            action:
-              "updateManagerProxyEmployee",
+      const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          action: "updateManagerProxyEmployee",
 
-            managerEmpId:
-              currentManager.id,
+          managerEmpId: currentManager.id,
 
-            originalEmployeeId:
-              originalEmployeeId,
+          originalEmployeeId: originalEmployeeId,
 
-            employeeId:
-              employeeId,
+          employeeId: employeeId,
 
-            name:
-              name,
+          name: name,
 
-            enabled:
-              enabled
-          })
-        }
-      );
+          enabled: enabled,
+        }),
+      });
 
-      const result =
-        await response.json();
+      const result = await response.json();
 
       if (!result.success) {
-        alert(
-          result.message ||
-          "修改人員失敗"
-        );
+        alert(result.message || "修改人員失敗");
         return;
       }
 
       alert("人員資料修改完成");
-
     } catch (error) {
-      console.error(
-        "管理者代訂修改人員失敗：",
-        error
-      );
+      console.error("管理者代訂修改人員失敗：", error);
 
-      alert(
-        "修改人員失敗，請稍後再試"
-      );
-
+      alert("修改人員失敗，請稍後再試");
     } finally {
-      editEmployeeSubmitButton.disabled =
-        false;
+      editEmployeeSubmitButton.disabled = false;
 
-      editEmployeeSubmitButton.textContent =
-        "儲存修改";
+      editEmployeeSubmitButton.textContent = "儲存修改";
     }
-  }
-);
+  });
   // =========================
   // 進入代訂紀錄
   // =========================
@@ -1365,89 +1300,77 @@ editEmployeeSubmitButton.addEventListener(
     homePage.classList.remove("hidden");
   });
   addEmployeeBackButton.addEventListener("click", () => {
-  addEmployeePage.classList.add("hidden");
+    addEmployeePage.classList.add("hidden");
 
-  homePage.classList.remove("hidden");
-});
-// =========================
-// 管理者代訂－新增人員
-// =========================
-addEmployeeSubmitButton.addEventListener("click", async () => {
-  const employeeId =
-    newEmployeeId.value.trim().toUpperCase();
+    homePage.classList.remove("hidden");
+  });
+  // =========================
+  // 管理者代訂－新增人員
+  // =========================
+  addEmployeeSubmitButton.addEventListener("click", async () => {
+    const employeeId = newEmployeeId.value.trim().toUpperCase();
 
-  const name =
-    newEmployeeName.value.trim();
+    const name = newEmployeeName.value.trim();
 
-  const group =
-    newEmployeeGroup.value.trim();
+    const group = newEmployeeGroup.value.trim();
 
-  if (!employeeId) {
-    alert("請輸入員工工號");
-    newEmployeeId.focus();
-    return;
-  }
+    if (!employeeId) {
+      alert("請輸入員工工號");
+      newEmployeeId.focus();
+      return;
+    }
 
-  if (!name) {
-    alert("請輸入員工姓名");
-    newEmployeeName.focus();
-    return;
-  }
+    if (!name) {
+      alert("請輸入員工姓名");
+      newEmployeeName.focus();
+      return;
+    }
 
-  if (!group) {
-    alert("無法取得管理者組別，請重新登入");
-    return;
-  }
+    if (!group) {
+      alert("無法取得管理者組別，請重新登入");
+      return;
+    }
 
-  try {
-    addEmployeeSubmitButton.disabled = true;
-    addEmployeeSubmitButton.textContent = "新增中...";
+    try {
+      addEmployeeSubmitButton.disabled = true;
+      addEmployeeSubmitButton.textContent = "新增中...";
 
-    const response = await fetch(
-      APP_CONFIG.ADMIN_API_URL,
-      {
+      const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8"
+          "Content-Type": "text/plain;charset=utf-8",
         },
         body: JSON.stringify({
           action: "addManagerProxyEmployee",
           employeeId,
           name,
-          group
-        })
+          group,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(result.message || "新增人員失敗");
+        return;
       }
-    );
 
-    const result = await response.json();
+      alert("人員新增完成");
 
-    if (!result.success) {
-      alert(result.message || "新增人員失敗");
-      return;
+      // 清除人員快取，讓下次進入代訂時重新取得最新名單
+      sessionStorage.removeItem("managerEmployeeCache");
+
+      newEmployeeId.value = "";
+      newEmployeeName.value = "";
+    } catch (error) {
+      console.error("管理者代訂新增人員失敗：", error);
+
+      alert("新增人員失敗，請稍後再試");
+    } finally {
+      addEmployeeSubmitButton.disabled = false;
+      addEmployeeSubmitButton.textContent = "確認新增人員";
     }
-
-    alert("人員新增完成");
-
-    // 清除人員快取，讓下次進入代訂時重新取得最新名單
-    sessionStorage.removeItem("managerEmployeeCache");
-
-
-    newEmployeeId.value = "";
-    newEmployeeName.value = "";
-
-  } catch (error) {
-    console.error(
-      "管理者代訂新增人員失敗：",
-      error
-    );
-
-    alert("新增人員失敗，請稍後再試");
-
-  } finally {
-    addEmployeeSubmitButton.disabled = false;
-    addEmployeeSubmitButton.textContent = "確認新增人員";
-  }
-});
+  });
   // =========================
   // 代訂紀錄搜尋
   // =========================
