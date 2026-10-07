@@ -966,7 +966,13 @@ function getFilteredEmployees() {
       !employeeFilters.status || employee.status === employeeFilters.status;
 
     return matchKeyword && matchGroup && matchStatus;
-  });
+  }).sort((a, b) =>
+    String(a.employeeId || "").localeCompare(
+      String(b.employeeId || ""),
+      undefined,
+      { numeric: true, sensitivity: "base" }
+    )
+  );
 }
 function employeesView() {
   if (employeesLoading && !employeesLoaded) {
