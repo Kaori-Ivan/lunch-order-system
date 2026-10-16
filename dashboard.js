@@ -8395,7 +8395,7 @@ function openImportEmployeeModal() {
     "批次匯入人員",
     `
       <div class="employee-modal-intro">
-        <h3>批次匯入人員</h3>
+      
         <p>請使用 Excel 範本填寫工號、姓名、組別。</p>
         <a
   href="./範本.xlsx"
@@ -8418,7 +8418,7 @@ function openImportEmployeeModal() {
 
       <div id="employeeImportPreview" style="margin-top:16px;"></div>
 
-      <p>目前為畫面測試階段，尚未開放正式匯入。</p>
+      
     `,
     `
       <button
