@@ -785,12 +785,21 @@ function setHeader() {
     if (topActions) {
       topActions.innerHTML = `
       <button
+  type="button"
+  class="btn btn-secondary"
+id="importEmployeeBtn"
+>
+  匯入檔案
+</button>
+      <button
         type="button"
         class="btn btn-primary employee-header-add"
         id="addEmployeeBtn"
       >
         ＋ 新增人員
       </button>
+
+      
     `;
     }
 
@@ -874,8 +883,6 @@ function setHeader() {
       refreshButton.title = "重新整理";
       refreshButton.setAttribute("aria-label", "重新整理");
 
-
-
       refreshButton.innerHTML = `
   <span class="refresh-icon">⟳</span>
 `;
@@ -951,28 +958,30 @@ function render() {
 function getFilteredEmployees() {
   const keyword = employeeFilters.keyword.trim().toLowerCase();
 
-  return employees.filter((employee) => {
-    const employeeId = String(employee.employeeId || "").toLowerCase();
+  return employees
+    .filter((employee) => {
+      const employeeId = String(employee.employeeId || "").toLowerCase();
 
-    const name = String(employee.name || "").toLowerCase();
+      const name = String(employee.name || "").toLowerCase();
 
-    const matchKeyword =
-      !keyword || employeeId.includes(keyword) || name.includes(keyword);
+      const matchKeyword =
+        !keyword || employeeId.includes(keyword) || name.includes(keyword);
 
-    const matchGroup =
-      !employeeFilters.group || employee.group === employeeFilters.group;
+      const matchGroup =
+        !employeeFilters.group || employee.group === employeeFilters.group;
 
-    const matchStatus =
-      !employeeFilters.status || employee.status === employeeFilters.status;
+      const matchStatus =
+        !employeeFilters.status || employee.status === employeeFilters.status;
 
-    return matchKeyword && matchGroup && matchStatus;
-  }).sort((a, b) =>
-    String(a.employeeId || "").localeCompare(
-      String(b.employeeId || ""),
-      undefined,
-      { numeric: true, sensitivity: "base" }
-    )
-  );
+      return matchKeyword && matchGroup && matchStatus;
+    })
+    .sort((a, b) =>
+      String(a.employeeId || "").localeCompare(
+        String(b.employeeId || ""),
+        undefined,
+        { numeric: true, sensitivity: "base" },
+      ),
+    );
 }
 function employeesView() {
   if (employeesLoading && !employeesLoaded) {
@@ -3300,71 +3309,69 @@ function currentWeekSupplySummary(data) {
   `;
 }
 function currentWeekDailySupplyView() {
-    const workdays = getCurrentWeekWorkdays(
-      dashboardData.currentWeek.startDate,
+  const workdays = getCurrentWeekWorkdays(dashboardData.currentWeek.startDate);
+
+  const orders =
+    currentWeekOrderSummaryData &&
+    Array.isArray(currentWeekOrderSummaryData.data)
+      ? currentWeekOrderSummaryData.data
+      : [];
+
+  const days = workdays.map((day) => {
+    // =========================
+    // 只抓這一天的訂單
+    // =========================
+    const dailyOrders = orders.filter(
+      (order) => String(order.date || "") === String(day.dateValue || ""),
     );
 
-    const orders =
-      currentWeekOrderSummaryData &&
-      Array.isArray(currentWeekOrderSummaryData.data)
-        ? currentWeekOrderSummaryData.data
-        : [];
+    // =========================
+    // 當日便當
+    // =========================
+    const lunchBoxOrders = dailyOrders.filter(
+      (order) => order.mealType === "便當",
+    );
 
-    const days = workdays.map((day) => {
-      // =========================
-      // 只抓這一天的訂單
-      // =========================
-      const dailyOrders = orders.filter(
-        (order) => String(order.date || "") === String(day.dateValue || ""),
-      );
+    const meatTotal = lunchBoxOrders.filter(
+      (order) => order.diet === "葷食",
+    ).length;
 
-      // =========================
-      // 當日便當
-      // =========================
-      const lunchBoxOrders = dailyOrders.filter(
-        (order) => order.mealType === "便當",
-      );
+    const vegetarianTotal = lunchBoxOrders.filter(
+      (order) => order.diet === "素食",
+    ).length;
 
-      const meatTotal = lunchBoxOrders.filter(
-        (order) => order.diet === "葷食",
-      ).length;
+    // =========================
+    // 當日正式員工上樓
+    // =========================
+    const upstairsOrders = dailyOrders.filter(
+      (order) => order.mealType === "上樓用餐",
+    );
 
-      const vegetarianTotal = lunchBoxOrders.filter(
-        (order) => order.diet === "素食",
-      ).length;
+    // =========================
+    // 當日新人
+    // =========================
+    const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
 
-      // =========================
-      // 當日正式員工上樓
-      // =========================
-      const upstairsOrders = dailyOrders.filter(
-        (order) => order.mealType === "上樓用餐",
-      );
+    const newcomerTotal = newcomerSummary.total;
 
-      // =========================
-      // 當日新人
-      // =========================
-      const newcomerSummary = getNewcomerSummaryByDate(day.dateValue);
+    const actualUpstairs = upstairsOrders.length + newcomerTotal;
 
-      const newcomerTotal = newcomerSummary.total;
+    return {
+      ...day,
 
-      const actualUpstairs = upstairsOrders.length + newcomerTotal;
+      lunchBox: lunchBoxOrders.length,
 
-      return {
-        ...day,
+      meat: meatTotal,
 
-        lunchBox: lunchBoxOrders.length,
+      vegetarian: vegetarianTotal,
 
-        meat: meatTotal,
+      upstairs: actualUpstairs,
 
-        vegetarian: vegetarianTotal,
+      newcomer: newcomerTotal,
 
-        upstairs: actualUpstairs,
-
-        newcomer: newcomerTotal,
-
-        total: lunchBoxOrders.length + actualUpstairs,
-      };
-    });
+      total: lunchBoxOrders.length + actualUpstairs,
+    };
+  });
 
   return `
     <section class="card current-week-daily-panel">
@@ -5656,30 +5663,30 @@ function bindCommon() {
       toast("廠區統計匯出功能尚未串接");
     };
   });
-    document.querySelectorAll("[data-export-factory]").forEach((button) => {
-      button.addEventListener("click", async () => {
-        if (button.disabled) return;
+  document.querySelectorAll("[data-export-factory]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.disabled) return;
 
-        const factoryName = button.dataset.exportFactory;
-        const originalText = button.textContent;
+      const factoryName = button.dataset.exportFactory;
+      const originalText = button.textContent;
 
-        button.disabled = true;
-        button.textContent = "準備下載中...";
+      button.disabled = true;
+      button.textContent = "準備下載中...";
 
-        try {
-          toast(`正在準備${factoryName}下載資料...`);
-          await exportFactoryCSV(factoryName);
-        } catch (error) {
-          console.error("廠區訂單匯出失敗：", error);
-          window.alert(
-            `${factoryName}下載失敗：\n${error.message || String(error)}`,
-          );
-        } finally {
-          button.disabled = false;
-          button.textContent = originalText;
-        }
-      });
+      try {
+        toast(`正在準備${factoryName}下載資料...`);
+        await exportFactoryCSV(factoryName);
+      } catch (error) {
+        console.error("廠區訂單匯出失敗：", error);
+        window.alert(
+          `${factoryName}下載失敗：\n${error.message || String(error)}`,
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
     });
+  });
 
   document.querySelectorAll(".export-history").forEach((button) => {
     button.onclick = () => {
@@ -6179,6 +6186,10 @@ function bindCommon() {
     document
       .querySelector("#addEmployeeBtn")
       ?.addEventListener("click", openCreateEmployeeModal);
+
+      document
+  .querySelector("#importEmployeeBtn")
+  ?.addEventListener("click", openImportEmployeeModal);
 
     /* 暫時的休假日 */
     document
@@ -7242,7 +7253,6 @@ async function exportCSV() {
 
     // 原本一般訂餐完整保留，再加入管理者代訂
     orders = [...orders, ...proxyOrders];
-    
 
     // =========================
     // 套用目前畫面的查詢條件
@@ -8193,6 +8203,238 @@ function createAdminFromModal() {
 
   return Boolean(currentAdmin && currentAdmin.canManageAdmins);
 } */
+
+
+async function previewEmployeeExcel(event) {
+  const preview = document.querySelector("#employeeImportPreview");
+  const file = event.target.files[0];
+
+  preview.replaceChildren();
+
+  if (!file) return;
+
+  if (typeof XLSX === "undefined") {
+    preview.textContent = "Excel 讀取程式庫載入失敗，請檢查網路。";
+    return;
+  }
+
+  try {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+    const rows = XLSX.utils.sheet_to_json(sheet, {
+      defval: "",
+      raw: false
+    });
+
+    const required = ["工號", "姓名", "組別"];
+    const headers = XLSX.utils.sheet_to_json(sheet, {
+      header: 1,
+      blankrows: false
+    })[0] || [];
+
+    if (!required.every(col => headers.includes(col))) {
+      preview.textContent = "Excel 必須包含：工號、姓名、組別。";
+      return;
+    }
+
+    const existingIds = new Set(
+      employees.map(e =>
+        String(e.employeeId).trim().toUpperCase()
+      )
+    );
+
+    const fileIds = new Set();
+    const results = rows.map(row => {
+      const employeeId = String(row["工號"] || "")
+        .trim().toUpperCase();
+      const name = String(row["姓名"] || "").trim();
+      const group = String(row["組別"] || "").trim();
+
+      let status = "可匯入";
+
+      if (!employeeId || !name || !group) {
+        status = "資料缺漏";
+      } else if (existingIds.has(employeeId)) {
+        status = "工號已存在";
+      } else if (fileIds.has(employeeId)) {
+        status = "檔案內工號重複";
+      }
+
+      if (employeeId) fileIds.add(employeeId);
+
+      return { employeeId, name, group, status };
+    });
+
+    const validCount = results.filter(
+      r => r.status === "可匯入"
+    ).length;
+
+    const summary = document.createElement("p");
+    summary.textContent =
+      `共 ${results.length} 筆，可匯入 ${validCount} 筆，` +
+      `需跳過 ${results.length - validCount} 筆。`;
+
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText =
+      "max-height:260px;overflow:auto;margin-top:12px;";
+
+    const table = document.createElement("table");
+    table.style.cssText =
+      "width:100%;border-collapse:collapse;font-size:14px;";
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+
+    ["工號", "姓名", "組別", "檢查結果"].forEach(label => {
+      const th = document.createElement("th");
+      th.textContent = label;
+      th.style.padding = "8px";
+      headRow.appendChild(th);
+    });
+
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
+    results.forEach(item => {
+      const tr = document.createElement("tr");
+
+      [
+        item.employeeId,
+        item.name,
+        item.group,
+        item.status
+      ].forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        td.style.cssText =
+          "padding:8px;border-top:1px solid #ddd;";
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    preview.append(summary, wrapper);
+    
+        if (validCount > 0) {
+      const importButton = document.createElement("button");
+
+      importButton.type = "button";
+      importButton.className = "btn btn-primary";
+      importButton.textContent = `確認匯入 ${validCount} 筆人員`;
+      importButton.style.marginTop = "16px";
+
+      preview.appendChild(importButton);
+
+      importButton.addEventListener("click", async () => {
+        const validEmployees = results
+          .filter(item => item.status === "可匯入")
+          .map(item => ({
+            employeeId: item.employeeId,
+            name: item.name,
+            group: item.group
+          }));
+
+        if (!confirm(`確定新增 ${validEmployees.length} 位人員嗎？`)) {
+          return;
+        }
+
+        importButton.disabled = true;
+        importButton.textContent = "匯入中，請稍候...";
+
+        try {
+          const response = await fetch(APP_CONFIG.ADMIN_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "batchAddEmployees",
+              employees: validEmployees
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error("API 連線失敗");
+          }
+
+          const result = await response.json();
+
+          if (!result.success) {
+            throw new Error(result.message || "匯入失敗");
+          }
+
+          alert(
+            `匯入完成！\n` +
+            `成功新增：${result.added} 筆\n` +
+            `後端跳過：${result.skipped} 筆`
+          );
+
+          // 重新載入最新人員資料
+          location.reload();
+
+        } catch (error) {
+          console.error(error);
+          alert("匯入未能確認完成：" + error.message);
+          importButton.disabled = false;
+          importButton.textContent = "重新確認匯入";
+        }
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    preview.textContent = "Excel 讀取失敗，請確認檔案格式。";
+  }
+}
+
+function openImportEmployeeModal() {
+  openModal(
+    "批次匯入人員",
+    `
+      <div class="employee-modal-intro">
+        <h3>批次匯入人員</h3>
+        <p>請使用 Excel 範本填寫工號、姓名、組別。</p>
+        <a
+  href="./範本.xlsx"
+  download="範本.xlsx"
+  class="btn btn-secondary"
+  style="display:inline-block; margin:12px 0;"
+>
+  📥 下載 Excel 範本
+</a>
+      </div>
+
+      <div class="field">
+        <label>選擇 Excel 檔案</label>
+        <input
+          type="file"
+          id="employeeImportFile"
+          accept=".xlsx"
+        >
+      </div>
+
+      <div id="employeeImportPreview" style="margin-top:16px;"></div>
+
+      <p>目前為畫面測試階段，尚未開放正式匯入。</p>
+    `,
+    `
+      <button
+        type="button"
+        class="btn btn-primary"
+        disabled
+      >
+        確認匯入
+      </button>
+    `
+  );
+
+    document
+    .querySelector("#employeeImportFile")
+    .addEventListener("change", previewEmployeeExcel);
+}
 function openCreateEmployeeModal() {
   openModal(
     "新增人員",
@@ -8564,11 +8806,11 @@ function bindDeadlineSettingsEvents() {
 
     const deadlineTime = timeInput.value;
 
-   if (!deadlineDate || !deadlineTime) {
-     showToast("請選擇截止日期與時間", "error");
+    if (!deadlineDate || !deadlineTime) {
+      showToast("請選擇截止日期與時間", "error");
 
-     return;
-   }
+      return;
+    }
 
     try {
       saveButton.disabled = true;
